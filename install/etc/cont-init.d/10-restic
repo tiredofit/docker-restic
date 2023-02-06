@@ -1,0 +1,49 @@
+#!/command/with-contenv bash
+
+source /assets/functions/00-container
+prepare_service
+PROCESS_NAME="restic"
+
+setup_container_mode
+bootstrap_filesystem
+
+if [ ! -f "/tmp/.container/container-restart" ] ; then
+    if var_true "${ENABLE_STANDALONE}" ; then
+        print_debug "Configuring Standlone"
+        liftoff
+        exit 0
+    fi
+
+    repository init
+
+    if var_true "${ENABLE_BACKUP}" ; then
+        print_debug "Configuring Backup"
+        create_backup_schedulers
+        if var_true "${BACKUP_ON_STARTUP}" ; then
+            print_notice "Backing up on Startup"
+            /usr/bin/backup_now
+        fi
+    fi
+
+    if var_true "${ENABLE_CHECK}" ; then
+        print_debug "Configuring Check"
+        if var_true "${CHECK_ON_STARTUP}" ; then
+            print_notice "Checking on Startup"
+            repository check
+        fi
+    else
+        service_stop restic-check
+    fi
+
+    if var_true "${ENABLE_PRUNE}" ; then
+        print_debug "Configuring Prune"
+        if var_true "${PRUNE_ON_STARTUP}" ; then
+            print_notice "Pruning on Startup"
+            repository prune
+        fi
+    else
+        service_stop restic-prune
+    fi
+fi
+
+liftoff

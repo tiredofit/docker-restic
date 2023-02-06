@@ -1,0 +1,66 @@
+#!/command/with-contenv bash
+
+source /assets/functions/00-container
+check_container_initialized
+check_service_initialized init 10-restic
+source /assets/functions/10-restic
+source /assets/defaults/10-restic
+PROCESS_NAME="restic-check-scheduler"
+
+setup_container_mode
+if [ -n "${RESTIC_PASSWORD}" ] && [ -z "${REPOSITORY_PASS}" ]  ; then export REPOSITORY_PASS="${RESTIC_PASSWORD}" ; fi
+if [ -z "${REPOSITORY_PASS}" ] ; then
+    print_error "No REPOSITORY_PASS environment variable set. Halting.."
+    s6-svc -d /var/run/s6/legacy-services/restic-prune
+    exit 1
+fi
+export RESTIC_PASSWORD=${REPOSITORY_PASS}
+
+if [[ "${MODE,,}" =~ "standalone" ]] || [ "${1,,}" = "manual" ] || [ "${1,,}" = "now" ]; then
+    print_debug "Detected Manual Mode"
+    persist=false
+    CHECK_BEGIN=+0
+else
+    current_time=$(date +"%s")
+    today=$(date +"%Y%m%d")
+
+    if [[ $CHECK_BEGIN =~ ^\+(.*)$ ]]; then
+        waittime=$(( ${BASH_REMATCH[1]} * 60 ))
+        target_time=$(($current_time + $waittime))
+    else
+        target_time=$(date --date="${today} ${CHECK_BEGIN}" +"%s")
+        if [[ "$target_time" < "$current_time" ]]; then
+            target_time=$(($target_time + 24*60*60))
+        fi
+        waittime=$(($target_time - $current_time))
+    fi
+    print_debug "Wait Time: ${waittime} Target time: ${target_time} Current Time: ${current_time}"
+    print_info "Next Check at $(date -d @${target_time} +"%Y-%m-%d %T %Z")"
+    sleep $waittime
+fi
+
+while true; do
+    check_start_time=$(date +"%s")
+    print_debug "Repository Check routines started time: $(date +'%Y-%m-%d %T %Z')"
+    #pre_check
+    repository check
+    check_finish_time=$(date +"%s")
+    check_total_time=$(echo $((check_finish_time-check_start_time)))
+    #post_check
+    if [ -z "${exitcode_check}" ] ; then exitcode_check="0" ; fi
+    print_info "Repository check routines finish time: $(date -d @${check_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_check}"
+    print_notice "Repository check routines time taken: $(echo ${check_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
+
+    if var_false "${persist}" ; then
+        print_debug "Exiting due to manual mode"
+        exit ${exitcode_check};
+    else
+        if var_true "${stop_scheduler_check}" ; then
+            print_error "Stopping check_scheduler due to detected errors. Fix and restart container."
+            s6-svc -d /var/run/s6/legacy-services/restic-check
+        else
+            print_notice "Sleeping for another $(($CHECK_INTERVAL*60-check_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($CHECK_INTERVAL*60-check_total_time))))" +"%Y-%m-%d %T %Z") "
+            sleep $(($CHECK_INTERVAL*60-check_total_time))
+        fi
+    fi
+done

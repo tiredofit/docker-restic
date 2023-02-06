@@ -1,0 +1,831 @@
+#!/command/with-contenv bash
+
+bootstrap_filesystem() {
+    if [ ! -d "${CONFIG_PATH}" ]; then
+        mkdir -p "${CONFIG_PATH}"
+    fi
+    if [ $(stat -c %U "${CONFIG_PATH}") != "restic" ] ; then chown -R restic:restic "${CONFIG_PATH}" ; fi
+
+    if [ ! -d "${REPOSITORY_PATH}" ]; then
+        mkdir -p "${REPOSITORY_PATH}"
+    fi
+    if [ $(stat -c %U "${REPOSITORY_PATH}") != "restic" ] ; then chown restic:restic "${REPOSITORY_PATH}" ; fi
+
+    if var_true "${ENABLE_HOOKS}" ; then
+        if [ ! -d "${HOOKS_PATH}" ]; then
+            mkdir -p "${HOOKS_PATH}"
+        fi
+        if [ $(stat -c %U "${HOOKS_PATH}") != "restic" ] ; then chown restic:restic "${HOOKS_PATH}" ; fi
+
+        if [ ! -d "${HOOKS_PRE_PATH}" ]; then
+            mkdir -p "${HOOKS_PRE_PATH}"
+        fi
+        if [ $(stat -c %U "${HOOKS_PRE_PATH}") != "restic" ] ; then chown restic:restic "${HOOKS_PRE_PATH}" ; fi
+        if [ ! -d "${HOOKS_POST_PATH}" ]; then
+            mkdir -p "${HOOKS_POST_PATH}"
+        fi
+        if [ $(stat -c %U "${HOOKS_POST_PATH}") != "restic" ] ; then chown restic:restic "${HOOKS_POST_PATH}" ; fi
+    fi
+
+    if [ ! -d "${LOG_PATH}" ]; then
+        mkdir -p "${LOG_PATH}"
+    fi
+    if [ $(stat -c %U "${LOG_PATH}") != "restic" ] ; then chown -R restic:restic "${LOG_PATH}" ; fi
+
+    case "${LOG_TYPE,,}" in
+        file )
+            source /assets/defaults/05-logging
+            echo "0 0 * * * find ${LOG_PATH} -name \"\$(date --date=\"yesterday\" +\"%Y%m%d\")_*.log\" -print0 | xargs -0 tar cfa ${LOG_PATH}/\$(date --date=\"yesterday\" +\"%Y%m%d\").tar.zst --remove-files  2>/dev/null ; find /logs -name '*.zst' -mtime +${LOGROTATE_REAIN_DAYS}7 -exec rm {} \;" > /assets/cron/restic_log
+        ;;
+    esac
+}
+
+bootstrap_variables() {
+    backup_init() {
+        PROCESS_NAME=backup${backup_instance_number}
+        backup_instance_vars=$(mktemp)
+        set -o posix ; set | grep -E "^backup_job_" | tr " " "\n" > ${backup_instance_vars}
+
+        while read -r backup_instance_var ; do
+            unset "$(echo "${backup_instance_var}" | cut -d = -f 1)"
+        done < "${backup_instance_vars}"
+
+        set -o posix ; set | grep -E "^BACKUP_" | tr " " "\n" > ${backup_instance_vars}
+        while read -r backup_instance_var ; do
+            backup_instance_var_split=BACKUP01_$(echo "${backup_instance_var}" | cut -d = -f 1 | sed 's|BACKUP_||g')"
+            if [ -z "${backup_instance_var_split}" ; then
+            export BACKUP01_$(echo "${backup_instance_var}" | cut -d = -f 1 | sed 's|BACKUP_||g')=$(echo "${backup_instance_var}" | cut -d = -f 2)
+            unset "$(echo "${backup_instance_var}" | cut -d = -f 1)"
+        done < "${backup_instance_vars}"
+
+        backup_instance_number=${1}
+        set -o posix ; set | grep -E "^BACKUP${backup_instance_number}_|^DEFAULT_" | tr " " "\n" > ${backup_instance_vars}
+
+        transform_instance_variable() {
+            if grep -q "^BACKUP${1}_${2}=" ${backup_instance_vars} && [ $(grep "^BACKUP${1}_${2}=" ${backup_instance_vars} | cut -d = -f2) != "skip" ]; then
+                export $3=$(grep "^BACKUP${1}_${2}=" ${backup_instance_vars} | cut -d = -f2)
+            elif grep -q "^DEFAULT_BACKUP_${2}=" ${backup_instance_vars} && [ "$(grep "^DEFAULT_BACKUP_${2}=" ${backup_instance_vars} | cut -d = -f2)" != "skip" ]; then
+                export $3=$(grep "^DEFAULT_BACKUP_${2}=" ${backup_instance_vars} | cut -d = -f2)
+            fi
+        }
+
+        transform_instance_variable ${backup_instance_number} ARGS backup_job_backup_args
+        transform_instance_variable ${backup_instance_number} CLEANUP_ARGS backup_job_cleanup_args
+        transform_instance_variable ${backup_instance_number} CLEANUP_DRY_RUN backup_job_cleanup_dryrun
+        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_LAST backup_job_retain_last
+        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_HOURLY backup_job_retain_hourly
+        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_DAILY backup_job_retain_daily
+        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_WEEKLY backup_job_retain_weekly
+        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_MONTHLY backup_job_retain_monthly
+        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_YEARLY backup_job_retain_yearly
+        transform_instance_variable ${backup_instance_number} CLEANUP_VERBOSE_LEVEL backup_job_cleanup_verbose_level
+        transform_instance_variable ${backup_instance_number} DRY_RUN backup_job_dryrun
+        transform_instance_variable ${backup_instance_number} ENABLE_CLEANUP backup_job_enable_cleanup
+        transform_instance_variable ${backup_instance_number} EXCLUDE backup_job_exclude
+        transform_instance_variable ${backup_instance_number} EXCLUDE_FILE backup_job_exclude_file
+        transform_instance_variable ${backup_instance_number} NAME backup_job_backup_name
+        transform_instance_variable ${backup_instance_number} PATH backup_job_backup_path
+        transform_instance_variable ${backup_instance_number} PATH_FILE backup_job_backup_path_file
+        transform_instance_variable ${backup_instance_number} VERBOSE_LEVEL backup_job_verbose_level
+        rm -rf "${backup_instance_vars}"
+    }
+
+    case "${1}" in
+        backup_init ) backup_init $2 ;;
+    esac
+}
+
+create_backup_schedulers() {
+    local backup_instances=$(printenv | sort | grep -c '^BACKUP.*_PATH')
+    for (( instance = 01; instance <= backup_instances; instance++ )) ; do
+        instance=$(printf "%02d" $instance)
+        BACKUP_BEGIN=BACKUP${instance}_BEGIN
+        BACKUP_INTERVAL=BACKUP${instance}_INVERVAL
+
+        cp -R /assets/restic/template-restic-backup /etc/services.available/restic-backup${instance}
+        sed -i "s|{{BACKUP_NUMBER}}|${instance}|g" /etc/services.available/restic-backup${instance}/run
+
+        cat <<EOF >> /usr/bin/backup${instance}-now
+#!/bin/bash
+source /assets/functions/00-container
+PROCESS_NAME=backup_${instance}
+print_info "Starting Manual Backup for BACKUP${instance}"
+/var/run/s6/legacy-services/restic-backup${instance}/run now
+
+EOF
+        chmod +x /usr/bin/backup${instance}-now
+        if [ "${instance}" = "01" ] ; then
+            touch /usr/bin/backup-now
+            chmod +x /usr/bin/backup-now
+            cat <<EOF > /usr/bin/backup-now
+#!/bin/bash
+
+/usr/bin/backup${instance}-now
+
+EOF
+        else
+            echo "/usr/bin/backup${instance}-now" >> /usr/bin/backup-now
+        fi
+    done
+}
+
+repository() {
+    backup() {
+        check_process restic ${BACKUP_CONCURRENCY} backup
+        backup_process_start_time=$(date +%s)
+        backup_file_log=
+        backup_file_log+=$(cat <<EOF
+# Job Started:                          $(date -d @${backup_routines_start_time} +"%Y%m%d_%H%M%S") (${backup_routines_start_time})
+# Repository:                           ${REPOSITORY_PATH}
+# Hostname:                             $(hostname)
+# Container Name:                       $(echo ${CONTAINER_NAME})
+
+## Task:                                Backup (${backup_instance_number})
+
+EOF
+                        )
+        if [ -n "${backup_job_backup_name}" ] ; then backup_file_log+="## Backup Name:                         ${backup_job_backup_name}" ; fi
+        if [ -n "${backup_job_backup_path}" ] ; then backup_file_log+="## Backup Path:                         ${backup_job_backup_path}" ; fi
+        if [ -n "${backup_job_backup_path_file}" ] ; then backup_file_log+="## Backup Path File:                    ${backup_job_backup_file}" ; fi
+
+        backup_file_log+="
+## Backup procedure started:            $(date -d @${backup_process_start_time} +"%Y-%m-%d %H:%M:%S") (${backup_process_start_time})
+"
+        backup_process_delay_time=$(echo $((backup_process_start_time-backup_routines_start_time)))
+        if [ "${backup_process_delay_time}" -ge 5 ] ; then
+            backup_file_log+="## Delay in starting:                   $(echo ${backup_process_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_delay_time})"
+        fi
+
+        if [ -n "${backup_job_exclude}" ] ; then
+            backup_job_excludes=$(echo "${backup_job_exclude}" | tr "," "\n")
+            for exclude in ${backup_job_excludes} ; do
+                backup_args+="--exclude ${exclude} "
+            done
+            backup_file_log+="## Backup Exclude:                     ${backup_job_exclude}"
+        fi
+
+        if [ -n "${backup_job_exclude_file}" ] ; then
+            if [ -f "${backup_job_exclude_file}" ]; then
+                backup_args+="--exclude_file ${BACKUP_EXCLUDE_FILE} "
+                backup_file_log+="## Backup Exclude File:                ${BACKUP_EXCLUDE_FILE}"
+            else
+                print_error "Cannot find EXCLUDE_FILE '${backup_job_exclude_file}'"
+                backup_file_log+="## Backup Exclude File:                ERROR: Set but missing: ${BACKUP_EXCLUDE_FILE}"
+
+            fi
+        fi
+
+        if var_true "${backup_job_dryrun}" ; then
+            print_notice "DRY_RUN enabled - No backups will actually be written!"
+            backup_args+="--dry-run"
+            backup_file_log+="## Dry Run enabled - No backups were actually performed"
+        fi
+
+        if [ -n "${backup_job_backup_args}" ] ; then
+            backup_args+="${backup_job_backup_args}"
+            backup_file_log+="## Additional Arguments:                ${backup_job_backup_args}"
+        fi
+
+        if [ -n "${backup_job_backup_path_file}" ] ; then
+            backup_args+="-files-from ${backup_job_backup_path_file} "
+        fi
+
+
+        if [ -n "${backup_job_verbose_level}" ] ; then
+            case "${backup_job_verbose_level,,}" in
+                0 | normal | standard )
+                    backup_job_verbose_level=0
+                ;;
+                1 | verbose )
+                    backup_job_verbose_level=1
+                ;;
+                2 | verboseverbose | loud )
+                    backup_job_verbose_level=2
+                ;;
+            esac
+            backup_args+="--verbose=${backup_job_verbose_level} ${exclude} "
+            backup_file_log+="## Verbosity Level:                     ${backup_job_verbose_level}"
+        fi
+
+        if [ -n "${backup_job_backup_name}" ] ; then
+            backup_args+="--tag ${backup_job_backup_name} "
+            backup_job_log_suffix=${backup_job_backup_name}
+        else
+            backup_job_log_suffix=${backup_instance_number}
+        fi
+
+        if [ -n "${backup_job_backup_path}" ] ; then
+            backup_args+="${backup_job_backup_path} "
+        fi
+
+        #if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
+            command_string="restic --repo ${REPOSITORY_PATH} backup --host ${CONTAINER_NAME} --tag auto ${backup_args} ${backup_job_backup_path}"
+            print_debug "Command execution string: '${command_string}'"
+            backup_file_log+="## Debug Command String:               ${command_string}"
+        #fi
+
+        print_info "Starting Restic ${backup_job_log_suffix}"
+        restic \
+                --repo "${REPOSITORY_PATH}" \
+                backup \
+                    --host "${CONTAINER_NAME}" ${backup_args} \
+                    --tag auto \
+                2> /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.error \
+                > /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log
+
+        exitcode_backup=$?
+        backup_process_finish_time=$(date +%s)
+        backup_process_total_time=$(echo $((backup_process_start_time-backup_routines_finish_time)))
+        case "${exitcode_backup}" in
+            0 )
+                print_info "Backup Successful"
+                exitcode_backup_description="OK"
+            ;;
+            1 )
+                exitcode_backup_description="FAIL"
+                backup_error_log=true
+                if grep -q "^Fatal: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
+                    backup_fatal_error="- Fatal errors detected"
+                fi
+                print_error "Backup Failed completely ${backup_fatal_error}"
+                backup_error_log=true
+            ;;
+            3 )
+                exitcode_backup_description="ERROR"
+                if grep -q "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
+                    backup_error_count=$(grep "^error: .*" /tmp/"${backup_number}"-"${backup_routines_start_time}".error | wc -l)
+                fi
+                backup_error_description="#### Error Count: ${backup_error_count}"
+                print_error "Backup completed with ${backup_error_count} errors detected"
+                backup_error_log=true
+            ;;
+            130 )
+                print_error "Backup Failed due to user cancellation"
+                exitcode_backup_description="CANCELLED"
+                backup_error_log=true
+            ;;
+            * )
+                print_error "Backup Failed with exit code ${exitcode_backup}"
+                exitcode_backup_description="UNKNOWN"
+                backup_error_log=true
+            ;;
+        esac
+
+        backup_file_log+="$(cat <<EOF
+## Backup procedure finished:           $(date -d @${backup_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${backup_process_finish_time})
+## Backup procedure total time:         $(echo ${backup_routines_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
+## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
+
+### Backup Details
+$(cat /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log | sed "/^unchanged/d" )
+
+EOF
+                        )"
+
+        if var_true "${backup_error_log}" ; then
+            backup_file_log+="$(cat <<EOF
+
+#### Error Log
+${backup_error_description}
+${backup_error_description}
+
+$(cat /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.error)
+
+EOF
+                                )"
+        fi
+
+        cat << EOF > "${LOG_PATH}"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-${backup_job_log_suffix}.log
+${backup_file_log}
+
+EOF
+
+        backup_summary_files=$(grep "^Files:" /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log | xargs | sed "s|Files:||g")
+        print_debug "[summary] Backup Summary Files: ${backup_summary_files}"
+        backup_summary_files_new=$(echo "${backup_summary_files}" | awk '{print $1}')
+        print_debug "[summary] Files new: ${backup_summary_files_new}"
+        backup_summary_files_changed=$(echo "${backup_summary_files}" | awk '{print $3}')
+        print_debug "[summary] Files changed: ${backup_summary_files_changed}"
+        backup_summary_files_unmodified=$(echo "${backup_summary_files}" | awk '{print $5}')
+        print_debug "[summary] Files unmodified: ${backup_summary_files_unmodified}"
+        backup_summary_directory=$(grep "^Dirs:" /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log | xargs | sed "s|Dirs:||g")
+        print_debug "[summary] Backup_summary_directory: ${backup_summary_directory}"
+        backup_summary_directory_new=$(echo "${backup_summary_directory}" | awk '{print $1}')
+        print_debug "[summary] Directory new: ${backup_summary_directory_new}"
+        backup_summary_directory_changed=$(echo "${backup_summary_directory}" | awk '{print $3}')
+        print_debug "[summary] Directory changed: ${backup_summary_directory_changed}"
+        backup_summary_directory_unmodified=$(echo "${backup_summary_directory}" | awk '{print $5}')
+        print_debug "[summary] Directory unmodified: ${backup_summary_directory_unmodified}"
+        backup_summary_added=$(grep "^Added to the repository:" /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log | xargs | sed "s|Added to the repository:||g" | tr "," "\n")
+        print_debug "[summary] Backup_summary added: ${backup_summary_added}"
+        backup_summary_added_size_bytes=$(echo "${backup_summary_added}" | awk '{print$1 $2}')
+        if [ "${backup_summary_added_size_bytes}" = "0B" ] ; then
+            backup_summary_added_size_bytes=0
+        else
+            backup_summary_added_size_bytes=$(echo "${backup_summary_added}" | awk '{print$1 $2}' | numfmt --from=iec-i --to=none --suffix=B 2>/dev/null| sed "s|B$||g")
+        fi
+        print_debug "[summary] added size bytes: ${backup_summary_added_size_bytes}"
+        backup_summary_added_size_stored_bytes=$(echo "${backup_summary_added}" | awk '{print$3 $4}' | sed -e "s|(||g" -e "s|)||g" )
+        if [ "${backup_summary_added_size_stored_bytes}" = "0B" ] ; then
+            backup_summary_added_size_stored_bytes=0
+        else
+            backup_summary_added_size_stored_bytes=$(echo "${backup_summary_added}" | awk '{print$3 $4}' | sed -e "s|(||g" -e "s|)||g" | numfmt --from=iec-i --to=none --suffix=B 2>/dev/null| sed "s|B$||g")
+        fi
+        print_debug "[summary] Added size stored bytes: ${backup_summary_added_size_stored_bytes}"
+        backup_summary_processed=$(grep "^processed" /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log | sed "s|processed||g" )
+        print_debug "[summary] Backup_summary processed: ${backup_summary_processed}"
+        backup_summary_proccessed_files=$(echo "${backup_summary_processed}" | awk '{print $1}')
+        print_debug "[summary] Processed files: ${backup_summary_proccessed_files}"
+        backup_summary_processed_size_bytes=$(echo "${backup_summary_processed}" | awk '{print $3 $4}')
+        if [ "${backup_summary_processed_size_bytes}" = "0B" ] ; then
+            backup_summary_processed_size_bytes=0
+        else
+            backup_summary_processed_size_bytes=$(echo "${backup_summary_processed}" | awk '{print $3 $4}' | numfmt --from=iec-i --to=none --suffix=B 2>/dev/null | sed "s|B$||g")
+        fi
+        print_debug "[summary] Processed size bytes: ${backup_summary_processed_size_bytes}"
+        rm -rf /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.*
+
+        ## TODO Zabbix Monitoring
+
+        #for backup_var in $backup_vars ; do
+        #    print_debug "Unsetting '$(echo "${backup_var}" | cut -d = -f 1 | sed "s|$1_|_|g")' variable"
+        #    unset "$(echo "${backup_var}" | cut -d = -f 1 | sed "s|$1_|_|g")"
+        #done
+
+        repository cleanup
+    }
+
+    check () {
+        if [ -z "${check_routines_start_time}" ] ; then check_routines_start_time=$(date +%s) ; fi
+        check_file_log=$(cat <<EOF
+## Job Started:                         $(date -d @${check_routines_start_time} +"%Y%m%d_%H%M%S") (${check_routines_start_time})
+## Repository:                          ${REPOSITORY_PATH}
+## Hostname:                            $(hostname)
+## Container Name:                      $(echo ${CONTAINER_NAME})
+
+## Task:                                Check
+EOF
+                        )
+
+        check_process restic 1 check
+        check_process_start_time=$(date +%s)
+        check_file_log+="
+## Check procedure started:             $(date -d @${check_process_start_time} +"%Y-%m-%d %H:%M:%S") (${check_process_start_time})"
+        check_process_delay_time=$(echo $((check_process_start_time-check_routines_start_time)))
+        if [ "${check_process_delay_time}" -ge 5 ] ; then
+            check_file_log+="## Delay in starting:                   $(echo ${check_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})"
+        fi
+
+        check_process restic 1 check
+        restic \
+                -r "${REPOSITORY_PATH}" \
+                check ${CHECK_ARGS} \
+                2> /tmp/check-${check_routines_start_time}.error \
+                > /tmp/check-${check_routines_start_time}.log
+
+        exitcode_check=$?
+
+        check_process_finish_time=$(date +%s)
+        check_process_total_time=$(echo $((check_process_finish_time-check_process_start_time)))
+        case "${exitcode_check}" in
+            0 )
+                print_info "[check] Check Successful"
+                exitcode_check_description="OK"
+            ;;
+            1 )
+                print_error "[check] Check Failed completely"
+                exitcode_check_description="FAIL"
+            ;;
+            3 )
+                print_error "[check] Check completed with errors"
+                exitcode_check_description="ERROR"
+            ;;
+            * )
+                print_error "[check] Check Failed with exit_code ${exitcode_check}"
+                exitcode_check_description="UNKNOWN"
+            ;;
+        esac
+
+        check_file_log+="$(cat <<EOF
+
+## Check procedure finished:            $(date -d @${check_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${check_process_finish_time})
+## Check procedure total time:          $(echo ${check_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_total_time})
+## Check procedure completion:          ${exitcode_check_description} (${exitcode_check})
+
+### Check Details
+$(cat /tmp/check-${check_routines_start_time}.log)
+
+
+EOF
+                        )"
+
+        if grep -q "^error: .*" /tmp/check-"${check_routines_start_time}".error ; then
+            check_error_count=$(grep "^error: .*" /tmp/check-"${check_routines_start_time}".error | wc -l)
+            check_contains_errors
+            print_error "[check] ${check_error_count} errors detected"
+            check_file_log+="$(cat <<EOF
+### Error Log
+## Errors: ${check_error_count}
+
+$(cat /tmp/check-${check_routines_start_time}.error)
+
+
+EOF
+                            )"
+        fi
+
+        cat << EOF > "${LOG_PATH}"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check.log
+${check_file_log}
+
+EOF
+    }
+
+    cleanup() {
+        if [ "${exitcode_backup}" = "0" ] && var_true "${backup_job_enable_cleanup}" ; then
+            cleanup_file_log=""
+            cleanup_file_log+="## Task:                               Cleanup (${backup_instance_number})"
+            check_process restic ${BACKUP_CONCURRENCY} cleanup
+            cleanup_process_start_time=$(date +%s)
+            cleanup_file_log+="## Cleanup procedure started:          $(date -d @${cleanup_process_start_time} +"%Y-%m-%d %H:%M:%S") (${cleanup_process_start_time})"
+            cleanup_process_delay_time=$(echo $((cleanup_process_start_time-backup_process_finish_time)))
+            if [ "${cleanup_process_delay_time}" -ge "5" ] ; then
+                cleanup_file_log+="## Delay in starting:                   $(echo ${cleanup_process_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})"
+            fi
+
+            unset cleanup_log_keep_policy
+            if [ -n "${backup_job_retain_last}" ] ; then
+                cleanup_keep_arg+="--keep-last ${backup_job_retain_last} "
+                cleanup_log_keep_policy="${backup_job_retain_last} last "
+            fi
+            if [ -n "${backup_job_retain_hourly}" ] ; then
+                cleanup_keep_arg+="--keep-hourly ${backup_job_retain_hourly} "
+                cleanup_log_keep_policy+="${backup_job_retain_hourly} hourly "
+            fi
+            if [ -n "${backup_job_retain_daily}" ] ; then
+                cleanup_keep_arg+="--keep-daily ${backup_job_retain_daily} "
+                cleanup_log_keep_policy+="${backup_job_retain_daily} daily "
+            fi
+            if [ -n "${backup_job_retain_weekly}" ] ; then
+                cleanup_keep_arg+="--keep-weekly ${backup_job_retain_weekly} "
+                cleanup_log_keep_policy+="${backup_job_retain_weekly} weekly "
+            fi
+            if [ -n "${backup_job_retain_monthly}" ] ; then
+                cleanup_keep_arg+="--keep-monthly ${backup_job_retain_monthly} "
+                cleanup_log_keep_policy+="${backup_job_retain_monthly} monthly "
+            fi
+            if [ -n "${backup_job_retain_yearly}" ] ; then
+                cleanup_keep_arg+="--keep-yearly ${backup_job_retain_yearly} "
+                cleanup_log_keep_policy+="${backup_job_retain_yearly} yearly"
+            fi
+
+            if [ -n "${cleanup_keep_arg}" ] ; then
+                print_notice "[cleanup_policy] Retaining ${cleanup_log_keep_policy} backups"
+                cleanup_file_log+="## Cleanup Policy:                     ${cleanup_log_keep_policy}"
+                cleanup_args+=${cleanup_keep_arg}
+            fi
+
+            if var_true "${backup_job_dryrun}" || var_true ${backup_job_cleanup_dryrun}; then
+                print_notice "DRY_RUN enabled - No cleanup will actually be performed!"
+                cleanup_args+="--dry-run"
+                cleanup_file_log+="## Dry Run enabled - No cleanup was actually performed"
+            fi
+
+            if [ -n "${backup_job_cleanup_args}" ] ; then
+                cleanup_args+="${backup_job_cleanup_args} "
+                cleanup_file_log+="## Additional Arguments:                ${backup_job_cleanup_args}"
+            fi
+
+            if [ -n "${backup_job_backup_path_file}" ] ; then
+                while read -r backup_file_path ; do
+                    cleanup_args+="--path ${backup_file_path} "
+                done < "${backup_job_backup_path_file}"
+            fi
+
+            if [ -n "${backup_job_backup_path}" ] ; then
+                cleanup_args+="--path ${backup_job_backup_path} "
+            fi
+
+            if [ -n "${backup_job_cleanup_verbose_level}" ] ; then
+                case "${backup_job_cleanup_verbose_level,,}" in
+                    0 | normal | standard )
+                        backup_job_cleanup_verbose_level=0
+                    ;;
+                    1 | verbose )
+                        backup_job_cleanup_verbose_level=1
+                    ;;
+                    2 | verboseverbose | loud )
+                        backup_job_cleanup_verbose_level=2
+                    ;;
+                esac
+                cleanup_args+="--verbose=${backup_job_cleanup_verbose_level} "
+                cleanup_file_log+="## Verbosity Level:                     ${backup_job_verbose_level}"
+            fi
+
+            #if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
+                cleanup_command_string="restic --repo ${REPOSITORY_PATH} forget --host ${CONTAINER_NAME} --group-by '' ${cleanup_args}"
+                print_debug "Command execution string: '${cleanup_command_string}'"
+                cleanup_file_log+="## Debug Command String:               ${cleanup_command_string}"
+            #fi
+
+            restic \
+                    -r "${REPOSITORY_PATH}" \
+                    forget \
+                            --host ${CONTAINER_NAME} \
+                            --group-by '' ${cleanup_args} \
+                            2> /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error \
+                            > /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.log
+
+            exitcode_cleanup=$?
+
+            cleanup_process_finish_time=$(date +%s)
+            cleanup_process_total_time=$(echo $((cleanup_process_start_time-cleanup_routines_finish_time)))
+
+            case "${exitcode_cleanup}" in
+                0 )
+                    print_info "[cleanup] Cleanup successful"
+                ;;
+                1 )
+                    print_error "[cleanup] Cleanup failed completely"
+                    exitcode_cleanup_description="FAIL"
+                ;;
+                3 )
+                    print_error "[cleanup] Cleanup completed with errors"
+                    exitcode_cleanup_description="ERROR"
+                ;;
+                130 )
+                    print_error "[cleanup] Cleanup failed due to user cancellation"
+                    exitcode_cleanup_description="CANCELLED"
+                ;;
+                * )
+                    print_error "[cleanup] Cleanup Failed with exit_code ${exitcode_cleanup}"
+                    exitcode_cleanup_description="UNKNOWN"
+                ;;
+            esac
+
+            cleanup_file_log+="$(cat <<EOF
+## Cleanup procedure finished:         $(date -d @${cleanup_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${cleanup_process_finish_time})
+## Cleanup procedure total time:       $(echo ${cleanup_routines_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${cleanup_process_total_time})
+## Cleanup procedure completion:       ${exitcode_cleanup_description} (${exitcode_cleanup})
+
+### Cleanup Details
+$(cat /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.log)
+
+EOF
+                            )"
+
+            if grep -q "^error: .*" /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error ; then
+                cleanup_error_count=$(grep "^error: .*" /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error | wc -l)
+                print_error "[Cleanup] ${cleanup_error_count} errors detected"
+                foget_file_log+="$(cat <<EOF
+### Error Log
+## Errors: ${cleanup_error_count}
+
+$(cat /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error)
+
+EOF
+                                )"
+            fi
+        rm -rf /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.*
+        cat << EOF >> "${LOG_PATH}"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-${backup_job_log_suffix}.log
+${cleanup_file_log}
+EOF
+        fi
+    }
+
+    init() {
+        if [ -n "${RESTIC_PASSWORD}" ] && [ -z "${REPOSITORY_PASS}" ] ; then export REPOSITORY_PASS="${RESTIC_PASSWORD}" ; fi
+        sanity_var REPOSITORY_PASS "password to initialize repository"
+        export RESTIC_PASSWORD=${REPOSITORY_PASS}
+
+        silent restic \
+                -r "${REPOSITORY_PATH}" \
+                snapshots \
+                    --host "${CONTAINER_NAME}" \
+                    --quiet ${INIT_ARGS}
+        init_status=$?
+        print_debug "[check_repository] Initialization exit code ${init_status}"
+
+        if [ "${init_status}" != "0" ]; then
+            print_debug "[check_repository] No repository found"
+            print_notice "[check_repository] Initializing Repository"
+            silent restic \
+                    -r "${REPOSITORY_PATH}" \
+                    init ${INIT_ARGS}
+            init_status=$?
+            if [ $init_status != 0 ]; then
+                print_error "Failed to init the repository: '${REPOSITORY_PATH}'"
+                exit 1
+            fi
+        fi
+    }
+
+    prune () {
+        if [ -z "${prune_routines_start_time}" ] ; then prune_routines_start_time=$(date +%s) ; fi
+        prune_file_log=$(cat <<EOF
+## Job Started:                         $(date -d @${prune_routines_start_time} +"%Y%m%d_%H%M%S") (${prune_routines_start_time})
+## Repository:                          ${REPOSITORY_PATH}
+## Hostname:                            $(hostname)
+## Container Name:                      $(echo ${CONTAINER_NAME})
+
+## Task:                                Check
+EOF
+                        )
+
+        check_process restic 1 check
+        prune_process_start_time=$(date +%s)
+        prune_file_log+="
+## Check procedure started:             $(date -d @${prune_process_start_time} +"%Y-%m-%d %H:%M:%S") (${prune_process_start_time})"
+        prune_process_delay_time=$(echo $((prune_process_start_time-prune_routines_start_time)))
+        if [ "${prune_process_delay_time}" -ge 5 ] ; then
+            prune_file_log+="## Delay in starting:                   $(echo ${prune_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${prune_process_delay_time})"
+        fi
+
+        prune_process restic 1 prune
+        restic \
+                -r "${REPOSITORY_PATH}" \
+                prune ${PRUNE_ARGS} \
+                2> /tmp/prune-${prune_routines_start_time}.error \
+                > /tmp/prune-${prune_routines_start_time}.log
+
+        exitcode_check=$?
+
+        prune_process_finish_time=$(date +%s)
+        prune_process_total_time=$(echo $((prune_process_finish_time-prune_process_start_time)))
+        case "${exitcode_prune}" in
+            0 )
+                print_info "[check] Check Successful"
+                exitcode_prune_description="OK"
+            ;;
+            1 )
+                print_error "[check] Check Failed completely"
+                exitcode_prune_description="FAIL"
+            ;;
+            3 )
+                print_error "[check] Check completed with errors"
+                exitcode_prune_description="ERROR"
+            ;;
+            * )
+                print_error "[check] Check Failed with exit_code ${exitcode_prune}"
+                exitcode_prune_description="UNKNOWN"
+            ;;
+        esac
+
+        prune_file_log+="$(cat <<EOF
+
+## Prune procedure finished:            $(date -d @${prune_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${prune_process_finish_time})
+## Prune procedure total time:          $(echo ${prune_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${prune_process_total_time})
+## Prune procedure completion:          ${exitcode_prune_description} (${exitcode_prune})
+
+### Check Details
+$(cat /tmp/check-${prune_routines_start_time}.log)
+
+
+EOF
+                        )"
+
+        if grep -q "^error: .*" /tmp/prune-"${prune_routines_start_time}".error ; then
+            prune_error_count=$(grep "^error: .*" /tmp/prune-"${prune_routines_start_time}".error | wc -l)
+            prune_contains_errors
+            print_error "${prune_error_count} errors detected"
+            prune_file_log+="$(cat <<EOF
+### Error Log
+## Errors: ${prune_error_count}
+
+$(cat /tmp/prune-${prune_routines_start_time}.error)
+
+
+EOF
+                            )"
+        fi
+
+        cat << EOF > "${LOG_PATH}"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune.log
+${prune_file_log}
+
+EOF
+    }
+
+    case "${1}" in
+        backup ) backup $2 ;;
+        check ) check ;;
+        cleanup ) cleanup $2 ;;
+        init ) init ;;
+        prune ) prune ;;
+    esac
+}
+
+
+check_process() {
+    process="${1}"
+    limiter="${2}"
+
+    while true ; do
+        counter=0
+        process_amount=$(pidof ${process} | wc -w)
+        if [ "${process_amount}" -ge "${limiter}" ] ; then
+            if [[ "${counter}" =~ 0|45|90|135|180|225|315|360|405|450|495|540|585|630|675|720|765|810|855|900|945|990 ]] ; then
+                if [ "${counter}" != 0 ] ; then counter_verbose=" (${counter} seconds so far)" ; fi
+                case "${3}" in
+                    backup )
+                        print_notice "Restic process concurrency liimt reached. Waiting for other tasks to finish before backing up ${counter_verbose}"
+                    ;;
+                    check )
+                        print_notice "Restic is running, waiting for tasks to complete before running a repository check ${counter_verbose}"
+                    ;;
+                    cleanup )
+                        print_notice "Restic is running, waiting for tasks to complete before running a 'forget' task ${counter_verbose}"
+                    ;;
+                    prune )
+                        print_notice "Restic is running, waiting for tasks to complete before running a 'prune' task ${counter_verbose}"
+                    ;;
+                esac
+            fi
+            sleep 5
+        else
+            break
+        fi
+    done
+}
+
+pre_backup() {
+    :
+}
+
+post_backup() {
+    :
+}
+
+parse_log() {
+    :
+#
+### prune
+
+# reading repository password from stdin
+# loading indexes...
+# loading all snapshots...
+# finding data that is still in use for 5 snapshots
+# [0:00] 100.00%  5 / 5 snapshots
+#
+# searching used packs...
+# collecting packs for deletion and repacking
+#
+# to repack:             0 blobs / 0 B
+# this removes:          0 blobs / 0 B
+# to delete:             0 blobs / 0 B
+# total prune:           0 blobs / 0 B
+# remaining:         58709 blobs / 199.963 MiB
+# unused size after prune: 0 B (0.00% of remaining size)
+#
+# done
+}
+
+pre_backup() {
+    :
+}
+
+post_backup() {
+    :
+}
+
+setup_container_mode() {
+    if [ -f "/tmp/.container/restic_mode/.mode-env" ]; then
+        print_debug "Importing MODE environment generated variables"
+        source /tmp/.container/restic_mode/.mode-env
+    else
+        mkdir -p /tmp/.container/restic_mode/
+        if [ "${MODE,,}" = "all" ] ; then
+            print_debug "Container Mode: ALL"
+            print_debug "Creating MODE environment generated variables"
+            echo "ENABLE_BACKUP=TRUE" >> /tmp/.container/restic_mode/.mode-env
+            echo "ENABLE_CHECK=TRUE" >> /tmp/.container/restic_mode/.mode-env
+            echo "ENABLE_PRUNE=TRUE" >> /tmp/.container/restic_mode/.mode-env
+        else
+            modes=$(echo "${MODE}" | tr "," "\n")
+            for mode in $modes ; do
+                case "${mode,,}" in
+                    "backup" )
+                        print_debug "Enabling Container Mode for: BACKUP"
+                        echo "ENABLE_BACKUP=TRUE" >> /tmp/.container/restic_mode/.mode-env
+                    ;;
+                    "check" )
+                        print_debug "Enabling Container Mode for: CHECK"
+                        echo "ENABLE_CHECK=TRUE" >> /tmp/.container/restic_mode/.mode-env
+                    ;;
+                    "prune" )
+                        print_debug "Enabling Container Mode for: PRUNE"
+                        echo "ENABLE_PRUNE=TRUE" >> /tmp/.container/restic_mode/.mode-env
+                    ;;
+                    "standalone" | "manual" )
+                        print_debug "Enabling Container Mode for: STANDALONE"
+                        echo "ENABLE_STANDALONE=TRUE" >> /tmp/.container/restic_mode/.mode-env
+                    ;;
+                    *)
+                        print_error "Unknown 'MODE' environment variable - exitting.."
+                        exit 1
+                    ;;
+                esac
+            done
+        fi
+        source /tmp/.container/restic_mode/.mode-env
+    fi
+}
+

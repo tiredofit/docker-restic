@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/var/run/s6/legacy-services/restic-check/run now
