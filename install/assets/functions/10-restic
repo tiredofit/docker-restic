@@ -52,10 +52,11 @@ bootstrap_variables() {
 
         set -o posix ; set | grep -E "^BACKUP_" | tr " " "\n" > ${backup_instance_vars}
         while read -r backup_instance_var ; do
-            backup_instance_var_split=BACKUP01_$(echo "${backup_instance_var}" | cut -d = -f 1 | sed 's|BACKUP_||g')"
-            if [ -z "${backup_instance_var_split}" ; then
-            export BACKUP01_$(echo "${backup_instance_var}" | cut -d = -f 1 | sed 's|BACKUP_||g')=$(echo "${backup_instance_var}" | cut -d = -f 2)
-            unset "$(echo "${backup_instance_var}" | cut -d = -f 1)"
+            backup_instance_var_split=BACKUP01_$(echo "${backup_instance_var}" | cut -d = -f 1 | sed 's|BACKUP_||g')
+            if [ -z "${backup_instance_var_split}" ] ; then
+                export BACKUP01_$(echo "${backup_instance_var}" | cut -d = -f 1 | sed 's|BACKUP_||g')=$(echo "${backup_instance_var}" | cut -d = -f 2)
+                unset $(echo "${backup_instance_var}" | cut -d = -f 1)
+            fi
         done < "${backup_instance_vars}"
 
         backup_instance_number=${1}

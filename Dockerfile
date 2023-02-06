@@ -5,10 +5,15 @@ FROM docker.io/tiredofit/${DISTRO}:${DISTRO_VARIANT}
 LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
 ARG RESTIC_VERSION
+ARG RESTIC_REST_SERVER_VERSION
 ARG RCLONE VERSION
 
 ENV RESTIC_VERSION=v0.15.1 \
+    RESTIC_REST_SERVER_VERSION=v0.11.0 \
     RESTIC_REPO_URL=https://github.com/restic/restic \
+    RESTIC_REST_SERVER_REPO_URL=https://github.com/restic/rest-server \
+    RCLONE_VERSION=v1.61.1 \
+    RCLONE_REPO_URL=https://github.com/rclone/rclone \
     IMAGE_NAME="tiredofit/restic" \
     IMAGE_REPO_URL="https://github.com/tiredofit/restic/"
 
@@ -30,9 +35,9 @@ RUN source assets/functions/00-container && \
                     && \
     \
     package install .restic-run-deps \
+                    apache2-utils \
                     coreutils \
                     fuse3 \
-                    rclone \
                     tar \
                     && \
     \
@@ -40,7 +45,18 @@ RUN source assets/functions/00-container && \
     \
     clone_git_repo "${RESTIC_REPO_URL}" "${RESTIC_VERSION}" && \
     go run build.go && \
+    strip restic && \
     cp -R restic /usr/sbin/ && \
+    \
+    clone_git_repo "${RESTIC_REST_SERVER_REPO_URL}" "${RESTIC_REST_SERVER_VERSION}" && \
+    go run build.go && \
+    strip rest-server && \
+    cp rest-server /usr/sbin && \
+    \
+    clone_git_repo "${RCLONE_REPO_URL}" "${RCLONE_VERSION}" && \
+    go build rclone.go && \
+    strip rclone && \
+    cp rclone /usr/sbin && \
     \
     package remove .restic-build-deps && \
     package cleanup && \
