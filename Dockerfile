@@ -6,14 +6,14 @@ LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
 ARG RESTIC_VERSION
 ARG RESTIC_REST_SERVER_VERSION
-ARG RCLONE VERSION
+ARG R_CLONE VERSION
 
 ENV RESTIC_VERSION=v0.15.1 \
-    RESTIC_REST_SERVER_VERSION=v0.11.0 \
+    RESTIC_REST_SERVER_VERSION=667ce6e26b92f960059e916df0e875dead5a44fb \
     RESTIC_REPO_URL=https://github.com/restic/restic \
     RESTIC_REST_SERVER_REPO_URL=https://github.com/restic/rest-server \
-    RCLONE_VERSION=v1.61.1 \
-    RCLONE_REPO_URL=https://github.com/rclone/rclone \
+    R_CLONE_VERSION=v1.61.1 \
+    R_CLONE_REPO_URL=https://github.com/rclone/rclone \
     IMAGE_NAME="tiredofit/restic" \
     IMAGE_REPO_URL="https://github.com/tiredofit/restic/"
 
@@ -53,7 +53,7 @@ RUN source assets/functions/00-container && \
     strip rest-server && \
     cp rest-server /usr/sbin && \
     \
-    clone_git_repo "${RCLONE_REPO_URL}" "${RCLONE_VERSION}" && \
+    clone_git_repo "${R_CLONE_REPO_URL}" "${R_CLONE_VERSION}" && \
     go build rclone.go && \
     strip rclone && \
     cp rclone /usr/sbin && \

@@ -44,6 +44,19 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
     else
         service_stop restic-prune
     fi
+
+    if var_true "${ENABLE_SERVER}" ; then
+        print_debug "Configuring Repository Server"
+        repository server
+    else
+        service_stop restic-rest-server
+    fi
+
+    if var_true "${ENABLE_RCLONE}" ; then
+        print_debug "Configuring RClone"
+    else
+        service_stop rclone
+    fi
 fi
 
 liftoff

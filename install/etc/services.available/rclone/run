@@ -1,0 +1,14 @@
+#!/command/with-contenv bash
+
+source /assets/functions/00-container
+PROCESS_NAME="rclone"
+prepare_service defaults single
+
+check_container_initialized
+check_service_initialized init
+
+liftoff
+
+print_start "Starting Rclone ${RCLONE_VERSION}"
+exec /usr/sbin/rclone \
+                        ${RCLONE_ARGS}

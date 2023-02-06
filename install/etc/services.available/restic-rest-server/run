@@ -1,0 +1,43 @@
+#!/command/with-contenv bash
+
+source /assets/functions/00-container
+PROCESS_NAME="restic-rest-server"
+source /assets/defaults/10-restic
+
+check_container_initialized
+
+if var_true "${SERVER_ENABLE_AUTHENTICATION}" ; then
+    rest_server_args+="--htpasswd-file ${SERVER_PASSWORD_FILE} "
+    rclone_args+="--htpasswd ${SERVER_PASSWORD_FILE} "
+else
+    rest_server_args+="--no-auth "
+fi
+
+if var_true "${REST_SERVER_ENABLE_METRICS}" ; then
+    rest_server_args+="--prometheus "
+    if var_true "${REST_SERVER_METRICS_ENABLE_AUTHENTICATION}" ; then
+        rest_server_args+="--prometheus-no-auth "
+    fi
+fi
+
+liftoff
+
+case "${SERVER_MODE,,}" in
+    rclone )
+    print_start "Starting RClone REST server ${R_CLONE_VERSION}"
+    exec /usr/sbin/rclone \
+                                    serve restic \
+                                    --config "${RCLONE_CONFIG_PATH}"/"${RCLONE_CONFIG_FILE}" \
+                                    ${SERVER_REPOSITORY_PATH} \
+                                    --addr "${SERVER_LISTEN_IP}":"${SERVER_LISTEN_PORT}" \
+                                    --log-file "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" \
+                                    --log-level "${SERVER_LOG_LEVEL}" ${rclone_args} ${SERVER_ARGS}
+
+    ;;
+    restic )
+        print_start "Starting Restic REST server ${RESTIC_REST_SERVER_VERSION}"
+        exec /usr/sbin/rest-server \
+                                            --listen "${SERVER_LISTEN_IP}":"${SERVER_LISTEN_PORT}" \
+                                            --log "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" ${rest_server_args} ${SERVER_ARGS}
+    ;;
+esac

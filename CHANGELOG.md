@@ -1,3 +1,10 @@
+## 0.9.0 2023-02-06 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add RESTIC rest server support
+      - Add RCLONE rest server support
+
+
 ## 0.8.0 2023-02-06 <dave at tiredofit dot ca>
 
    ### Added

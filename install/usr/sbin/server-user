@@ -1,0 +1,37 @@
+#!/command/with-contenv bash
+
+source /assets/functions/00-container
+source /assets/defaults/10-restic
+PROCESS_NAME="server-user"
+
+display_usage() {
+    print_info "REST server user creation tool"
+    cat <<EOF
+Usage:
+
+$(basename $0) create [username] [password]
+$(basename $0) delete [username]
+
+EOF
+}
+
+if [ -z "${1}" ] || [ -z "${2}" ]; then
+    display_usage
+    exit 1
+fi
+
+case "${1}" in
+    create )
+        if [ -z "${3}" ]; then
+            sudo -u restic htpasswd -B "${REST_SERVER_PASSWORD_FILE}" "${2}"
+        else
+            sudo -u restic htpasswd -B -b "${REST_SERVER_PASSWORD_FILE}" "${2}" "${3}"
+        fi
+    ;;
+    delete )
+        sudo -u restic htpasswd -D "${REST_SERVER_PASSWORD_FILE}" "${2}"
+    ;;
+    help )
+        display_usage
+    ;;
+esac

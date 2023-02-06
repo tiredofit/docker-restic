@@ -6,10 +6,16 @@ bootstrap_filesystem() {
     fi
     if [ $(stat -c %U "${CONFIG_PATH}") != "restic" ] ; then chown -R restic:restic "${CONFIG_PATH}" ; fi
 
-    if [ ! -d "${REPOSITORY_PATH}" ]; then
-        mkdir -p "${REPOSITORY_PATH}"
+    if var_true "${ENABLE_SERVER}" && [ "${SERVER_MODE}" != "rclone" ] ; then
+        if [ ! -d "${SERVER_REPOSITORY_PATH}" ]; then
+            mkdir -p "${SERVER_REPOSITORY_PATH}"
+        fi
+        if [ $(stat -c %U "${SERVER_REPOSITORY_PATH}") != "restic" ] ; then chown restic:restic "${SERVER_REPOSITORY_PATH}" ; fi
     fi
-    if [ $(stat -c %U "${REPOSITORY_PATH}") != "restic" ] ; then chown restic:restic "${REPOSITORY_PATH}" ; fi
+
+    if [ -d "${REPOSITORY_PATH}" ]; then
+        if [ $(stat -c %U "${REPOSITORY_PATH}") != "restic" ] ; then chown restic:restic "${REPOSITORY_PATH}" ; fi
+    fi
 
     if var_true "${ENABLE_HOOKS}" ; then
         if [ ! -d "${HOOKS_PATH}" ]; then
@@ -36,21 +42,25 @@ bootstrap_filesystem() {
         file )
             source /assets/defaults/05-logging
             echo "0 0 * * * find ${LOG_PATH} -name \"\$(date --date=\"yesterday\" +\"%Y%m%d\")_*.log\" -print0 | xargs -0 tar cfa ${LOG_PATH}/\$(date --date=\"yesterday\" +\"%Y%m%d\").tar.zst --remove-files  2>/dev/null ; find /logs -name '*.zst' -mtime +${LOGROTATE_REAIN_DAYS}7 -exec rm {} \;" > /assets/cron/restic_log
+            if var_true "${ENABLE_SERVER}" ; then
+                create_logrotate restic-rest-server "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" none restic restic
+            fi
         ;;
     esac
 }
 
 bootstrap_variables() {
     backup_init() {
+        backup_instance_number=${1}
         PROCESS_NAME=backup${backup_instance_number}
         backup_instance_vars=$(mktemp)
-        set -o posix ; set | grep -E "^backup_job_" | tr " " "\n" > ${backup_instance_vars}
+        set -o posix ; set | grep -E "^backup_job_" | tr " " "\n" > "${backup_instance_vars}"
 
         while read -r backup_instance_var ; do
             unset "$(echo "${backup_instance_var}" | cut -d = -f 1)"
         done < "${backup_instance_vars}"
 
-        set -o posix ; set | grep -E "^BACKUP_" | tr " " "\n" > ${backup_instance_vars}
+        set -o posix ; set | grep -E "^BACKUP_" | tr " " "\n" > "${backup_instance_vars}"
         while read -r backup_instance_var ; do
             backup_instance_var_split=BACKUP01_$(echo "${backup_instance_var}" | cut -d = -f 1 | sed 's|BACKUP_||g')
             if [ -z "${backup_instance_var_split}" ] ; then
@@ -59,35 +69,34 @@ bootstrap_variables() {
             fi
         done < "${backup_instance_vars}"
 
-        backup_instance_number=${1}
-        set -o posix ; set | grep -E "^BACKUP${backup_instance_number}_|^DEFAULT_" | tr " " "\n" > ${backup_instance_vars}
+        set -o posix ; set | grep -E "^BACKUP${backup_instance_number}_|^DEFAULT_" | tr " " "\n" > "${backup_instance_vars}"
 
         transform_instance_variable() {
-            if grep -q "^BACKUP${1}_${2}=" ${backup_instance_vars} && [ $(grep "^BACKUP${1}_${2}=" ${backup_instance_vars} | cut -d = -f2) != "skip" ]; then
+            if grep -q "^BACKUP${1}_${2}=" ${backup_instance_vars} && [ $(grep "^BACKUP${1}_${2}=" "${backup_instance_vars}" | cut -d = -f2) != "skip" ]; then
                 export $3=$(grep "^BACKUP${1}_${2}=" ${backup_instance_vars} | cut -d = -f2)
-            elif grep -q "^DEFAULT_BACKUP_${2}=" ${backup_instance_vars} && [ "$(grep "^DEFAULT_BACKUP_${2}=" ${backup_instance_vars} | cut -d = -f2)" != "skip" ]; then
+            elif grep -q "^DEFAULT_BACKUP_${2}=" ${backup_instance_vars} && [ "$(grep "^DEFAULT_BACKUP_${2}=" "${backup_instance_vars}" | cut -d = -f2)" != "skip" ]; then
                 export $3=$(grep "^DEFAULT_BACKUP_${2}=" ${backup_instance_vars} | cut -d = -f2)
             fi
         }
 
-        transform_instance_variable ${backup_instance_number} ARGS backup_job_backup_args
-        transform_instance_variable ${backup_instance_number} CLEANUP_ARGS backup_job_cleanup_args
-        transform_instance_variable ${backup_instance_number} CLEANUP_DRY_RUN backup_job_cleanup_dryrun
-        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_LAST backup_job_retain_last
-        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_HOURLY backup_job_retain_hourly
-        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_DAILY backup_job_retain_daily
-        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_WEEKLY backup_job_retain_weekly
-        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_MONTHLY backup_job_retain_monthly
-        transform_instance_variable ${backup_instance_number} CLEANUP_RETAIN_YEARLY backup_job_retain_yearly
-        transform_instance_variable ${backup_instance_number} CLEANUP_VERBOSE_LEVEL backup_job_cleanup_verbose_level
-        transform_instance_variable ${backup_instance_number} DRY_RUN backup_job_dryrun
-        transform_instance_variable ${backup_instance_number} ENABLE_CLEANUP backup_job_enable_cleanup
-        transform_instance_variable ${backup_instance_number} EXCLUDE backup_job_exclude
-        transform_instance_variable ${backup_instance_number} EXCLUDE_FILE backup_job_exclude_file
-        transform_instance_variable ${backup_instance_number} NAME backup_job_backup_name
-        transform_instance_variable ${backup_instance_number} PATH backup_job_backup_path
-        transform_instance_variable ${backup_instance_number} PATH_FILE backup_job_backup_path_file
-        transform_instance_variable ${backup_instance_number} VERBOSE_LEVEL backup_job_verbose_level
+        transform_instance_variable "${backup_instance_number}" ARGS backup_job_backup_args
+        transform_instance_variable "${backup_instance_number}" CLEANUP_ARGS backup_job_cleanup_args
+        transform_instance_variable "${backup_instance_number}" CLEANUP_DRY_RUN backup_job_cleanup_dryrun
+        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_LAST backup_job_retain_last
+        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_HOURLY backup_job_retain_hourly
+        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_DAILY backup_job_retain_daily
+        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_WEEKLY backup_job_retain_weekly
+        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_MONTHLY backup_job_retain_monthly
+        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_YEARLY backup_job_retain_yearly
+        transform_instance_variable "${backup_instance_number}" CLEANUP_VERBOSE_LEVEL backup_job_cleanup_verbose_level
+        transform_instance_variable "${backup_instance_number}" DRY_RUN backup_job_dryrun
+        transform_instance_variable "${backup_instance_number}" ENABLE_CLEANUP backup_job_enable_cleanup
+        transform_instance_variable "${backup_instance_number}" EXCLUDE backup_job_exclude
+        transform_instance_variable "${backup_instance_number}" EXCLUDE_FILE backup_job_exclude_file
+        transform_instance_variable "${backup_instance_number}" NAME backup_job_backup_name
+        transform_instance_variable "${backup_instance_number}" PATH backup_job_backup_path
+        transform_instance_variable "${backup_instance_number}" PATH_FILE backup_job_backup_path_file
+        transform_instance_variable "${backup_instance_number}" VERBOSE_LEVEL backup_job_verbose_level
         rm -rf "${backup_instance_vars}"
     }
 
@@ -100,13 +109,11 @@ create_backup_schedulers() {
     local backup_instances=$(printenv | sort | grep -c '^BACKUP.*_PATH')
     for (( instance = 01; instance <= backup_instances; instance++ )) ; do
         instance=$(printf "%02d" $instance)
-        BACKUP_BEGIN=BACKUP${instance}_BEGIN
-        BACKUP_INTERVAL=BACKUP${instance}_INVERVAL
 
-        cp -R /assets/restic/template-restic-backup /etc/services.available/restic-backup${instance}
-        sed -i "s|{{BACKUP_NUMBER}}|${instance}|g" /etc/services.available/restic-backup${instance}/run
+        cp -R /assets/restic/template-restic-backup /etc/services.available/restic-backup"${instance}"
+        sed -i "s|{{BACKUP_NUMBER}}|${instance}|g" /etc/services.available/restic-backup"${instance}"/run
 
-        cat <<EOF >> /usr/bin/backup${instance}-now
+        cat <<EOF >> /usr/bin/backup"${instance}"-now
 #!/bin/bash
 source /assets/functions/00-container
 PROCESS_NAME=backup_${instance}
@@ -114,7 +121,7 @@ print_info "Starting Manual Backup for BACKUP${instance}"
 /var/run/s6/legacy-services/restic-backup${instance}/run now
 
 EOF
-        chmod +x /usr/bin/backup${instance}-now
+        chmod +x /usr/bin/backup"${instance}"-now
         if [ "${instance}" = "01" ] ; then
             touch /usr/bin/backup-now
             chmod +x /usr/bin/backup-now
@@ -132,7 +139,7 @@ EOF
 
 repository() {
     backup() {
-        check_process restic ${BACKUP_CONCURRENCY} backup
+        check_process restic "${BACKUP_CONCURRENCY}" backup
         backup_process_start_time=$(date +%s)
         backup_file_log=
         backup_file_log+=$(cat <<EOF
@@ -154,7 +161,7 @@ EOF
 "
         backup_process_delay_time=$(echo $((backup_process_start_time-backup_routines_start_time)))
         if [ "${backup_process_delay_time}" -ge 5 ] ; then
-            backup_file_log+="## Delay in starting:                   $(echo ${backup_process_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_delay_time})"
+            backup_file_log+="## Delay in starting:                   $(echo "${backup_process_delay_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_delay_time})"
         fi
 
         if [ -n "${backup_job_exclude}" ] ; then
@@ -254,7 +261,7 @@ EOF
             3 )
                 exitcode_backup_description="ERROR"
                 if grep -q "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
-                    backup_error_count=$(grep "^error: .*" /tmp/"${backup_number}"-"${backup_routines_start_time}".error | wc -l)
+                    backup_error_count=$(grep -c "^error: .*" /tmp/"${backup_number}"-"${backup_routines_start_time}".error)
                 fi
                 backup_error_description="#### Error Count: ${backup_error_count}"
                 print_error "Backup completed with ${backup_error_count} errors detected"
@@ -362,7 +369,7 @@ EOF
 ## Job Started:                         $(date -d @${check_routines_start_time} +"%Y%m%d_%H%M%S") (${check_routines_start_time})
 ## Repository:                          ${REPOSITORY_PATH}
 ## Hostname:                            $(hostname)
-## Container Name:                      $(echo ${CONTAINER_NAME})
+## Container Name:                      $(echo "${CONTAINER_NAME}")
 
 ## Task:                                Check
 EOF
@@ -705,12 +712,24 @@ ${prune_file_log}
 EOF
     }
 
+    server() {
+        if var_true "${SERVER_ENABLE_AUTHENTICATION}" && [ ! -s "${SERVER_PASSWORD_FILE}" ] ; then
+            print_warn "[server] No Users setup in SERVER_PASSWORD_FILE - enter container and use 'server-user create' tool"
+            sudo -u restic touch "${SERVER_PASSWORD_FILE}"
+        fi
+
+        if [ ! -s "${RCLONE_CONFIG_PATH}"/"${RCLONE_CONFIG_FILE}" ] ; then
+            print_warn "[server] Detected missing Rclone configuration file '${RCLONE_CONFIG_PATH}/${RCLONE_CONFIG_FILE}'. Please configure it use the server!"
+        fi
+    }
+
     case "${1}" in
         backup ) backup $2 ;;
         check ) check ;;
         cleanup ) cleanup $2 ;;
         init ) init ;;
         prune ) prune ;;
+        server ) server ;;
     esac
 }
 
@@ -747,46 +766,6 @@ check_process() {
     done
 }
 
-pre_backup() {
-    :
-}
-
-post_backup() {
-    :
-}
-
-parse_log() {
-    :
-#
-### prune
-
-# reading repository password from stdin
-# loading indexes...
-# loading all snapshots...
-# finding data that is still in use for 5 snapshots
-# [0:00] 100.00%  5 / 5 snapshots
-#
-# searching used packs...
-# collecting packs for deletion and repacking
-#
-# to repack:             0 blobs / 0 B
-# this removes:          0 blobs / 0 B
-# to delete:             0 blobs / 0 B
-# total prune:           0 blobs / 0 B
-# remaining:         58709 blobs / 199.963 MiB
-# unused size after prune: 0 B (0.00% of remaining size)
-#
-# done
-}
-
-pre_backup() {
-    :
-}
-
-post_backup() {
-    :
-}
-
 setup_container_mode() {
     if [ -f "/tmp/.container/restic_mode/.mode-env" ]; then
         print_debug "Importing MODE environment generated variables"
@@ -814,6 +793,10 @@ setup_container_mode() {
                     "prune" )
                         print_debug "Enabling Container Mode for: PRUNE"
                         echo "ENABLE_PRUNE=TRUE" >> /tmp/.container/restic_mode/.mode-env
+                    ;;
+                    "server" )
+                        print_debug "Enabling Container Mode for: SERVER"
+                        echo "ENABLE_SERVER=TRUE" >> /tmp/.container/restic_mode/.mode-env
                     ;;
                     "standalone" | "manual" )
                         print_debug "Enabling Container Mode for: STANDALONE"
