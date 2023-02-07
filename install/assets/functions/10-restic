@@ -96,6 +96,7 @@ bootstrap_variables() {
         transform_instance_variable "${backup_instance_number}" NAME backup_job_backup_name
         transform_instance_variable "${backup_instance_number}" PATH backup_job_backup_path
         transform_instance_variable "${backup_instance_number}" PATH_FILE backup_job_backup_path_file
+        transform_instance_variable "${backup_instance_number}" REPOSITORY_PATH backup_job_respository_path
         transform_instance_variable "${backup_instance_number}" VERBOSE_LEVEL backup_job_verbose_level
         rm -rf "${backup_instance_vars}"
     }
@@ -143,7 +144,7 @@ repository() {
         backup_process_start_time=$(date +%s)
         backup_file_log=$(cat <<EOF
 # Job Started:                          $(date -d @"${backup_routines_start_time}" +"%Y%m%d_%H%M%S") (${backup_routines_start_time})
-# Repository:                           ${REPOSITORY_PATH}
+# Repository:                           $(echo ${REPOSITORY_PATH} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 # Hostname:                             $(hostname)
 # Container Name:                       $(echo "${CONTAINER_NAME}")
 
@@ -255,14 +256,14 @@ EOF
             backup_args+="${backup_job_backup_path} "
         fi
 
-        #if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
+        if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
             command_string="restic --repo ${REPOSITORY_PATH} backup --host ${CONTAINER_NAME} --tag auto ${backup_args} ${backup_job_backup_path}"
             print_debug "Command execution string: '${command_string}'"
             backup_file_log=$(echo "${backup_file_log}" ; cat <<EOF
 ## Debug Command String:               ${command_string}"
 EOF
                             )
-        #fi
+        fi
 
         print_info "Starting Restic ${backup_job_log_suffix}"
         restic \
@@ -399,7 +400,7 @@ EOF
         if [ -z "${check_routines_start_time}" ] ; then check_routines_start_time=$(date +%s) ; fi
         check_file_log=$(cat <<EOF
 ## Job Started:                         $(date -d @${check_routines_start_time} +"%Y%m%d_%H%M%S") (${check_routines_start_time})
-## Repository:                          ${REPOSITORY_PATH}
+## Repository:                          $(echo ${REPOSITORY_PATH} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo "${CONTAINER_NAME}")
 
@@ -585,14 +586,14 @@ EOF
                                 )
             fi
 
-            #if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
+            if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
                 cleanup_command_string="restic --repo ${REPOSITORY_PATH} forget --host ${CONTAINER_NAME} --group-by '' ${cleanup_args}"
                 print_debug "Command execution string: '${cleanup_command_string}'"
                 cleanup_file_log=$(echo "${cleanup_file_log}" ; cat <<EOF
 ## Debug Command String:               ${cleanup_command_string}
 EOF
                                 )
-            #fi
+            fi
 
             print_info "Starting cleanup of old backups"
             restic \
@@ -691,7 +692,7 @@ EOF
         if [ -z "${prune_routines_start_time}" ] ; then prune_routines_start_time=$(date +%s) ; fi
         prune_file_log=$(cat <<EOF
 ## Job Started:                         $(date -d @${prune_routines_start_time} +"%Y%m%d_%H%M%S") (${prune_routines_start_time})
-## Repository:                          ${REPOSITORY_PATH}
+## Repository:                          $(echo ${REPOSITORY_PATH} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo ${CONTAINER_NAME})
 
