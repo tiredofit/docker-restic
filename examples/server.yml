@@ -1,0 +1,48 @@
+services:
+  restic-server-app:
+    image: tiredofit/restic
+    container_name: restic-server-app
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.restic-server-app.rule=Host(`resticserver.example.com`)
+      - traefik.http.services.restic-server-app.loadbalancer.server.port=8000
+    volumes:
+      - ./config:/config
+      - ./data:/repository
+      - ./logs:/logs
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
+    devices:
+        - /dev/fuse:/dev/fuse:rwm
+    environment:
+      - TIMEZONE=America/Vancouver
+      - CONTAINER_NAME=restic-server-app
+
+      - MODE=SERVER,CHECK,PRUNE
+
+      - SKIP_INIT=TRUE
+
+      - SERVER_MODE=RESTIC
+      - SERVER_REPOSITORY_PATH=/repository/
+
+      #- SERVER_MODE=RCLONE
+      #- SERVER_REPOSITORY_PATH=/repository/
+      #- SERVER_REPOSITORY_PATH=rcloneremote:/
+      - SERVER_REPOSITORY_PASS=password
+
+      - CHECK_START_TIME=0000
+      - CHECK_INTERVAL=1440
+
+      - PRUNE_START_TIME=0100
+      - PRUNE_INTERVAL=1440
+    networks:
+      - proxy
+      - services
+    restart: always
+
+networks:
+  proxy:
+    external: true
+  services:
+    external: true

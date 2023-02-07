@@ -242,7 +242,10 @@ EOF
                 ;;
             esac
             backup_args+="--verbose=${backup_job_verbose_level} ${exclude} "
-            backup_file_log+="## Verbosity Level:                     ${backup_job_verbose_level}"
+            backup_file_log=$(echo "${backup_file_log}" ; cat <<EOF
+## Verbosity Level:                     ${backup_job_verbose_level}
+EOF
+                            )
         fi
 
         if [ -n "${backup_job_backup_name}" ] ; then
@@ -642,7 +645,7 @@ $(cat /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.log)
 EOF
                             )
 
-            if grep -q "^error: .*" /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error ; then
+            if [ -s /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error ] ; then
                 cleanup_error_count=$(grep "^error: .*" /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error | wc -l)
                 print_error "[Cleanup] ${cleanup_error_count} errors detected"
                 cleanup_file_log=$(echo "${cleanup_file_log}" ; cat <<EOF
@@ -757,7 +760,7 @@ $(cat /tmp/check-${prune_routines_start_time}.log)
 EOF
                         )"
 
-        if grep -q "^error: .*" /tmp/prune-"${prune_routines_start_time}".error ; then
+        if [ -s /tmp/prune-"${prune_routines_start_time}".error ] ; then
             prune_error_count=$(grep "^error: .*" /tmp/prune-"${prune_routines_start_time}".error | wc -l)
             print_error "${prune_error_count} errors detected"
             prune_file_log="$(echo "${prune_file_log}" ; cat <<EOF
@@ -831,6 +834,35 @@ check_process() {
     done
 }
 
+post_backup() {
+        set -x
+        backup_instance_number=${1}
+        PROCESS_NAME=post_backup${backup_instance_number}
+
+        if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_TYPE,,}" = "zabbix" ]; then
+        set -x
+            source /assets/defaults/03-monitoring
+            print_notice "Sending Backup Statistics to Zabbix"
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.start.date -o "${dbbackup_date}"
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.status -o "${exit_code_backup}"
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.backup_duration -o "${backup_process_total_time}"
+
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.files.new -o "${backup_summary_files_new}"
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.files.changed -o "${backup_summary_files_changed}"
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.files.unmodified -o "${backup_summary_files_unmodified}"
+
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.dirs.new -o "${backup_summary_directory_new}"
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.dirs.changed -o "${backup_summary_directory_changed}"
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.dirs.unmodified -o "${backup_summary_directory_unmodified}"
+
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.size.bytes.added -o "${backup_summary_added_size_bytes}"
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.size.bytes.stored -o "${backup_summary_added_size_stored_bytes}"
+            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.size.bytes.processed -o "${backup_summary_processed_size_bytes}"
+        set +x
+            if [ "$?" != "0" ] ; then print_error "Error sending statistics, consider disabling with 'CONTAINER_ENABLE_MONITORING=FALSE'" ; fi
+        fi
+
+}
 setup_container_mode() {
     if [ -f "/tmp/.container/restic_mode/.mode-env" ]; then
         print_debug "Importing MODE environment generated variables"

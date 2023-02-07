@@ -1,0 +1,45 @@
+services:
+  restic-app:
+    image: tiredofit/restic
+    container_name: restic-app
+    volumes:
+      - ./config:/config
+      - ./data:/repository
+      - ./logs:/logs
+      - /:/rootfs:ro
+    privileged: true
+    cap_add:
+      - SYS_ADMIN
+    devices:
+        - /dev/fuse:/dev/fuse:rwm
+    environment:
+      - TIMEZONE=America/Vancouver
+      - CONTAINER_NAME=restic-app
+
+      - MODE=BACKUP
+
+      - REPOSITORY_PASS=password
+
+      - BACKUP01_NAME=home
+      - BACKUP01_PATH=/rootfs/home
+      - BACKUP01_EXCLUDE=.snapshots
+
+      - BACKUP01_BEGIN=1230
+      - BACKUP01_INTERVAL=60
+      - BACKUP01_ENABLE_CLEANUP=TRUE
+
+      - BACKUP02_NAME=var_local
+      - BACKUP02_PATH=/rootfs/var/local/data
+      - BACKUP02_EXCLUDE=restic/*,kopia/*
+      - BACKUP02_BEGIN=+10
+      - BACKUP02_INTERVAL=60
+
+      - REPOSITORY_PATH=/data/
+      #- REPOSITORY_PATH=rest:https://user:password@restic-server
+    networks:
+      - services
+    restart: always
+
+networks:
+  services:
+    external: true

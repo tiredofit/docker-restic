@@ -60,7 +60,7 @@ while true; do
 
     backup_routines_finish_time=$(date +"%s")
     backup_routines_total_time=$(echo $((backup_routines_finish_time-backup_routines_start_time)))
-    #post_backup {{BACKUP_NUMBER}}
+    post_backup {{BACKUP_NUMBER}}
     PROCESS_NAME="restic-backup{{BACKUP_NUMBER}}-scheduler"
     if [ -z "${exitcode_backup}" ] ; then exitcode_backup="0" ; fi
     print_info "Repository backup {{BACKUP_NUMBER}} routines finish time: $(date -d @${backup_routines_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_backup}"
