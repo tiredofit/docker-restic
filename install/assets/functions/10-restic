@@ -503,6 +503,7 @@ EOF
                                 )
             fi
 
+            unset cleanup_keep_arg
             unset cleanup_log_keep_policy
             if [ -n "${backup_job_retain_last}" ] ; then
                 cleanup_keep_arg+="--keep-last ${backup_job_retain_last} "
