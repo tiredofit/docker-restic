@@ -15,8 +15,8 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
     fi
 
     if var_true "${SKIP_INIT}" ; then
-        print_debug "Skipping init"
-        echo "skipping init"
+        print_notice "Skipping repository init routines"
+
     else
         repository init
     fi
