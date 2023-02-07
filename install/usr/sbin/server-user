@@ -23,13 +23,13 @@ fi
 case "${1}" in
     create )
         if [ -z "${3}" ]; then
-            sudo -u restic htpasswd -B "${REST_SERVER_PASSWORD_FILE}" "${2}"
+            sudo -u restic htpasswd -B "${SERVER_PASSWORD_FILE}" "${2}"
         else
-            sudo -u restic htpasswd -B -b "${REST_SERVER_PASSWORD_FILE}" "${2}" "${3}"
+            sudo -u restic htpasswd -B -b "${SERVER_PASSWORD_FILE}" "${2}" "${3}"
         fi
     ;;
     delete )
-        sudo -u restic htpasswd -D "${REST_SERVER_PASSWORD_FILE}" "${2}"
+        sudo -u restic htpasswd -D "${SERVER_PASSWORD_FILE}" "${2}"
     ;;
     help )
         display_usage

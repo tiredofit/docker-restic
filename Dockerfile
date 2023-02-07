@@ -41,7 +41,7 @@ RUN source assets/functions/00-container && \
                     tar \
                     && \
     \
-    ln -s /usr/bin/fusermount3 /usr/sbin/fusemount && \
+    ln -s /usr/bin/fusermount3 /usr/sbin/fusermount && \
     \
     clone_git_repo "${RESTIC_REPO_URL}" "${RESTIC_VERSION}" && \
     go run build.go && \

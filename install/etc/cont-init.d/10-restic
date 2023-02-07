@@ -14,7 +14,12 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
         exit 0
     fi
 
-    repository init
+    if var_true "${SKIP_INIT}" ; then
+        print_debug "Skipping init"
+        echo "skipping init"
+    else
+        repository init
+    fi
 
     if var_true "${ENABLE_BACKUP}" ; then
         print_debug "Configuring Backup"

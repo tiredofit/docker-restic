@@ -27,7 +27,7 @@ case "${SERVER_MODE,,}" in
     print_start "Starting RClone REST repository server ${R_CLONE_VERSION} at ${SERVER_REPOSITORY_PATH}"
     exec /usr/sbin/rclone \
                                     serve restic \
-                                    --config "${RCLONE_CONFIG_PATH}"/"${RCLONE_CONFIG_FILE}" \
+                                    --config "${SERVER_RCLONE_CONFIG_PATH}"/"${SERVER_RCLONE_CONFIG_FILE}" \
                                     ${SERVER_REPOSITORY_PATH} \
                                     --addr "${SERVER_LISTEN_IP}":"${SERVER_LISTEN_PORT}" \
                                     --log-file "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" \
