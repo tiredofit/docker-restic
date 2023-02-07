@@ -465,9 +465,11 @@ $(cat /tmp/check-${check_routines_start_time}.log)
 EOF
                         )
 
-        if grep -q "^error: .*" /tmp/check-"${check_routines_start_time}".error ; then
-            check_error_count=$(grep "^error: .*" /tmp/check-"${check_routines_start_time}".error | wc -l)
-            print_error "[check] ${check_error_count} errors detected"
+        if [ -s /tmp/check-"${check_routines_start_time}".error ] ; then
+            if grep -q "^error: .*" /tmp/check-"${check_routines_start_time}".error ; then
+                check_error_count=$(grep "^error: .*" /tmp/check-"${check_routines_start_time}".error | wc -l)
+                print_error "[check] ${check_error_count} errors detected"
+            fi
             check_file_log=$(echo "${check_file_log}" ; cat <<EOF
 ### Error Log
 ## Errors: ${check_error_count}
@@ -835,11 +837,10 @@ check_process() {
 }
 
 post_backup() {
-        set -x
         backup_instance_number=${1}
         PROCESS_NAME=post_backup${backup_instance_number}
 
-        if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_TYPE,,}" = "zabbix" ]; then
+        if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
         set -x
             source /assets/defaults/03-monitoring
             print_notice "Sending Backup Statistics to Zabbix"
