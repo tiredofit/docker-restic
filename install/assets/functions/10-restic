@@ -648,8 +648,10 @@ EOF
                             )
 
             if [ -s /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error ] ; then
-                cleanup_error_count=$(grep "^error: .*" /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error | wc -l)
-                print_error "[Cleanup] ${cleanup_error_count} errors detected"
+                if grep -q "^error: .*" /tmp/cleanup-"${backup_routines_start_time}".error ; then
+                    cleanup_error_count=$(grep "^error: .*" /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error | wc -l)
+                    print_error "[Cleanup] ${cleanup_error_count} errors detected"
+                fi
                 cleanup_file_log=$(echo "${cleanup_file_log}" ; cat <<EOF
 ### Error Log
 ## Errors: ${cleanup_error_count}
@@ -756,13 +758,14 @@ EOF
 ## Prune procedure completion:          ${exitcode_prune_description} (${exitcode_prune})
 
 ### Check Details
-$(cat /tmp/check-${prune_routines_start_time}.log)
+$(cat /tmp/prune-${prune_routines_start_time}.log)
 
 
 EOF
                         )"
 
         if [ -s /tmp/prune-"${prune_routines_start_time}".error ] ; then
+
             prune_error_count=$(grep "^error: .*" /tmp/prune-"${prune_routines_start_time}".error | wc -l)
             print_error "${prune_error_count} errors detected"
             prune_file_log="$(echo "${prune_file_log}" ; cat <<EOF
@@ -841,25 +844,25 @@ post_backup() {
         PROCESS_NAME=post_backup${backup_instance_number}
 
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
-        set -x
             source /assets/defaults/03-monitoring
             print_notice "Sending Backup Statistics to Zabbix"
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.start.date -o "${dbbackup_date}"
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.status -o "${exit_code_backup}"
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.backup_duration -o "${backup_process_total_time}"
+            zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k restic.backup -o '[{"{#NAME}":"'${backup_job_backup_name}'"}]'
+set -x
+            cat <<EOF | zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}" -i -
+- restic.backup.start_date.[${backup_job_backup_name}] "${backup_routines_start_time}"
+- restic.backup.status.[${backup_job_backup_name}] "${exitcode_backup}"
+- restic.backup.backup_duration.[${backup_job_backup_name}] "${backup_process_total_time}"
+- restic.backup.files.new.[${backup_job_backup_name}] "${backup_summary_files_new}"
+- restic.backup.files.changed.[${backup_job_backup_name}] "${backup_summary_files_changed}"
+- restic.backup.files.unmodified.[${backup_job_backup_name}] "${backup_summary_files_unmodified}"
+- restic.backup.dirs.new.[${backup_job_backup_name}] "${backup_summary_directory_new}"
+- restic.backup.dirs.changed.[${backup_job_backup_name}] "${backup_summary_directory_changed}"
+- restic.backup.dirs.unmodified.[${backup_job_backup_name}] "${backup_summary_directory_unmodified}"
+- restic.backup.size.bytes.added.[${backup_job_backup_name}] "${backup_summary_added_size_bytes}"
+- restic.backup.size.bytes.stored.[${backup_job_backup_name}] "${backup_summary_added_size_stored_bytes}"
+- restic.backup.size.bytes.processed.[${backup_job_backup_name}] "${backup_summary_processed_size_bytes}"
+EOF
 
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.files.new -o "${backup_summary_files_new}"
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.files.changed -o "${backup_summary_files_changed}"
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.files.unmodified -o "${backup_summary_files_unmodified}"
-
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.dirs.new -o "${backup_summary_directory_new}"
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.dirs.changed -o "${backup_summary_directory_changed}"
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.dirs.unmodified -o "${backup_summary_directory_unmodified}"
-
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.size.bytes.added -o "${backup_summary_added_size_bytes}"
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.size.bytes.stored -o "${backup_summary_added_size_stored_bytes}"
-            silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/${ZABBIX_CONFIG_PATH}" -k backup.${backup_job_backup_name}.size.bytes.processed -o "${backup_summary_processed_size_bytes}"
-        set +x
             if [ "$?" != "0" ] ; then print_error "Error sending statistics, consider disabling with 'CONTAINER_ENABLE_MONITORING=FALSE'" ; fi
         fi
 
