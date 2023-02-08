@@ -241,7 +241,7 @@ EOF
                     backup_job_verbose_level=2
                 ;;
             esac
-            backup_args+="--verbose=${backup_job_verbose_level} ${exclude} "
+            backup_args+="--verbose=${backup_job_verbose_level} "
             backup_file_log=$(echo "${backup_file_log}" ; cat <<EOF
 ## Verbosity Level:                     ${backup_job_verbose_level}
 EOF
@@ -419,99 +419,6 @@ EOF
 EOF
         fi
 
-        repository cleanup
-
-    }
-
-    check () {
-        if [ -z "${check_routines_start_time}" ] ; then check_routines_start_time=$(date +%s) ; fi
-        check_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${check_routines_start_time} +"%Y%m%d_%H%M%S") (${check_routines_start_time})
-## Repository:                          $(echo ${REPOSITORY_PATH} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-## Hostname:                            $(hostname)
-## Container Name:                      $(echo "${CONTAINER_NAME}")
-
-## Task:                                Check
-EOF
-                        )
-
-        check_process restic 1 check
-        check_process_start_time=$(date +%s)
-        check_file_log+="
-## Check procedure started:             $(date -d @${check_process_start_time} +"%Y-%m-%d %H:%M:%S") (${check_process_start_time})"
-        check_process_delay_time=$(echo $((check_process_start_time-check_routines_start_time)))
-        if [ "${check_process_delay_time}" -ge 5 ] ; then
-            check_file_log=$(echo "${check_file_log}" ; cat <<EOF
-## Delay in starting:                   $(echo ${check_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})"
-EOF
-                            )
-        fi
-
-        check_process restic 1 check
-        restic \
-                -r "${REPOSITORY_PATH}" \
-                check ${CHECK_ARGS} \
-                2> /tmp/check-${check_routines_start_time}.error \
-                > /tmp/check-${check_routines_start_time}.log
-
-        exitcode_check=$?
-
-        check_process_finish_time=$(date +%s)
-        check_process_total_time=$(echo $((check_process_finish_time-check_process_start_time)))
-        case "${exitcode_check}" in
-            0 )
-                print_info "[check] Check Successful"
-                exitcode_check_description="OK"
-            ;;
-            1 )
-                print_error "[check] Check Failed completely"
-                exitcode_check_description="FAIL"
-            ;;
-            3 )
-                print_error "[check] Check completed with errors"
-                exitcode_check_description="ERROR"
-            ;;
-            * )
-                print_error "[check] Check Failed with exit_code ${exitcode_check}"
-                exitcode_check_description="UNKNOWN"
-            ;;
-        esac
-
-        check_file_log=$(echo "${check_file_log}" ; cat <<EOF
-
-## Check procedure finished:            $(date -d @${check_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${check_process_finish_time})
-## Check procedure total time:          $(echo ${check_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_total_time})
-## Check procedure completion:          ${exitcode_check_description} (${exitcode_check})
-
-### Check Details
-$(cat /tmp/check-${check_routines_start_time}.log)
-
-EOF
-                        )
-
-        if [ -s /tmp/check-"${check_routines_start_time}".error ] ; then
-            if grep -q "^error: .*" /tmp/check-"${check_routines_start_time}".error ; then
-                check_error_count=$(grep "^error: .*" /tmp/check-"${check_routines_start_time}".error | wc -l)
-                print_error "[check] ${check_error_count} errors detected"
-            fi
-            check_file_log=$(echo "${check_file_log}" ; cat <<EOF
-### Error Log
-## Errors: ${check_error_count}
-
-$(cat /tmp/check-${check_routines_start_time}.error)
-
-
-EOF
-                            )
-        fi
-
-        cat << EOF > "${LOG_PATH}"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check.log
-${check_file_log}
-
-EOF
-    }
-
-    cleanup() {
         if [ "${exitcode_backup}" = "0" ] && var_true "${backup_job_enable_cleanup}" ; then
             cleanup_file_log=""
             cleanup_file_log=$(echo "${cleanup_file_log}" ; cat <<EOF
@@ -690,6 +597,95 @@ EOF
 ${cleanup_file_log}
 EOF
         fi
+
+    }
+
+    check () {
+        if [ -z "${check_routines_start_time}" ] ; then check_routines_start_time=$(date +%s) ; fi
+        check_file_log=$(cat <<EOF
+## Job Started:                         $(date -d @${check_routines_start_time} +"%Y%m%d_%H%M%S") (${check_routines_start_time})
+## Repository:                          $(echo ${REPOSITORY_PATH} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
+## Hostname:                            $(hostname)
+## Container Name:                      $(echo "${CONTAINER_NAME}")
+
+## Task:                                Check
+EOF
+                        )
+
+        check_process restic 1 check
+        check_process_start_time=$(date +%s)
+        check_file_log+="
+## Check procedure started:             $(date -d @${check_process_start_time} +"%Y-%m-%d %H:%M:%S") (${check_process_start_time})"
+        check_process_delay_time=$(echo $((check_process_start_time-check_routines_start_time)))
+        if [ "${check_process_delay_time}" -ge 5 ] ; then
+            check_file_log=$(echo "${check_file_log}" ; cat <<EOF
+## Delay in starting:                   $(echo ${check_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})"
+EOF
+                            )
+        fi
+
+        check_process restic 1 check
+        restic \
+                -r "${REPOSITORY_PATH}" \
+                check ${CHECK_ARGS} \
+                2> /tmp/check-${check_routines_start_time}.error \
+                > /tmp/check-${check_routines_start_time}.log
+
+        exitcode_check=$?
+
+        check_process_finish_time=$(date +%s)
+        check_process_total_time=$(echo $((check_process_finish_time-check_process_start_time)))
+        case "${exitcode_check}" in
+            0 )
+                print_info "[check] Check Successful"
+                exitcode_check_description="OK"
+            ;;
+            1 )
+                print_error "[check] Check Failed completely"
+                exitcode_check_description="FAIL"
+            ;;
+            3 )
+                print_error "[check] Check completed with errors"
+                exitcode_check_description="ERROR"
+            ;;
+            * )
+                print_error "[check] Check Failed with exit_code ${exitcode_check}"
+                exitcode_check_description="UNKNOWN"
+            ;;
+        esac
+
+        check_file_log=$(echo "${check_file_log}" ; cat <<EOF
+
+## Check procedure finished:            $(date -d @${check_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${check_process_finish_time})
+## Check procedure total time:          $(echo ${check_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_total_time})
+## Check procedure completion:          ${exitcode_check_description} (${exitcode_check})
+
+### Check Details
+$(cat /tmp/check-${check_routines_start_time}.log)
+
+EOF
+                        )
+
+        if [ -s /tmp/check-"${check_routines_start_time}".error ] ; then
+            if grep -q "^error: .*" /tmp/check-"${check_routines_start_time}".error ; then
+                check_error_count=$(grep "^error: .*" /tmp/check-"${check_routines_start_time}".error | wc -l)
+                print_error "[check] ${check_error_count} errors detected"
+            fi
+            check_file_log=$(echo "${check_file_log}" ; cat <<EOF
+### Error Log
+## Errors: ${check_error_count}
+
+$(cat /tmp/check-${check_routines_start_time}.error)
+
+
+EOF
+                            )
+        fi
+
+        cat << EOF > "${LOG_PATH}"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check.log
+${check_file_log}
+
+EOF
     }
 
     init() {
@@ -745,7 +741,7 @@ EOF
                         )
         fi
 
-        prune_process restic 1 prune
+        check_process restic 1 prune
         restic \
                 -r "${REPOSITORY_PATH}" \
                 prune ${PRUNE_ARGS} \
@@ -823,7 +819,6 @@ EOF
     case "${1}" in
         backup ) backup $2 ;;
         check ) check ;;
-        cleanup ) cleanup $2 ;;
         init ) init ;;
         prune ) prune ;;
         server ) server ;;
