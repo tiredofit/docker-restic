@@ -188,7 +188,7 @@ EOF
                 backup_args+="--exclude ${exclude} "
             done
             backup_file_log=$(echo "${backup_file_log}" ; cat <<EOF
-## Backup Exclude:                     ${backup_job_exclude}
+## Backup Exclude:                      ${backup_job_exclude}
 EOF
                             )
         fi
@@ -269,6 +269,7 @@ EOF
         fi
 
         print_info "Starting Restic ${backup_job_log_suffix}"
+        set -x
         restic \
                 --repo "${REPOSITORY_PATH}" \
                 backup \
@@ -276,7 +277,7 @@ EOF
                     --tag auto \
                 2> /tmp/"${backup_instance_number}"-backup-${backup_routines_start_time}.error \
                 > /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log
-
+        set +x
         exitcode_backup=$?
         backup_process_finish_time=$(date +%s)
         backup_process_total_time=$(echo $((backup_process_start_time-backup_routines_finish_time)))
@@ -317,7 +318,7 @@ EOF
 
         backup_file_log=$(echo "${backup_file_log}" ; cat <<EOF
 ## Backup procedure finished:           $(date -d @${backup_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${backup_process_finish_time})
-## Backup procedure total time:         $(echo ${backup_routines_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
+## Backup procedure total time:         $(echo ${backup_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
 ## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
 
 ### Backup Details
@@ -396,7 +397,30 @@ EOF
         #    unset "$(echo "${backup_var}" | cut -d = -f 1 | sed "s|$1_|_|g")"
         #done
 
+        PROCESS_NAME=post_backup${backup_instance_number}
+
+        if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
+            source /assets/defaults/03-monitoring
+            print_notice "Sending Backup Statistics to Zabbix"
+            silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k restic.backup -o '[{"{#NAME}":"'${backup_job_backup_name}'"}]'
+            cat <<EOF | silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}" -i -
+- restic.backup.start_date.[${backup_job_backup_name}] "${backup_routines_start_time}"
+- restic.backup.status.[${backup_job_backup_name}] "${exitcode_backup}"
+- restic.backup.backup_duration.[${backup_job_backup_name}] "${backup_process_total_time}"
+- restic.backup.files.new.[${backup_job_backup_name}] "${backup_summary_files_new}"
+- restic.backup.files.changed.[${backup_job_backup_name}] "${backup_summary_files_changed}"
+- restic.backup.files.unmodified.[${backup_job_backup_name}] "${backup_summary_files_unmodified}"
+- restic.backup.dirs.new.[${backup_job_backup_name}] "${backup_summary_directory_new}"
+- restic.backup.dirs.changed.[${backup_job_backup_name}] "${backup_summary_directory_changed}"
+- restic.backup.dirs.unmodified.[${backup_job_backup_name}] "${backup_summary_directory_unmodified}"
+- restic.backup.size.bytes.added.[${backup_job_backup_name}] "${backup_summary_added_size_bytes}"
+- restic.backup.size.bytes.stored.[${backup_job_backup_name}] "${backup_summary_added_size_stored_bytes}"
+- restic.backup.size.bytes.processed.[${backup_job_backup_name}] "${backup_summary_processed_size_bytes}"
+EOF
+        fi
+
         repository cleanup
+
     }
 
     check () {
@@ -648,7 +672,7 @@ EOF
                             )
 
             if [ -s /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error ] ; then
-                if grep -q "^error: .*" /tmp/cleanup-"${backup_routines_start_time}".error ; then
+                if grep -q "^error: .*" /tmp/${backup_instance_number}-cleanup-"${backup_routines_start_time}".error ; then
                     cleanup_error_count=$(grep "^error: .*" /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error | wc -l)
                     print_error "[Cleanup] ${cleanup_error_count} errors detected"
                 fi
@@ -840,32 +864,7 @@ check_process() {
 }
 
 post_backup() {
-        backup_instance_number=${1}
-        PROCESS_NAME=post_backup${backup_instance_number}
-
-        if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
-            source /assets/defaults/03-monitoring
-            print_notice "Sending Backup Statistics to Zabbix"
-            zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k restic.backup -o '[{"{#NAME}":"'${backup_job_backup_name}'"}]'
-set -x
-            cat <<EOF | zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}" -i -
-- restic.backup.start_date.[${backup_job_backup_name}] "${backup_routines_start_time}"
-- restic.backup.status.[${backup_job_backup_name}] "${exitcode_backup}"
-- restic.backup.backup_duration.[${backup_job_backup_name}] "${backup_process_total_time}"
-- restic.backup.files.new.[${backup_job_backup_name}] "${backup_summary_files_new}"
-- restic.backup.files.changed.[${backup_job_backup_name}] "${backup_summary_files_changed}"
-- restic.backup.files.unmodified.[${backup_job_backup_name}] "${backup_summary_files_unmodified}"
-- restic.backup.dirs.new.[${backup_job_backup_name}] "${backup_summary_directory_new}"
-- restic.backup.dirs.changed.[${backup_job_backup_name}] "${backup_summary_directory_changed}"
-- restic.backup.dirs.unmodified.[${backup_job_backup_name}] "${backup_summary_directory_unmodified}"
-- restic.backup.size.bytes.added.[${backup_job_backup_name}] "${backup_summary_added_size_bytes}"
-- restic.backup.size.bytes.stored.[${backup_job_backup_name}] "${backup_summary_added_size_stored_bytes}"
-- restic.backup.size.bytes.processed.[${backup_job_backup_name}] "${backup_summary_processed_size_bytes}"
-EOF
-
-            if [ "$?" != "0" ] ; then print_error "Error sending statistics, consider disabling with 'CONTAINER_ENABLE_MONITORING=FALSE'" ; fi
-        fi
-
+    :
 }
 setup_container_mode() {
     if [ -f "/tmp/.container/restic_mode/.mode-env" ]; then
