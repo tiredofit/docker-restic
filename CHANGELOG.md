@@ -1,3 +1,14 @@
+## 0.11.0 2023-02-13 <dave at tiredofit dot ca>
+
+   ### Added
+      - Multiple repository support per BACKUPXX_ CHECKXX_ PRUNEXX_ tasks
+      - Add Nginx for reverse proxy to restic server for better logging and enhancements
+      - CHECK and PRUNE can now be run multiple times and create their own schedulers
+      - Automatically unlock the repository at the end of tasks.
+      - Change the way repositories are initialized, don't do them multiple times if using multiple TASKXX vars and they end up to be going to the same place
+      - Cleanup some logging weirdness.
+
+
 ## 0.10.0 2023-02-07 <dave at tiredofit dot ca>
 
    ### Added
