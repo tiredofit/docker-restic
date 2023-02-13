@@ -1,7 +1,7 @@
 ARG DISTRO=alpine
 ARG DISTRO_VARIANT=3.17
 
-FROM docker.io/tiredofit/${DISTRO}:${DISTRO_VARIANT}
+FROM docker.io/tiredofit/nginx:${DISTRO}-${DISTRO_VARIANT}
 LABEL maintainer="Dave Conroy (github.com/tiredofit)"
 
 ARG RESTIC_VERSION
@@ -14,6 +14,9 @@ ENV RESTIC_VERSION=v0.15.1 \
     RESTIC_REST_SERVER_REPO_URL=https://github.com/restic/rest-server \
     R_CLONE_VERSION=v1.61.1 \
     R_CLONE_REPO_URL=https://github.com/rclone/rclone \
+    NGINX_SITE_ENABLED="restic-rest-server" \
+    NGINX_ENABLE_CREATE_SAMPLE_HTML=FALSE \
+    NGINX_WORKER_PROCESSES=1 \
     IMAGE_NAME="tiredofit/restic" \
     IMAGE_REPO_URL="https://github.com/tiredofit/restic/"
 

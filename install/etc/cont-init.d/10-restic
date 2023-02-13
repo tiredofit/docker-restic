@@ -14,16 +14,9 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
         exit 0
     fi
 
-    if var_true "${SKIP_INIT}" ; then
-        print_notice "Skipping repository init routines"
-
-    else
-        repository init
-    fi
-
     if var_true "${ENABLE_BACKUP}" ; then
         print_debug "Configuring Backup"
-        create_backup_schedulers
+        create_schedulers backup
         if var_true "${BACKUP_ON_STARTUP}" ; then
             print_notice "Backing up on Startup"
             /usr/bin/backup_now
@@ -32,6 +25,7 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
 
     if var_true "${ENABLE_CHECK}" ; then
         print_debug "Configuring Check"
+        create_schedulers check
         if var_true "${CHECK_ON_STARTUP}" ; then
             print_notice "Checking on Startup"
             repository check
@@ -42,6 +36,7 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
 
     if var_true "${ENABLE_PRUNE}" ; then
         print_debug "Configuring Prune"
+        create_schedulers prune
         if var_true "${PRUNE_ON_STARTUP}" ; then
             print_notice "Pruning on Startup"
             repository prune
@@ -53,8 +48,14 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
     if var_true "${ENABLE_SERVER}" ; then
         print_debug "Configuring Repository Server"
         repository server
+        if var_false "${ENABLE_NGINX}" ; then
+            service_stop 10-nginx
+            service_stop 11-nginx-config-reload
+        fi
     else
         service_stop restic-rest-server
+        service_stop 10-nginx
+        service_stop 11-nginx-config-reload
     fi
 
     if var_true "${ENABLE_RCLONE}" ; then
@@ -62,6 +63,8 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
     else
         service_stop rclone
     fi
+
+    create_schedulers init
 fi
 
 liftoff

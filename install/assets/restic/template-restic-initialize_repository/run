@@ -1,0 +1,32 @@
+#!/command/with-contenv bash
+
+source /assets/functions/00-container
+PROCESS_NAME="restic-initialize_repository"
+check_container_initialized
+check_service_initialized init 10-restic
+source /assets/functions/10-restic
+source /assets/defaults/10-restic
+
+if [[ "${MODE,,}" =~ "standalone" ]] || [ "${1,,}" = "manual" ] || [ "${1,,}" = "now" ]; then
+    print_debug "Detected Manual Mode"
+else
+    init_routines_start_time=$(date +"%s")
+    print_info "Initializing Repositories on: $(date +'%Y-%m-%d %T %Z')"
+    repository init
+    init_routines_finish_time=$(date +"%s")
+    init_routines_total_time=$(echo $((init_routines_finish_time-init_routines_start_time)))
+
+    if [ -z "${exitcode_init}" ] ; then exitcode_init="0" ; fi
+
+    if [ "${exitcode_init}" = "0" ] ; then
+        print_info "Repositories initialized successfully"
+        print_debug "Repository initialization routines finish time: $(date -d @${init_routines_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_init}"
+        print_info "Repository initialization routines time taken: $(echo ${init_routines_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
+        echo "Repositories initialized $(date -d @${init_routines_finish_time} +"%Y-%m-%d %T %Z")" > /tmp/.container/restic-initialize_repository-init
+        s6-svc -d /var/run/s6/legacy-services/restic-initialize_repository
+    else
+        print_error "Repositories initialization routines FAILED - Halting.."
+        s6-svc -d /var/run/s6/legacy-services/restic-initialize_repository
+        exit 1
+    fi
+fi

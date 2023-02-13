@@ -1,21 +1,15 @@
 #!/command/with-contenv bash
 
 source /assets/functions/00-container
+PROCESS_NAME="restic-backup{{BACKUP_NUMBER}}-snapshot-scheduler"
 check_container_initialized
 check_service_initialized init 10-restic
+check_service_initialized restic-initialize_repository
 source /assets/functions/10-restic
 source /assets/defaults/10-restic
-PROCESS_NAME="restic-backup{{BACKUP_NUMBER}}-scheduler"
 
 setup_container_mode
-
-if [ -n "${RESTIC_PASSWORD}" ] && [ -z "${REPOSITORY_PASS}" ]  ; then export REPOSITORY_PASS="${RESTIC_PASSWORD}" ; fi
-if [ -z "${REPOSITORY_PASS}" ] ; then
-    print_error "No REPOSITORY_PASS environment variable set. Halting.."
-    s6-svc -d /var/run/s6/legacy-services/restic-backup{{BACKUP_NUMBER}}
-    exit 1
-fi
-export RESTIC_PASSWORD=${REPOSITORY_PASS}
+bootstrap_variables upgrade BACKUP
 
 if [[ "${MODE,,}" =~ "standalone" ]] || [ "${1,,}" = "manual" ] || [ "${1,,}" = "now" ]; then
     print_debug "Detected Manual Mode"
@@ -23,24 +17,24 @@ if [[ "${MODE,,}" =~ "standalone" ]] || [ "${1,,}" = "manual" ] || [ "${1,,}" = 
     BACKUP{{BACKUP_NUMBER}}_BEGIN=+0
 else
     sleep {{BACKUP_NUMBER}}
-    if [ -z "${BACKUP{{BACKUP_NUMBER}}_INTERVAL}" ] ; then
-        print_error "No Environment variable for BACKUP{{BACKUP_NUMBER}}_INTERVAL set! Please set a value. Halting Backup Number {{BACKUP_NUMBER}}."
+    if [ -z "${BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_INTERVAL}" ] ; then
+        print_error "No Environment variable for BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_INTERVAL set! Please set a value. Halting Backup Snapshot Number {{BACKUP_NUMBER}}."
         s6-svc -d /var/run/s6/legacy-services/restic-backup{{BACKUP_NUMBER}}
         exit 1
     fi
-    if [ -z "${BACKUP{{BACKUP_NUMBER}}_PATH}" ] ; then
-        print_error "No Environment variable for BACKUP{{BACKUP_NUMBER}}_PATH set! Please set a value. Halting Backup Number {{BACKUP_NUMBER}}."
+    if [ -z "${BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_PATH}" ] ; then
+        print_error "No Environment variable for BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_PATH set! Please set a value. Halting Backup Number {{BACKUP_NUMBER}}."
         s6-svc -d /var/run/s6/legacy-services/restic-backup{{BACKUP_NUMBER}}
         exit 1
     fi
     current_time=$(date +"%s")
     today=$(date +"%Y%m%d")
 
-    if [[ $BACKUP{{BACKUP_NUMBER}}_BEGIN =~ ^\+(.*)$ ]]; then
+    if [[ $BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_BEGIN =~ ^\+(.*)$ ]]; then
         waittime=$(( ${BASH_REMATCH[1]} * 60 ))
         target_time=$(($current_time + $waittime))
     else
-        target_time=$(date --date="${today} ${BACKUP{{BACKUP_NUMBER}}_BEGIN}" +"%s")
+        target_time=$(date --date="${today} ${BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_BEGIN}" +"%s")
         if [[ "$target_time" < "$current_time" ]]; then
             target_time=$(($target_time + 24*60*60))
         fi
@@ -53,15 +47,13 @@ fi
 
 while true; do
     backup_routines_start_time=$(date +"%s")
-    print_debug "Repository Backup {{BACKUP_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
+    print_debug "Repository Backup Snapshot {{BACKUP_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
     bootstrap_variables backup_init {{BACKUP_NUMBER}}
-    #pre_backup {{BACKUP_NUMBER}}
     repository backup {{BACKUP_NUMBER}}
-
+    repository unlock "BACKUP {{BACKUP_NUMBER}}"
     backup_routines_finish_time=$(date +"%s")
     backup_routines_total_time=$(echo $((backup_routines_finish_time-backup_routines_start_time)))
-    post_backup {{BACKUP_NUMBER}}
-    PROCESS_NAME="restic-backup{{BACKUP_NUMBER}}-scheduler"
+    PROCESS_NAME="restic-backup{{BACKUP_NUMBER}}-snapshot-scheduler"
     if [ -z "${exitcode_backup}" ] ; then exitcode_backup="0" ; fi
     print_info "Repository backup {{BACKUP_NUMBER}} routines finish time: $(date -d @${backup_routines_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_backup}"
     print_notice "Repository backup {{BACKUP_NUMBER}} routines time taken: $(echo ${backup_routines_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
@@ -74,8 +66,8 @@ while true; do
             print_error "Stopping backup_scheduler {{BACKUP_NUMBER}} due to detected errors. Fix and restart container."
             s6-svc -d /var/run/s6/legacy-services/restic-backup{{BACKUP_NUMBER}}
         else
-            print_notice "Sleeping for another $(($BACKUP{{BACKUP_NUMBER}}_INTERVAL*60-backup_routines_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($BACKUP{{BACKUP_NUMBER}}_INTERVAL*60-backup_routines_total_time))))" +"%Y-%m-%d %T %Z") "
-            sleep $(($BACKUP{{BACKUP_NUMBER}}_INTERVAL*60-backup_routines_total_time))
+            print_notice "Sleeping for another $(($BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_INTERVAL*60-backup_routines_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_INTERVAL*60-backup_routines_total_time))))" +"%Y-%m-%d %T %Z") "
+            sleep $(($BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_INTERVAL*60-backup_routines_total_time))
         fi
     fi
 done

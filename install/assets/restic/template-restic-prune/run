@@ -1,0 +1,68 @@
+#!/command/with-contenv bash
+
+source /assets/functions/00-container
+PROCESS_NAME="restic-prune{{PRUNE_NUMBER}}-scheduler"
+check_container_initialized
+check_service_initialized init 10-restic
+check_service_initialized restic-initialize_repository
+source /assets/functions/10-restic
+source /assets/defaults/10-restic
+
+setup_container_mode
+bootstrap_variables upgrade PRUNE
+
+if [[ "${MODE,,}" =~ "standalone" ]] || [ "${1,,}" = "manual" ] || [ "${1,,}" = "now" ]; then
+    print_debug "Detected Manual Mode"
+    persist=false
+    PRUNE{{PRUNE_NUMBER}}_BEGIN=+0
+else
+    sleep {{PRUNE_NUMBER}}
+    if [ -z "${PRUNE{{PRUNE_NUMBER}}_INTERVAL}" ] ; then
+        print_error "No Environment variable for PRUNE{{PRUNE_NUMBER}}_INTERVAL set! Please set a value. Halting Check Number {{PRUNE_NUMBER}}."
+        s6-svc -d /var/run/s6/legacy-services/restic-prune{{PRUNE_NUMBER}}
+        exit 1
+    fi
+    current_time=$(date +"%s")
+    today=$(date +"%Y%m%d")
+
+    if [[ $PRUNE{{PRUNE_NUMBER}}_BEGIN =~ ^\+(.*)$ ]]; then
+        waittime=$(( ${BASH_REMATCH[1]} * 60 ))
+        target_time=$(($current_time + $waittime))
+    else
+        target_time=$(date --date="${today} ${PRUNE{{PRUNE_NUMBER}}_BEGIN}" +"%s")
+        if [[ "$target_time" < "$current_time" ]]; then
+            target_time=$(($target_time + 24*60*60))
+        fi
+        waittime=$(($target_time - $current_time))
+    fi
+    print_debug "Wait Time: ${waittime} Target time: ${target_time} Current Time: ${current_time}"
+    print_info "Next Prune at $(date -d @${target_time} +"%Y-%m-%d %T %Z")"
+    sleep $waittime
+fi
+
+while true; do
+    prune_start_time=$(date +"%s")
+    print_debug "Repository Check {{PRUNE_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
+    bootstrap_variables prune_init {{PRUNE_NUMBER}}
+    repository prune {{PRUNE_NUMBER}}
+    repository unlock "PRUNE {{PRUNE_NUMBER}}"
+    prune_finish_time=$(date +"%s")
+    prune_total_time=$(echo $((prune_finish_time-prune_start_time)))
+    PROCESS_NAME="restic-prune{{PRUNE_NUMBER}}-scheduler"
+    if [ -z "${exitcode_prune}" ] ; then exitcode_prune="0" ; fi
+    print_info "Repository prune {{PRUNE_NUMBER}} routines finish time: $(date -d @${prune_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_prune}"
+    print_notice "Repository prune {{PRUNE_NUMBER}} routines time taken: $(echo ${prune_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
+
+    if var_false "${persist}" ; then
+        print_debug "Exiting due to manual mode"
+        exit ${exitcode_prune};
+    else
+        if var_true "${stop_scheduler_prune}" ; then
+            print_error "Stopping prune_scheduler due to detected errors. Fix and restart container."
+            s6-svc -d /var/run/s6/legacy-services/restic-prune{{PRUNE_NUMBER}}
+        else
+            print_notice "Sleeping for another $(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time))))" +"%Y-%m-%d %T %Z") "
+            sleep $(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time))
+        fi
+    fi
+done

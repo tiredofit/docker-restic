@@ -43,6 +43,8 @@ bootstrap_filesystem() {
             source /assets/defaults/05-logging
             echo "0 0 * * * find ${LOG_PATH} -name \"\$(date --date=\"yesterday\" +\"%Y%m%d\")_*.log\" -print0 | xargs -0 tar cfa ${LOG_PATH}/\$(date --date=\"yesterday\" +\"%Y%m%d\").tar.zst --remove-files  2>/dev/null ; find /logs -name '*.zst' -mtime +${LOGROTATE_REAIN_DAYS}7 -exec rm {} \;" > /assets/cron/restic_log
             if var_true "${ENABLE_SERVER}" ; then
+                sudo -u restic touch "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
+                chown restic:restic "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
                 create_logrotate restic-rest-server "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" none restic restic
             fi
         ;;
@@ -55,23 +57,22 @@ bootstrap_variables() {
         PROCESS_NAME=backup${backup_instance_number}
         backup_instance_vars=$(mktemp)
         set -o posix ; set | grep -E "^backup_job_" | tr " " "\n" > "${backup_instance_vars}"
-
         while read -r backup_instance_var ; do
             unset "$(echo "${backup_instance_var}" | cut -d = -f 1)"
         done < "${backup_instance_vars}"
+        unset backup_args
 
-        set -o posix ; set | grep -E "^BACKUP_" | tr " " "\n" > "${backup_instance_vars}"
-        while read -r backup_instance_var ; do
-            backup_instance_var_split=BACKUP01_$(echo "${backup_instance_var}" | cut -d = -f 1 | sed 's|BACKUP_||g')
-            if [ -z "${backup_instance_var_split}" ] ; then
-                export BACKUP01_"$(echo "${backup_instance_var}" | cut -d = -f 1 | sed 's|BACKUP_||g')"="$(echo "${backup_instance_var}" | cut -d = -f 2)"
-                unset "$(echo "${backup_instance_var}" | cut -d = -f 1)"
-            fi
-        done < "${backup_instance_vars}"
+        if [ -v "$(echo BACKUP${backup_instance_number}_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "skip" ]; then
+            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)
+        elif [ -n "${DEFAULT_BACKUP_REPOSITORY_PASS}" ] && [ "${DEFAULT_BACKUP_REPOSITORY_PASS}" != "skip" ]; then
+            export RESTIC_PASSWORD=${DEFAULT_BACKUP_REPOSITORY_PASS}
+        elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "skip" ]; then
+            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+        fi
 
-        set -o posix ; set | grep -E "^BACKUP${backup_instance_number}_|^DEFAULT_" | tr " " "\n" > "${backup_instance_vars}"
+        set -o posix ; set | grep -E "^BACKUP${backup_instance_number}_|^DEFAULT_BACKUP_" | tr " " "\n" > "${backup_instance_vars}"
 
-        transform_instance_variable() {
+        transform_backup_instance_variable() {
             if grep -q "^BACKUP${1}_${2}=" "${backup_instance_vars}" && [ "$(grep "^BACKUP${1}_${2}=" "${backup_instance_vars}" | cut -d = -f2)" != "skip" ]; then
                 export "$3"="$(grep "^BACKUP${1}_${2}=" "${backup_instance_vars}" | cut -d = -f2)"
             elif grep -q "^DEFAULT_BACKUP_${2}=" "${backup_instance_vars}" && [ "$(grep "^DEFAULT_BACKUP_${2}=" "${backup_instance_vars}" | cut -d = -f2)" != "skip" ]; then
@@ -79,42 +80,187 @@ bootstrap_variables() {
             fi
         }
 
-        transform_instance_variable "${backup_instance_number}" ARGS backup_job_backup_args
-        transform_instance_variable "${backup_instance_number}" CLEANUP_ARGS backup_job_cleanup_args
-        transform_instance_variable "${backup_instance_number}" CLEANUP_DRY_RUN backup_job_cleanup_dryrun
-        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_LAST backup_job_retain_last
-        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_HOURLY backup_job_retain_hourly
-        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_DAILY backup_job_retain_daily
-        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_WEEKLY backup_job_retain_weekly
-        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_MONTHLY backup_job_retain_monthly
-        transform_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_YEARLY backup_job_retain_yearly
-        transform_instance_variable "${backup_instance_number}" CLEANUP_VERBOSE_LEVEL backup_job_cleanup_verbose_level
-        transform_instance_variable "${backup_instance_number}" DRY_RUN backup_job_dryrun
-        transform_instance_variable "${backup_instance_number}" ENABLE_CLEANUP backup_job_enable_cleanup
-        transform_instance_variable "${backup_instance_number}" EXCLUDE backup_job_exclude
-        transform_instance_variable "${backup_instance_number}" EXCLUDE_FILE backup_job_exclude_file
-        transform_instance_variable "${backup_instance_number}" NAME backup_job_backup_name
-        transform_instance_variable "${backup_instance_number}" PATH backup_job_backup_path
-        transform_instance_variable "${backup_instance_number}" PATH_FILE backup_job_backup_path_file
-        transform_instance_variable "${backup_instance_number}" REPOSITORY_PATH backup_job_respository_path
-        transform_instance_variable "${backup_instance_number}" VERBOSE_LEVEL backup_job_verbose_level
+        transform_backup_instance_variable "${backup_instance_number}" CLEANUP_ARGS backup_job_cleanup_args
+        transform_backup_instance_variable "${backup_instance_number}" CLEANUP_DRY_RUN backup_job_cleanup_dryrun
+        transform_backup_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_LAST backup_job_retain_last
+        transform_backup_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_HOURLY backup_job_retain_hourly
+        transform_backup_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_DAILY backup_job_retain_daily
+        transform_backup_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_WEEKLY backup_job_retain_weekly
+        transform_backup_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_MONTHLY backup_job_retain_monthly
+        transform_backup_instance_variable "${backup_instance_number}" CLEANUP_RETAIN_YEARLY backup_job_retain_yearly
+        transform_backup_instance_variable "${backup_instance_number}" CLEANUP_VERBOSITY_LEVEL backup_job_cleanup_verbosity_level
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_ARGS backup_job_backup_args
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_DRY_RUN backup_job_dryrun
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_ENABLE_CLEANUP backup_job_enable_cleanup
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_EXCLUDE backup_job_exclude
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_EXCLUDE_FILE backup_job_exclude_file
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_NAME backup_job_backup_name
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_PATH backup_job_backup_path
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_PATH_FILE backup_job_backup_path_file
+        transform_backup_instance_variable "${backup_instance_number}" REPOSITORY_PATH backup_job_respository_path
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_VERBOSITY_LEVEL backup_job_verbosity_level
         rm -rf "${backup_instance_vars}"
+    }
+
+    check_init() {
+        check_instance_number=${1}
+        PROCESS_NAME=check${check_instance_number}
+        check_instance_vars=$(mktemp)
+        set -o posix ; set | grep -E "^check_job_" | tr " " "\n" > "${check_instance_vars}"
+        while read -r check_instance_var ; do
+            unset "$(echo "${check_instance_var}" | cut -d = -f 1)"
+        done < "${check_instance_vars}"
+
+        set -o posix ; set | grep -E "^CHECK${check_instance_number}_|^DEFAULT_CHECK_" | tr " " "\n" > "${check_instance_vars}"
+
+        if [ -v "$(echo CHECK${check_instance_number}_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^CHECK${check_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "skip" ]; then
+            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^CHECK${check_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)
+        elif [ -n "${DEFAULT_CHECK_REPOSITORY_PASS}" ] && [ "${DEFAULT_CHECK_REPOSITORY_PASS}" != "skip" ]; then
+            export RESTIC_PASSWORD=${DEFAULT_CHECK_REPOSITORY_PASS}
+        elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "skip" ]; then
+            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+        fi
+
+        transform_check_instance_variable() {
+            if grep -q "^CHECK${1}_${2}=" "${check_instance_vars}" && [ "$(grep "^CHECK${1}_${2}=" "${check_instance_vars}" | cut -d = -f2)" != "skip" ]; then
+                export "$3"="$(grep "^CHECK${1}_${2}=" "${check_instance_vars}" | cut -d = -f2)"
+            elif grep -q "^DEFAULT_CHECK_${2}=" "${check_instance_vars}" && [ "$(grep "^DEFAULT_CHECK_${2}=" "${check_instance_vars}" | cut -d = -f2)" != "skip" ]; then
+                export "$3"="$(grep "^DEFAULT_CHECK_${2}=" "${check_instance_vars}" | cut -d = -f2)"
+            fi
+        }
+
+        transform_check_instance_variable "${check_instance_number}" ARGS check_job_check_args
+        transform_check_instance_variable "${check_instance_number}" CHECK_AMOUNT check_job_check_amount
+        transform_check_instance_variable "${check_instance_number}" DRY_RUN check_job_dryrun
+        transform_check_instance_variable "${check_instance_number}" NAME check_job_check_name
+        transform_check_instance_variable "${check_instance_number}" REPOSITORY_PASS check_job_repository_pass
+        transform_check_instance_variable "${check_instance_number}" REPOSITORY_PATH check_job_repository_path
+        transform_check_instance_variable "${check_instance_number}" USE_CACHE check_job_use_cache
+        transform_check_instance_variable "${check_instance_number}" VERBOSITY_LEVEL check_job_verbosity_level
+        rm -rf "${check_instance_vars}"
+    }
+
+    prune_init() {
+        prune_instance_number=${1}
+        PROCESS_NAME=prune${prune_instance_number}
+        prune_instance_vars=$(mktemp)
+        set -o posix ; set | grep -E "^prune_job_" | tr " " "\n" > "${prune_instance_vars}"
+        while read -r prune_instance_var ; do
+            unset "$(echo "${prune_instance_var}" | cut -d = -f 1)"
+        done < "${prune_instance_vars}"
+
+        if [ -v "$(echo PRUNE${prune_instance_number}_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^PRUNE${prune_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "skip" ]; then
+            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^PRUNE${prune_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)
+        elif [ -n "${DEFAULT_PRUNE_REPOSITORY_PASS}" ] && [ "${DEFAULT_PRUNE_REPOSITORY_PASS}" != "skip" ]; then
+            export RESTIC_PASSWORD=${DEFAULT_PRUNE_REPOSITORY_PASS}
+        elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "skip" ]; then
+            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+        fi
+
+        set -o posix ; set | grep -E "^PRUNE${prune_instance_number}_|^DEFAULT_PRUNE_" | tr " " "\n" > "${prune_instance_vars}"
+
+        transform_prune_instance_variable() {
+            if grep -q "^PRUNE${1}_${2}=" "${prune_instance_vars}" && [ "$(grep "^PRUNE${1}_${2}=" "${prune_instance_vars}" | cut -d = -f2)" != "skip" ]; then
+                export "$3"="$(grep "^PRUNE${1}_${2}=" "${prune_instance_vars}" | cut -d = -f2)"
+            elif grep -q "^DEFAULT_PRUNE_${2}=" "${prune_instance_vars}" && [ "$(grep "^DEFAULT_PRUNE_${2}=" "${prune_instance_vars}" | cut -d = -f2)" != "skip" ]; then
+                export "$3"="$(grep "^DEFAULT_PRUNE_${2}=" "${prune_instance_vars}" | cut -d = -f2)"
+            fi
+        }
+
+        transform_prune_instance_variable "${prune_instance_number}" ARGS prune_job_prune_args
+        transform_prune_instance_variable "${prune_instance_number}" DRY_RUN prune_job_dryrun
+        transform_prune_instance_variable "${prune_instance_number}" NAME prune_job_prune_name
+        transform_prune_instance_variable "${prune_instance_number}" REPOSITORY_PASS prune_job_repository_pass
+        transform_prune_instance_variable "${prune_instance_number}" REPOSITORY_PATH prune_job_repository_path
+        transform_prune_instance_variable "${prune_instance_number}" VERBOSITY_LEVEL prune_job_verbosity_level
+        rm -rf "${prune_instance_vars}"
+    }
+
+    unlock_init() {
+        unlock_called_from=${1}
+        unlock_called_from_instance=${2}
+        PROCESS_NAME=unlock
+        unlock_instance_vars=$(mktemp)
+        set -o posix ; set | grep -E "^unlock_job_" | tr " " "\n" > "${unlock_instance_vars}"
+        while read -r unlock_instance_var ; do
+            unset "$(echo "${unlock_instance_var}" | cut -d = -f 1)"
+        done < "${unlock_instance_vars}"
+
+        if [ -v "$(echo ${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PASS" | cut -d = -f 2)" != "skip" ]; then
+            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PASS" | cut -d = -f 2)
+        elif [ -v $(echo DEFAULT_${unlock_called_from}_REPOSITORY_PASS) ] && [ "$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PASS)" | cut -d = -f 2)" != "skip" ] ; then
+            export RESTIC_PASSWORD=$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PASS)" | cut -d = -f 2)
+        elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "skip" ]; then
+            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+        fi
+
+        if [ -v "$(echo ${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PATH)" ] && [ "$(set -o posix; set | grep -E "^${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "skip" ]; then
+            export unlock_job_repository_path=$(set -o posix; set | grep -E "^${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PATH" | cut -d = -f 2)
+        elif [ -v $(echo DEFAULT_${unlock_called_from}_REPOSITORY_PATH) ] && [ "$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PATH)" | cut -d = -f 2)" != "skip" ] ; then
+            export unlock_job_repository_path=$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PATH)" | cut -d = -f 2)
+        elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "skip" ]; then
+            export unlock_job_repository_path=${REPOSITORY_PATH}
+        fi
+
+        set -o posix ; set | grep -E "^UNLOCK_|^DEFAULT_UNLOCK_" | tr " " "\n" > "${unlock_instance_vars}"
+
+        transform_unlock_variable() {
+            if grep -q "^UNLOCK_${1}=" "${unlock_instance_vars}" && [ "$(grep "^UNLOCK_${1}=" "${unlock_instance_vars}" | cut -d = -f2)" != "skip" ]; then
+                export "$2"="$(grep "^UNLOCK_${1}=" "${unlock_instance_vars}" | cut -d = -f2)"
+            elif grep -q "^DEFAULT_UNLOCK_${1}=" "${unlock_instance_vars}" && [ "$(grep "^DEFAULT_UNLOCK_${1}=" "${unlock_instance_vars}" | cut -d = -f2)" != "skip" ]; then
+                export "$2"="$(grep "^DEFAULT_UNLOCK_${1}=" "${unlock_instance_vars}" | cut -d = -f2)"
+            fi
+        }
+
+        transform_unlock_variable ARGS unlock_job_unlock_args
+        transform_unlock_variable REMOVE_ALL unlock_job_remove_all
+        transform_unlock_variable REMOVE_ALL unlock_job_remove_all
+        transform_unlock_variable VERBOSITY_LEVEL unlock_job_verbosity_level
+
+        rm -rf "${unlock_instance_vars}"
+    }
+
+    upgrade_lonely_variables() {
+        upgrade_lonely_variables_tmp=$(mktemp)
+        set -o posix; set | grep "^$1" | grep -v "^$1[0-9]._" > "${upgrade_lonely_variables_tmp}"
+        while read -r exist_var ; do
+            if [ ! -v "$1"01_"$(echo "${exist_var}" | cut -d = -f1 | cut -d _ -f2)" ] ; then
+                export "$1"01_"$(echo "${exist_var}" | cut -d = -f1 | cut -d _ -f2-9)"="$(echo "${exist_var}" | cut -d = -f2)"
+            else
+                print_error "Variable $101_$(echo "${exist_var}" | cut -d = -f1 | cut -d _ -f2) already exists, fix your variables and start again.."
+                exit 1
+            fi
+        done < "${upgrade_lonely_variables_tmp}"
+        rm -rf "${upgrade_lonely_variables_tmp}"
     }
 
     case "${1}" in
         backup_init ) backup_init "$2" ;;
+        check_init ) check_init "$2" ;;
+        prune_init ) prune_init "$2" ;;
+        unlock_init ) unlock_init "$2" "$3" ;;
+        upgrade ) upgrade_lonely_variables "$2" ;;
     esac
 }
 
-create_backup_schedulers() {
-    local backup_instances=$(printenv | sort | grep -c '^BACKUP.*_PATH')
-    for (( instance = 01; instance <= backup_instances; instance++ )) ; do
-        instance=$(printf "%02d" $instance)
 
-        cp -R /assets/restic/template-restic-backup /etc/services.available/restic-backup"${instance}"
-        sed -i "s|{{BACKUP_NUMBER}}|${instance}|g" /etc/services.available/restic-backup"${instance}"/run
+create_schedulers() {
+    backup() {
+        bootstrap_variables upgrade BACKUP
+        local backup_instances=$(printenv | sort | grep -c "^BACKUP[0-9]._SNAPSHOT_PATH")
+        for (( instance = 01; instance <= backup_instances; instance++ )) ; do
+            instance=$(printf "%02d" $instance)
+            if [ -v BACKUP${instance}_REPOSITORY_PATH ] && [ "$(set -o posix; set | grep -E "^BACKUP${instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "skip" ]; then
+                echo "BACKUP${instance} $(grep -E "^BACKUP${instance}_REPOSITORY_PATH" | cut -d = -f 2)" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            elif [ -n "${DEFAULT_BACKUP_REPOSITORY_PATH}" ] && [ "${DEFAULT_BACKUP_REPOSITORY_PATH}" != "skip" ]; then
+                echo "BACKUP${instance} ${DEFAULT_BACKUP_REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "skip" ]; then
+                echo "BACKUP${instance} ${REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            fi
 
-        cat <<EOF >> /usr/bin/backup"${instance}"-now
+            cp -R /assets/restic/template-restic-backup /etc/services.available/restic-backup"${instance}"
+            sed -i "s|{{BACKUP_NUMBER}}|${instance}|g" /etc/services.available/restic-backup"${instance}"/run
+            cat <<EOF >> /usr/bin/backup"${instance}"-now
 #!/bin/bash
 source /assets/functions/00-container
 PROCESS_NAME=backup${instance}
@@ -122,29 +268,125 @@ print_info "Starting Manual Backup for BACKUP${instance}"
 /var/run/s6/legacy-services/restic-backup${instance}/run now
 
 EOF
-        chmod +x /usr/bin/backup"${instance}"-now
-        if [ "${instance}" = "01" ] ; then
-            touch /usr/bin/backup-now
-            chmod +x /usr/bin/backup-now
-            cat <<EOF > /usr/bin/backup-now
+            chmod +x /usr/bin/backup"${instance}"-now
+            if [ "${instance}" = "01" ] ; then
+                touch /usr/bin/backup-now
+                chmod +x /usr/bin/backup-now
+                cat <<EOF > /usr/bin/backup-now
 #!/bin/bash
 
 /usr/bin/backup${instance}-now
 
 EOF
-        else
-            echo "/usr/bin/backup${instance}-now" >> /usr/bin/backup-now
+            else
+                echo "/usr/bin/backup${instance}-now" >> /usr/bin/backup-now
+            fi
+        done
+    }
+
+    check() {
+        bootstrap_variables upgrade CHECK
+        check_instances=$(set -o posix ; set | sort | grep -Ec "^CHECK[0-9]._REPOSITORY_PATH")
+        for (( instance = 01; instance <= check_instances; instance++ )) ; do
+            instance=$(printf "%02d" $instance)
+
+            if [ -v CHECK${instance}_REPOSITORY_PATH ] && [ "$(set -o posix; set | grep -E "^CHECK${instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "skip" ]; then
+                echo "CHECK${instance} $(set -o posix; set | grep -E "^CHECK${instance}_REPOSITORY_PATH" | cut -d = -f 2)" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            elif [ -n "${DEFAULT_CHECK_REPOSITORY_PATH}" ] && [ "${DEFAULT_CHECK_REPOSITORY_PATH}" != "skip" ]; then
+                echo "CHECK${instance} ${DEFAULT_CHECK_REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            fi
+
+            cp -R /assets/restic/template-restic-check /etc/services.available/restic-check"${instance}"
+            sed -i "s|{{CHECK_NUMBER}}|${instance}|g" /etc/services.available/restic-check"${instance}"/run
+
+        cat <<EOF >> /usr/bin/check"${instance}"-now
+#!/bin/bash
+source /assets/functions/00-container
+PROCESS_NAME=check${instance}
+print_info "Starting Manual Check for for CHECK${instance}"
+/var/run/s6/legacy-services/restic-check${instance}/run now
+
+EOF
+            chmod +x /usr/bin/check"${instance}"-now
+            if [ "${instance}" = "01" ] ; then
+                touch /usr/bin/check-now
+                chmod +x /usr/bin/check-now
+                cat <<EOF > /usr/bin/check-now
+#!/bin/bash
+
+/usr/bin/check${instance}-now
+
+EOF
+            else
+                echo "/usr/bin/check${instance}-now" >> /usr/bin/check-now
+            fi
+        done
+    }
+
+    init() {
+        if [ -f "/tmp/.container/toi_restic/INIT_REPOSITORIES" ]; then
+            print_debug "Creating init repositories routine"
+            touch /tmp/.container/toi_restic/INIT_REPOSITORIES
+            sort -t ' ' -k2 -u /tmp/.container/toi_restic/INIT_REPOSITORIES -o /tmp/.container/toi_restic/INIT_REPOSITORIES
         fi
-    done
+
+        cp -R /assets/restic/template-restic-initialize_repository /etc/services.available/restic-initialize_repository
+    }
+
+    prune() {
+        bootstrap_variables upgrade PRUNE
+        local prune_instances=$(set -o posix; set | sort | grep -Ec "^PRUNE[0-9.]+_REPOSITORY_PATH")
+        for (( instance = 01; instance <= prune_instances; instance++ )) ; do
+            instance=$(printf "%02d" $instance)
+
+            if [ -v PRUNE${instance}_REPOSITORY_PATH ] && [ "$(set -o posix; set | grep -E "^PRUNE${instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "skip" ]; then
+                echo "PRUNE${instance} $(set -o posix; set | grep -E "^PRUNE${instance}_REPOSITORY_PATH" | cut -d = -f 2)" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            elif [ -n "${DEFAULT_PRUNE_REPOSITORY_PATH}" ] && [ "${DEFAULT_PRUNE_REPOSITORY_PATH}" != "skip" ]; then
+                echo "PRUNE${instance} ${DEFAULT_PRUNE_REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            fi
+
+            cp -R /assets/restic/template-restic-prune /etc/services.available/restic-prune"${instance}"
+            sed -i "s|{{PRUNE_NUMBER}}|${instance}|g" /etc/services.available/restic-prune"${instance}"/run
+
+            cat <<EOF >> /usr/bin/prune"${instance}"-now
+#!/bin/bash
+source /assets/functions/00-container
+PROCESS_NAME=prune${instance}
+print_info "Starting Manual Prune for PRUNE${instance}"
+/var/run/s6/legacy-services/restic-prune${instance}/run now
+
+EOF
+            chmod +x /usr/bin/prune"${instance}"-now
+            if [ "${instance}" = "01" ] ; then
+                touch /usr/bin/prune-now
+                chmod +x /usr/bin/prune-now
+                cat <<EOF > /usr/bin/prune-now
+#!/bin/bash
+
+/usr/bin/prune${instance}-now
+
+EOF
+            else
+                echo "/usr/bin/prune${instance}-now" >> /usr/bin/prune-now
+            fi
+        done
+    }
+
+    case "${1}" in
+        backup ) backup ;;
+        check ) check ;;
+        init ) init ;;
+        prune ) prune ;;
+    esac
 }
 
 repository() {
     backup() {
-        check_process restic "${BACKUP_CONCURRENCY}" backup
+        process_limiter restic "${PROCESS_CONCURRENCY}" backup
         backup_process_start_time=$(date +%s)
         backup_file_log=$(cat <<EOF
 # Job Started:                          $(date -d @"${backup_routines_start_time}" +"%Y%m%d_%H%M%S") (${backup_routines_start_time})
-# Repository:                           $(echo ${REPOSITORY_PATH} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
+# Repository:                           $(echo "${backup_job_repository_path}" | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 # Hostname:                             $(hostname)
 # Container Name:                       $(echo "${CONTAINER_NAME}")
 
@@ -183,12 +425,12 @@ EOF
         fi
 
         if [ -n "${backup_job_exclude}" ] ; then
-            backup_job_excludes=$(echo "${backup_job_exclude}" | tr "," "\n")
+            backup_job_excludes=$(echo "${backup_job_exclude}" | sed "s|'||g" | tr "," "\n")
             for exclude in ${backup_job_excludes} ; do
                 backup_args+="--exclude ${exclude} "
             done
             backup_file_log=$(echo "${backup_file_log}" ; cat <<EOF
-## Backup Exclude:                      ${backup_job_exclude}
+## Backup Exclude:                      $(echo "${backup_job_exclude}" | sed "s|'||g" )
 EOF
                             )
         fi
@@ -212,7 +454,7 @@ EOF
 
         if var_true "${backup_job_dryrun}" ; then
             print_notice "DRY_RUN enabled - No backups will actually be written!"
-            backup_args+="--dry-run"
+            backup_args+="--dry-run "
             backup_file_log=$(echo "${backup_file_log}" ; cat <<EOF
 ## Dry Run enabled - No backups were actually performed"
 EOF
@@ -220,37 +462,39 @@ EOF
         fi
 
         if [ -n "${backup_job_backup_args}" ] ; then
-            backup_args+="${backup_job_backup_args}"
-            backup_file_log+="## Additional Arguments:                ${backup_job_backup_args}"
+            backup_args+="${backup_job_backup_args} "
+            backup_file_log=$(cat <<EOF
+## Additional Arguments:                ${backup_job_backup_args}
+EOF
+                            )
         fi
 
         if [ -n "${backup_job_backup_path_file}" ] ; then
             backup_args+="-files-from ${backup_job_backup_path_file} "
         fi
 
-
-        if [ -n "${backup_job_verbose_level}" ] ; then
-            case "${backup_job_verbose_level,,}" in
+        if [ -n "${backup_job_verbosity_level}" ] ; then
+            case "${backup_job_verbosity_level,,}" in
                 0 | normal | standard )
-                    backup_job_verbose_level=0
+                    backup_job_verbosity_level=0
                 ;;
                 1 | verbose )
-                    backup_job_verbose_level=1
+                    backup_job_verbosity_level=1
                 ;;
                 2 | verboseverbose | loud )
-                    backup_job_verbose_level=2
+                    backup_job_verbosity_level=2
                 ;;
             esac
-            backup_args+="--verbose=${backup_job_verbose_level} "
+            backup_args+="--verbose=${backup_job_verbosity_level} "
             backup_file_log=$(echo "${backup_file_log}" ; cat <<EOF
-## Verbosity Level:                     ${backup_job_verbose_level}
+## Verbosity Level:                     ${backup_job_verbosity_level}
 EOF
                             )
         fi
 
         if [ -n "${backup_job_backup_name}" ] ; then
             backup_args+="--tag ${backup_job_backup_name} "
-            backup_job_log_suffix=${backup_job_backup_name}
+            backup_job_log_suffix=${backup_job_backup_name,,}
         else
             backup_job_log_suffix=${backup_instance_number}
         fi
@@ -269,7 +513,6 @@ EOF
         fi
 
         print_info "Starting Restic ${backup_job_log_suffix}"
-        set -x
         restic \
                 --repo "${REPOSITORY_PATH}" \
                 backup \
@@ -277,7 +520,6 @@ EOF
                     --tag auto \
                 2> /tmp/"${backup_instance_number}"-backup-${backup_routines_start_time}.error \
                 > /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log
-        set +x
         exitcode_backup=$?
         backup_process_finish_time=$(date +%s)
         backup_process_total_time=$(echo $((backup_process_start_time-backup_routines_finish_time)))
@@ -322,7 +564,7 @@ EOF
 ## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
 
 ### Backup Details
-$(cat /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log | sed "/^unchanged/d" )
+$(cat /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | sed "/^unchanged/d" )
 
 EOF
                         )
@@ -340,7 +582,7 @@ EOF
                             )
         fi
 
-        cat << EOF > "${LOG_PATH}"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-${backup_job_log_suffix}.log
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-${backup_job_log_suffix}.log
 ${backup_file_log}
 
 EOF
@@ -392,11 +634,6 @@ EOF
 
         ## TODO Zabbix Monitoring
 
-        #for backup_var in $backup_vars ; do
-        #    print_debug "Unsetting '$(echo "${backup_var}" | cut -d = -f 1 | sed "s|$1_|_|g")' variable"
-        #    unset "$(echo "${backup_var}" | cut -d = -f 1 | sed "s|$1_|_|g")"
-        #done
-
         PROCESS_NAME=post_backup${backup_instance_number}
 
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -426,7 +663,7 @@ EOF
 EOF
                             )
 
-            check_process restic ${BACKUP_CONCURRENCY} cleanup
+            process_limiter restic ${PROCESS_CONCURRENCY} cleanup
             cleanup_process_start_time=$(date +%s)
             cleanup_file_log=$(echo "${cleanup_file_log}" ; cat <<EOF
 ## Cleanup procedure started:          $(date -d @${cleanup_process_start_time} +"%Y-%m-%d %H:%M:%S") (${cleanup_process_start_time})
@@ -503,21 +740,21 @@ EOF
                 cleanup_args+="--path ${backup_job_backup_path} "
             fi
 
-            if [ -n "${backup_job_cleanup_verbose_level}" ] ; then
-                case "${backup_job_cleanup_verbose_level,,}" in
+            if [ -n "${backup_job_cleanup_verbosity_level}" ] ; then
+                case "${backup_job_cleanup_verbosity_level,,}" in
                     0 | normal | standard )
-                        backup_job_cleanup_verbose_level=0
+                        backup_job_cleanup_verbosity_level=0
                     ;;
                     1 | verbose )
-                        backup_job_cleanup_verbose_level=1
+                        backup_job_cleanup_verbosity_level=1
                     ;;
                     2 | verboseverbose | loud )
-                        backup_job_cleanup_verbose_level=2
+                        backup_job_cleanup_verbosity_level=2
                     ;;
                 esac
-                cleanup_args+="--verbose=${backup_job_cleanup_verbose_level} "
+                cleanup_args+="--verbose=${backup_job_cleanup_verbosity_level} "
                 cleanup_file_log=$(echo "${cleanup_file_log}" ; cat <<EOF
-## Verbosity Level:                     ${backup_job_verbose_level}"
+## Verbosity Level:                    ${backup_job_verbosity_level}
 EOF
                                 )
             fi
@@ -578,33 +815,41 @@ $(cat /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.log)
 EOF
                             )
 
-            if [ -s /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error ] ; then
-                if grep -q "^error: .*" /tmp/${backup_instance_number}-cleanup-"${backup_routines_start_time}".error ; then
-                    cleanup_error_count=$(grep "^error: .*" /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error | wc -l)
-                    print_error "[Cleanup] ${cleanup_error_count} errors detected"
-                fi
-                cleanup_file_log=$(echo "${cleanup_file_log}" ; cat <<EOF
+        if [ -s /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error ] ; then
+            if grep -q "^error: .*" /tmp/${backup_instance_number}-cleanup-"${backup_routines_start_time}".error ; then
+                cleanup_error_count=$(grep "^error: .*" /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error | wc -l)
+                print_error "[Cleanup] ${cleanup_error_count} errors detected"
+            fi
+            cleanup_file_log=$(echo "${cleanup_file_log}" ; cat <<EOF
 ### Error Log
 ## Errors: ${cleanup_error_count}
 
 $(cat /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.error)
 
 EOF
-                                )
-            fi
+                            )
+        fi
+
         rm -rf /tmp/${backup_instance_number}-cleanup-${backup_routines_start_time}.*
-        cat << EOF >> "${LOG_PATH}"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-${backup_job_log_suffix}.log
+        cat << EOF | silent sudo -u restic tee -a "${LOG_PATH}"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-${backup_job_log_suffix}.log
 ${cleanup_file_log}
 EOF
         fi
 
+        unset cleanup_args
+        cleanup_backup_instance_vars=$(mktemp)
+        set -o posix ; set | grep -E "^backup_job_" | tr " " "\n" > "${backup_instance_vars}"
+        while read -r backup_instance_var ; do
+            unset "$(echo "${backup_instance_var}" | cut -d = -f 1)"
+        done < "${cleanup_backup_instance_vars}"
+        rm -rf "${cleanup_backup_instance_vars}"
     }
 
     check () {
         if [ -z "${check_routines_start_time}" ] ; then check_routines_start_time=$(date +%s) ; fi
         check_file_log=$(cat <<EOF
 ## Job Started:                         $(date -d @${check_routines_start_time} +"%Y%m%d_%H%M%S") (${check_routines_start_time})
-## Repository:                          $(echo ${REPOSITORY_PATH} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
+## Repository:                          $(echo ${check_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo "${CONTAINER_NAME}")
 
@@ -612,10 +857,13 @@ EOF
 EOF
                         )
 
-        check_process restic 1 check
+        process_limiter restic 1 check
         check_process_start_time=$(date +%s)
-        check_file_log+="
-## Check procedure started:             $(date -d @${check_process_start_time} +"%Y-%m-%d %H:%M:%S") (${check_process_start_time})"
+        check_file_log=$(echo "${check_file_log}" ; cat <<EOF
+## Check procedure started:             $(date -d @${check_process_start_time} +"%Y-%m-%d %H:%M:%S") (${check_process_start_time})
+EOF
+                        )
+
         check_process_delay_time=$(echo $((check_process_start_time-check_routines_start_time)))
         if [ "${check_process_delay_time}" -ge 5 ] ; then
             check_file_log=$(echo "${check_file_log}" ; cat <<EOF
@@ -624,10 +872,69 @@ EOF
                             )
         fi
 
-        check_process restic 1 check
+        if [ -n "${check_job_check_name}" ] ; then
+            check_job_log_suffix="${check_job_check_name}"
+        else
+            check_job_log_suffix="${check_instance_number}"
+        fi
+
+        if [ -n "${check_job_use_cache}" ] ; then
+            if var_true "${check_job_use_cache}" ; then
+                check_args+="--with-cache "
+            fi
+            check_file_log=$(echo "${check_file_log}" ; cat <<EOF
+## Cache Enabled:                       ${check_job_use_cache}
+EOF
+                            )
+        fi
+
+        if [ -n "${check_job_check_amount}" ] ; then
+            if [ "${check_job_check_amount}" = "all" ] ; then
+                check_args+="--read-data "
+                check_file_log=$(echo "${check_file_log}" ; cat <<EOF
+## Checking data:                       ALL
+EOF
+                                )
+            else
+                check_args+="--read-data-subset ${check_job_check_amount} "
+                check_file_log=$(echo "${check_file_log}" ; cat <<EOF
+## Checking data:                       SUBSET ${check_job_check_amount}
+EOF
+                                )
+            fi
+        fi
+
+        if [ -n "${check_job_check_args}" ] ; then
+            check_args+="${check_job_check_args}"
+            check_file_log=$(echo "${check_file_log}" ; cat <<EOF
+## Additional Arguments:                ${check_job_check_args}
+EOF
+                            )
+        fi
+
+        if [ -n "${check_job_verbosity_level}" ] ; then
+            case "${check_job_verbosity_level,,}" in
+                0 | normal | standard )
+                    check_job_verbosity_level=0
+                ;;
+                1 | verbose )
+                    check_job_verbosity_level=1
+                ;;
+                2 | verboseverbose | loud )
+                    check_job_verbosity_level=2
+                ;;
+            esac
+            check_args+="--verbose=${check_job_verbosity_level} "
+            check_file_log=$(echo "${check_file_log}" ; cat <<EOF
+## Verbosity Level:                     ${check_job_verbosity_level}
+EOF
+                            )
+        fi
+
+        process_limiter restic 1 check
         restic \
-                -r "${REPOSITORY_PATH}" \
-                check ${CHECK_ARGS} \
+                -r "${check_job_repository_path}" \
+                check ${check_args} \
                 2> /tmp/check-${check_routines_start_time}.error \
                 > /tmp/check-${check_routines_start_time}.log
 
@@ -665,13 +972,14 @@ $(cat /tmp/check-${check_routines_start_time}.log)
 
 EOF
                         )
-
+        ## TOI Lock detection required and restart after first fail based on env
         if [ -s /tmp/check-"${check_routines_start_time}".error ] ; then
             if grep -q "^error: .*" /tmp/check-"${check_routines_start_time}".error ; then
                 check_error_count=$(grep "^error: .*" /tmp/check-"${check_routines_start_time}".error | wc -l)
                 print_error "[check] ${check_error_count} errors detected"
             fi
             check_file_log=$(echo "${check_file_log}" ; cat <<EOF
+
 ### Error Log
 ## Errors: ${check_error_count}
 
@@ -682,57 +990,143 @@ EOF
                             )
         fi
 
-        cat << EOF > "${LOG_PATH}"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check.log
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log
 ${check_file_log}
 
 EOF
+
+        unset check_args
+        check_instance_vars=$(mktemp)
+        set -o posix ; set | grep -E "^check_job_" | tr " " "\n" > "${check_instance_vars}"
+        while read -r check_instance_var ; do
+            unset "$(echo "${check_instance_var}" | cut -d = -f 1)"
+        done < "${check_instance_vars}"
+        rm -rf "${check_instance_vars}"
     }
 
     init() {
-        if [ -n "${RESTIC_PASSWORD}" ] && [ -z "${REPOSITORY_PASS}" ] ; then export REPOSITORY_PASS="${RESTIC_PASSWORD}" ; fi
-        sanity_var REPOSITORY_PASS "password to initialize repository"
-        export RESTIC_PASSWORD=${REPOSITORY_PASS}
-
-        silent restic \
-                -r "${REPOSITORY_PATH}" \
-                snapshots \
-                    --host "${CONTAINER_NAME}" \
-                    --quiet ${INIT_ARGS}
-        init_status=$?
-        print_debug "[check_repository] Initialization exit code ${init_status}"
-
-        if [ "${init_status}" != "0" ]; then
-            print_debug "[check_repository] No repository found"
-            print_notice "[check_repository] Initializing Repository"
-            silent restic \
-                    -r "${REPOSITORY_PATH}" \
-                    init ${INIT_ARGS}
-            init_status=$?
-            if [ $init_status != 0 ]; then
-                print_error "Failed to init the repository: '${REPOSITORY_PATH}'"
-                exit 1
+        while read -r repository_to_init ; do
+            if [ -v $(echo "${repository_to_init}" | awk '{print $1}')_SKIP_INIT ] && [ "$(set -o posix; set | grep -E "^${repository_to_init}_SKIP_INIT" | cut -d = -f 2)" = "TRUE" ]; then
+                skip_init=true
+            elif [ -n "${DEFAULT_SKIP_INIT}" ] && [ "${DEFAULT_SKIP_INIT}" != "true" ]; then
+                skip_init=true
+            elif [ -n "${SKIP_INIT}" ] && [ "${SKIP_INIT}" != "true" ]; then
+                skip_init=true
             fi
-        fi
+
+            if var_nottrue "${skip_init}" ; then
+                print_debug "Initializing Repository: ${repository_to_init}"
+                if grep -q "ENABLE_SERVER=TRUE" /tmp/.container/toi_restic/CONTAINER_MODE ; then
+                    print_notice "Delaying Initialization Routines until REST Server is running"
+                    wait_for_port 127.0.0.1 "${SERVER_LISTEN_PORT}"
+                elif [ -v "$(echo "${repository_to_init}" | awk '{print $1}')"_DELAY_INIT ] && [ "$(set -o posix; set | grep -E "^${repository_to_init}_DELAY_INIT" | cut -d = -f 2)" != "skip" ]; then
+                    delay_init=$(set -o posix; set | grep -E "^${repository_to_init}_DELAY_INIT" | cut -d = -f 2)
+                elif [ -n "${DEFAULT_DELAY_INIT}" ] && [ "${DEFAULT_DELAY_INIT}" != "skip" ]; then
+                    delay_init=${DEFAULT_DELAY_INIT}
+                elif [ -n "${DELAY_INIT}" ] && [ "${DELAY_INIT}" != "skip" ]; then
+                    delay_init=${DELAY_INIT}
+                fi
+
+                if [ -n "${delay_init}" ] ; then
+                    print_notice "Delaying repository initialization of $(echo ${repository_to_init} | awk '{print $1}') for ${delay_init} seconds"
+                    sleep "${delay_init}"
+                fi
+
+                case "$(echo "${repository_to_init}" | awk '{print $1}')" in
+                    BACKUP* )
+                        if [ "$(echo ${repository_to_init} | awk '{print $1}')" = "BACKUP01" ] ; then bootstrap_variables upgrade BACKUP ; fi
+                        if [ -v "$(echo ${repository_to_init} | awk '{print $1}')"_REPOSITORY_PASS ] && [ "$(set -o posix; set | grep -E "^${repository_to_init}_REPOSITORY_PASS" | cut -d = -f 2)" != "skip" ]; then
+                            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^${repository_to_init}_REPOSITORY_PASS" | cut -d = -f 2)
+                        elif [ -n "${DEFAULT_BACKUP_REPOSITORY_PASS}" ] && [ "${DEFAULT_BACKUP_REPOSITORY_PASS}" != "skip" ]; then
+                            export RESTIC_PASSWORD=${DEFAULT_BACKUP_REPOSITORY_PASS}
+                        elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "skip" ]; then
+                            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+                        fi
+                    ;;
+                    CHECK* )
+                        if [ "$(echo ${repository_to_init} | awk '{print $1}')" = "CHECK01" ] ; then bootstrap_variables upgrade CHECK ; fi
+                        if [ -v "$(echo "${repository_to_init}" | awk '{print $1}')"_REPOSITORY_PASS ] && [ "$(set -o posix; set | grep -E "^${repository_to_init}_REPOSITORY_PASS" | cut -d = -f 2)" != "skip" ]; then
+                            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^${repository_to_init}_REPOSITORY_PASS" | cut -d = -f 2)
+                        elif [ -n "${DEFAULT_CHECK_REPOSITORY_PASS}" ] && [ "${DEFAULT_CHECK_REPOSITORY_PASS}" != "skip" ]; then
+                            export RESTIC_PASSWORD=${DEFAULT_CHECK_REPOSITORY_PASS}
+                        elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "skip" ]; then
+                            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+                        fi
+                    ;;
+                    PRUNE* )
+                        if [ "$(echo "${repository_to_init}" | awk '{print $1}')" = "PRUNE01" ] ; then bootstrap_variables upgrade PRUNE ; fi
+                        if [ -v "$(echo ${repository_to_init} | awk '{print $1}')"_REPOSITORY_PASS ] && [ "$(set -o posix; set | grep -E "^${repository_to_init}_REPOSITORY_PASS" | cut -d = -f 2)" != "skip" ]; then
+                            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^${repository_to_init}_REPOSITORY_PASS" | cut -d = -f 2)
+                        elif [ -n "${DEFAULT_PRUNE_REPOSITORY_PASS}" ] && [ "${DEFAULT_PRUNE_REPOSITORY_PASS}" != "skip" ]; then
+                            export RESTIC_PASSWORD=${DEFAULT_PRUNE_REPOSITORY_PASS}
+                        elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "skip" ]; then
+                            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+                        fi
+
+                    ;;
+                esac
+
+                if [ -v "$(echo "${repository_to_init}" | awk '{print $1}')"_INIT_ARGS ] && [ "$(set -o posix; set | grep -E "^${repository_to_init}_INIT_ARGS" | cut -d = -f 2)" != "skip" ]; then
+                    repository_init_arg=$(set -o posix; set | grep -E "^${repository_to_init}_INIT_ARGS" | cut -d = -f 2)
+                elif [ -n "${DEFAULT_INIT_ARGS}" ] && [ "${DEFAULT_INIT_ARGS}" != "skip" ]; then
+                    repository_init_arg=${DEFAULT_INIT_ARGS}
+                fi
+
+                silent restic \
+                                -r "$(echo "${repository_to_init}" | awk '{print $2}')" \
+                                snapshots \
+                                --host "${CONTAINER_NAME}"
+                                --quiet ${repository_init_arg}
+                exitcode_init=$?
+                print_debug "[check_init_repository] [${repository_to_init}] Check exit code ${init_status}"
+
+                if [ "${exitcode_init}" != "0" ]; then
+                    print_debug "[check_repository] No repository found"
+                    print_notice "[check_repository] Initializing Repository '$(echo "${repository_to_init}" | awk '{print $1}')'"
+                    silent restic \
+                                    -r "$(echo "${repository_to_init}" | awk '{print $2}')" \
+                                    init ${repository_init_arg}
+                    exitcode_init=$?
+
+                    if [ "${exitcode_init}" != 0 ]; then
+                        print_error "Failed to init the repository: '$(echo "${repository_to_init}" | awk '{print $1}')':"
+                        restic \
+                            -r "$(echo "${repository_to_init}" | awk '{print $2}')" \
+                            init ${repository_init_arg}
+                        return "${exitcode_init}"
+                    else
+                        return "${exitcode_init}"
+                    fi
+                else
+                    return "${exitcode_init}"
+                fi
+            else
+                print_debug "Skipped Initialization routines for '$(echo "${repository_to_init}" | awk '{print $1}')'"
+                exitcode_init=0
+                return 0
+            fi
+        done < "/tmp/.container/toi_restic/INIT_REPOSITORIES"
     }
 
-    prune () {
+    prune() {
         if [ -z "${prune_routines_start_time}" ] ; then prune_routines_start_time=$(date +%s) ; fi
         prune_file_log=$(cat <<EOF
 ## Job Started:                         $(date -d @${prune_routines_start_time} +"%Y%m%d_%H%M%S") (${prune_routines_start_time})
-## Repository:                          $(echo ${REPOSITORY_PATH} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
+## Repository:                          $(echo ${prune_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo ${CONTAINER_NAME})
 
-## Task:                                Check
+## Task:                                Prune
 EOF
                         )
 
-        check_process restic 1 check
+        process_limiter restic 1 prune
         prune_process_start_time=$(date +%s)
         prune_file_log=$(echo "${prune_file_log}" ; cat <<EOF
-## Prune procedure started:             $(date -d @${prune_process_start_time} +"%Y-%m-%d %H:%M:%S") (${prune_process_start_time})"
+## Prune procedure started:             $(date -d @${prune_process_start_time} +"%Y-%m-%d %H:%M:%S") (${prune_process_start_time})
 EOF
                         )
+
         prune_process_delay_time=$(echo $((prune_process_start_time-prune_routines_start_time)))
         if [ "${prune_process_delay_time}" -ge 5 ] ; then
             prune_file_log=$(echo "${prune_file_log}" ; cat <<EOF
@@ -741,32 +1135,65 @@ EOF
                         )
         fi
 
-        check_process restic 1 prune
+        if [ -n "${prune_job_check_name}" ] ; then
+            prune_job_log_suffix=${prune_job_prune_name}
+        else
+            prune_job_log_suffix=${prune_instance_number}
+        fi
+
+        if [ -n "${prune_job_check_args}" ] ; then
+            prune_args+="${prune_job_prune_args}"
+            prune_file_log=$(echo "${prune_file_log}" ; cat <<EOF
+## Additional Arguments:                ${prune_job_prune_args}
+EOF
+                            )
+        fi
+
+        if [ -n "${prune_job_verbosity_level}" ] ; then
+            case "${prune_job_verbosity_level,,}" in
+                0 | normal | standard )
+                    prune_job_verbosity_level=0
+                ;;
+                1 | verbose )
+                    prune_job_verbosity_level=1
+                ;;
+                2 | verboseverbose | loud )
+                    prune_job_verbosity_level=2
+                ;;
+            esac
+            prune_args+="--verbose=${prune_job_verbosity_level} "
+            prune_file_log=$(echo "${prune_file_log}" ; cat <<EOF
+## Verbosity Level:                     ${prune_job_verbosity_level}
+EOF
+                            )
+        fi
+
+        process_limiter restic 1 prune
         restic \
-                -r "${REPOSITORY_PATH}" \
-                prune ${PRUNE_ARGS} \
+                -r "${prune_job_repository_path}" \
+                prune ${prune_args} \
                 2> /tmp/prune-${prune_routines_start_time}.error \
                 > /tmp/prune-${prune_routines_start_time}.log
 
-        exitcode_check=$?
+        exitcode_prune=$?
 
         prune_process_finish_time=$(date +%s)
         prune_process_total_time=$(echo $((prune_process_finish_time-prune_process_start_time)))
         case "${exitcode_prune}" in
             0 )
-                print_info "[check] Check Successful"
+                print_info "[prune] Prune Successful"
                 exitcode_prune_description="OK"
             ;;
             1 )
-                print_error "[check] Check Failed completely"
+                print_error "[prune] Prune Failed completely"
                 exitcode_prune_description="FAIL"
             ;;
             3 )
-                print_error "[check] Check completed with errors"
+                print_error "[prune] Prune completed with errors"
                 exitcode_prune_description="ERROR"
             ;;
             * )
-                print_error "[check] Check Failed with exit_code ${exitcode_prune}"
+                print_error "[prune] Prune Failed with exit_code ${exitcode_prune}"
                 exitcode_prune_description="UNKNOWN"
             ;;
         esac
@@ -777,14 +1204,57 @@ EOF
 ## Prune procedure total time:          $(echo ${prune_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${prune_process_total_time})
 ## Prune procedure completion:          ${exitcode_prune_description} (${exitcode_prune})
 
-### Check Details
+### Prune Details
 $(cat /tmp/prune-${prune_routines_start_time}.log)
 
 
 EOF
                         )"
 
+## TOI TODO Prune Sample Log
+# loading indexes...
+# loading all snapshots...
+# finding data that is still in use for 203 snapshots
+# [0:59] 100.00%  203 / 203 snapshots
+#
+# searching used packs...
+# collecting packs for deletion and repacking
+# [0:01] 100.00%  680 / 680 packs processed
+#
+#
+# to repack:         77467 blobs / 2.046 GiB
+# this removes:      19044 blobs / 651.923 MiB
+# to delete:         57205 blobs / 2.126 GiB
+# total prune:       76249 blobs / 2.762 GiB
+# remaining:        493297 blobs / 3.527 GiB
+# unused size after prune: 0 B (0.00% of remaining size)
+#
+# deleting unreferenced packs
+# [0:05] 100.00%  38 / 38 files deleted
+#
+# repacking packs
+# [2:37] 100.00%  336 / 336 packs repacked
+#
+# rebuilding index
+# [0:02] 100.00%  330 / 330 packs processed
+#
+# deleting obsolete index files
+# [0:22] 100.00%  199 / 199 files deleted
+#
+# removing 438 old packs
+# [0:48] 100.00%  438 / 438 files deleted
+#
+# done
+
+
         if [ -s /tmp/prune-"${prune_routines_start_time}".error ] ; then
+            ## TOI Lock Checking TODO
+##
+##Fatal: unable to create lock in backend: repository is already locked by PID 1548 on ecc8da8681d1 by root (UID 0, GID 0)
+##lock was created at 2023-02-06 18:46:23 (114h14m37.154670174s ago)
+##storage ID 3214de91
+
+
 
             prune_error_count=$(grep "^error: .*" /tmp/prune-"${prune_routines_start_time}".error | wc -l)
             print_error "${prune_error_count} errors detected"
@@ -794,18 +1264,29 @@ EOF
 
 $(cat /tmp/prune-${prune_routines_start_time}.error)
 
-
 EOF
                             )"
         fi
 
-        cat << EOF > "${LOG_PATH}"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune.log
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-${prune_job_log_suffix}.log
 ${prune_file_log}
 
 EOF
+
+        unset check_args
+        prune_instance_vars=$(mktemp)
+        set -o posix ; set | grep -E "^prune_job_" | tr " " "\n" > "${prune_instance_vars}"
+        while read -r prune_instance_var ; do
+            unset "$(echo "${prune_instance_var}" | cut -d = -f 1)"
+        done < "${prune_instance_vars}"
+        rm -rf "${prune_instance_vars}"
     }
 
     server() {
+        update_template \
+                        /etc/nginx/sites.available/restic-rest-server.conf \
+                                                                            SERVER_LISTEN_PORT
+
         if var_true "${SERVER_ENABLE_AUTHENTICATION}" && [ ! -s "${SERVER_PASSWORD_FILE}" ] ; then
             print_warn "[server] No Users setup in SERVER_PASSWORD_FILE - enter container and use 'server-user create' tool"
             sudo -u restic touch "${SERVER_PASSWORD_FILE}"
@@ -816,17 +1297,156 @@ EOF
         fi
     }
 
+    unlock() {
+        bootstrap_variables unlock_init $1 $2
+        if [ -z "${unlock_routines_start_time}" ] ; then unlock_routines_start_time=$(date +%s) ; fi
+            unlock_file_log=$(cat <<EOF
+## Job Started:                         $(date -d @${unlock_routines_start_time} +"%Y%m%d_%H%M%S") (${unlock_routines_start_time})
+## Repository:                          $(echo ${check_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
+## Hostname:                            $(hostname)
+## Container Name:                      $(echo "${CONTAINER_NAME}")
+
+## Task:                                Unlock
+EOF
+                       )
+
+        process_limiter restic 1 unlock
+        unlock_process_start_time=$(date +%s)
+        unlock_file_log=$(echo "${unlock_file_log}" ; cat <<EOF
+## Unlock procedure started:            $(date -d @${unlock_process_start_time} +"%Y-%m-%d %H:%M:%S") (${unlock_process_start_time})
+EOF
+                        )
+
+        unlock_process_delay_time=$(echo $((unlock_process_start_time-unlock_routines_start_time)))
+        if [ "${unlock_process_delay_time}" -ge 5 ] ; then
+            unlock_file_log=$(echo "${unlock_file_log}" ; cat <<EOF
+## Delay in starting:                   $(echo ${unlock_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${unlock_process_delay_time})"
+EOF
+                            )
+        fi
+
+        if [ -n "${unlock_job_remove_all}" ] ; then
+            unlock_args+="--remove-all "
+            unlock_file_log=$(cat ${unlock_file_log} ; cat <<EOF
+## Unlock Removal Scope:                ALL
+EOF
+                            )
+        fi
+
+        if [ -n "${unlock_job_unlock_args}" ] ; then
+            unlock_args+="${unlock_job_unlock_args}"
+            unlock_file_log=$(cat ${unlock_file_log} ; cat <<EOF
+## Additional Arguments:                ${unlock_job_unlock_args}
+EOF
+                            )
+        fi
+
+        if [ -n "${unlock_job_verbosity_level}" ] ; then
+            case "${unlock_job_verbosity_level,,}" in
+                0 | normal | standard )
+                    unlock_job_verbosity_level=0
+                ;;
+                1 | verbose )
+                    unlock_job_verbosity_level=1
+                ;;
+                2 | verboseverbose | loud )
+                    unlock_job_verbosity_level=2
+                ;;
+            esac
+            unlock_args+="--verbose=${unlock_job_verbosity_level} "
+            unlock_file_log=$(echo "${unlock_file_log}" ; cat <<EOF
+## Verbosity Level:                     ${unlock_job_verbosity_level}
+EOF
+                            )
+        fi
+
+        process_limiter restic 1 unlock
+        restic \
+                -r "${unlock_job_repository_path}" \
+                unlock ${unlock_args} \
+                2> /tmp/unlock-${unlock_routines_start_time}.error \
+                > /tmp/unlock-${unlock_routines_start_time}.log
+
+        exitcode_unlock=$?
+
+        unlock_process_finish_time=$(date +%s)
+        unlock_process_total_time=$(echo $((unlock_process_finish_time-unlock_process_start_time)))
+        case "${exitcode_unlock}" in
+            0 )
+                if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] || [ -s /tmp/unlock-"${unlock_routines_start_time}".log ] ; then
+                    print_info "[unlock] Unlock Successful"
+                    exitcode_unlock_description="OK"
+                else
+                    print_debug "[unlock] Unlock unnecessary"
+                    exitcode_unlock_description="NOT_NECESSARY"
+                    exitcode_unlock=23
+                fi
+            ;;
+            1 )
+                print_error "[unlock] Unlock Failed completely"
+                exitcode_unlock_description="FAIL"
+            ;;
+            3 )
+                print_error "[unlock] Unlock completed with errors"
+                exitcode_unlock_description="ERROR"
+            ;;
+            * )
+                print_error "[unlock] Unlock Failed with exit_code ${exitcode_unlock}"
+                exitcode_unlock_description="UNKNOWN"
+            ;;
+        esac
+
+        unlock_file_log=$(echo "${unlock_file_log}" ; cat <<EOF
+
+## Unlock procedure finished:           $(date -d @${unlock_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${unlock_process_finish_time})
+## Unlock procedure total time:         $(echo ${unlock_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${unlock_process_total_time})
+## Unlock procedure completion:         ${exitcode_unlock_description} (${exitcode_unlock})
+
+### Unlock Details
+$(cat /tmp/unlock-${unlock_routines_start_time}.log)
+
+EOF
+                        )
+        ## TOI Lock detection required and restart after first fail based on env
+        if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] ; then
+            if grep -q "^error: .*" /tmp/unlock-"${unlock_routines_start_time}".error ; then
+                unlock_error_count=$(grep "^error: .*" /tmp/unlock-"${unlock_routines_start_time}".error | wc -l)
+                print_error "[unlock] ${unlock_error_count} errors detected"
+            fi
+            unlock_file_log=$(echo "${unlock_file_log}" ; cat <<EOF
+
+### Error Log
+## Errors: ${unlock_error_count}
+
+$(cat /tmp/unlock-${unlock_routines_start_time}.error)
+
+
+EOF
+                            )
+        fi
+
+        if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] || [ -s /tmp/unlock-"${unlock_routines_start_time}".log ] ; then
+            cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log
+${unlock_file_log}
+
+EOF
+        fi
+
+        unset unlock_args
+
+    }
+
     case "${1}" in
         backup ) backup $2 ;;
         check ) check ;;
         init ) init ;;
         prune ) prune ;;
         server ) server ;;
+        unlock ) unlock $2 ;;
     esac
 }
 
-
-check_process() {
+process_limiter() {
     process="${1}"
     limiter="${2}"
 
@@ -861,50 +1481,43 @@ check_process() {
 post_backup() {
     :
 }
+
 setup_container_mode() {
-    if [ -f "/tmp/.container/restic_mode/.mode-env" ]; then
+    if [ -f "/tmp/.container/restic/CONTAINER_MODE" ]; then
         print_debug "Importing MODE environment generated variables"
-        source /tmp/.container/restic_mode/.mode-env
+        source /tmp/.container/toi_restic/CONTAINER_MODE
     else
-        mkdir -p /tmp/.container/restic_mode/
-        if [ "${MODE,,}" = "all" ] ; then
-            print_debug "Container Mode: ALL"
-            print_debug "Creating MODE environment generated variables"
-            echo "ENABLE_BACKUP=TRUE" >> /tmp/.container/restic_mode/.mode-env
-            echo "ENABLE_CHECK=TRUE" >> /tmp/.container/restic_mode/.mode-env
-            echo "ENABLE_PRUNE=TRUE" >> /tmp/.container/restic_mode/.mode-env
-        else
-            modes=$(echo "${MODE}" | tr "," "\n")
-            for mode in $modes ; do
-                case "${mode,,}" in
-                    "backup" )
-                        print_debug "Enabling Container Mode for: BACKUP"
-                        echo "ENABLE_BACKUP=TRUE" >> /tmp/.container/restic_mode/.mode-env
-                    ;;
-                    "check" )
-                        print_debug "Enabling Container Mode for: CHECK"
-                        echo "ENABLE_CHECK=TRUE" >> /tmp/.container/restic_mode/.mode-env
-                    ;;
-                    "prune" )
-                        print_debug "Enabling Container Mode for: PRUNE"
-                        echo "ENABLE_PRUNE=TRUE" >> /tmp/.container/restic_mode/.mode-env
-                    ;;
-                    "server" )
-                        print_debug "Enabling Container Mode for: SERVER"
-                        echo "ENABLE_SERVER=TRUE" >> /tmp/.container/restic_mode/.mode-env
-                    ;;
-                    "standalone" | "manual" )
-                        print_debug "Enabling Container Mode for: STANDALONE"
-                        echo "ENABLE_STANDALONE=TRUE" >> /tmp/.container/restic_mode/.mode-env
-                    ;;
-                    *)
-                        print_error "Unknown 'MODE' environment variable - exitting.."
-                        exit 1
-                    ;;
-                esac
-            done
-        fi
-        source /tmp/.container/restic_mode/.mode-env
+        mkdir -p /tmp/.container/toi_restic/
+        modes=$(echo "${MODE}" | tr "," "\n")
+        for mode in $modes ; do
+            case "${mode,,}" in
+                "backup" )
+                    print_debug "Enabling Container Mode for: BACKUP"
+                    echo "ENABLE_BACKUP=TRUE" >> /tmp/.container/toi_restic/CONTAINER_MODE
+                ;;
+                "check" )
+                    print_debug "Enabling Container Mode for: CHECK"
+                    echo "ENABLE_CHECK=TRUE" >> /tmp/.container/toi_restic/CONTAINER_MODE
+                ;;
+                "prune" )
+                    print_debug "Enabling Container Mode for: PRUNE"
+                    echo "ENABLE_PRUNE=TRUE" >> /tmp/.container/toi_restic/CONTAINER_MODE
+                ;;
+                "server" )
+                    print_debug "Enabling Container Mode for: SERVER"
+                    echo "ENABLE_SERVER=TRUE" >> /tmp/.container/toi_restic/CONTAINER_MODE
+                ;;
+                "standalone" | "manual" )
+                    print_debug "Enabling Container Mode for: STANDALONE"
+                    echo "ENABLE_STANDALONE=TRUE" >> /tmp/.container/toi_restic/CONTAINER_MODE
+                ;;
+                *)
+                    print_error "Unknown 'MODE' environment variable - exitting.."
+                    exit 1
+                ;;
+            esac
+        done
+        source /tmp/.container/toi_restic/CONTAINER_MODE
     fi
 }
 

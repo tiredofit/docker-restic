@@ -21,7 +21,7 @@ if var_true "${REST_SERVER_ENABLE_METRICS}" ; then
 fi
 
 liftoff
-
+#--log-file "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" \
 case "${SERVER_MODE,,}" in
     rclone )
     print_start "Starting RClone REST repository server ${R_CLONE_VERSION} at ${SERVER_REPOSITORY_PATH}"
@@ -31,14 +31,18 @@ case "${SERVER_MODE,,}" in
                                     ${SERVER_REPOSITORY_PATH} \
                                     --addr "${SERVER_LISTEN_IP}":"${SERVER_LISTEN_PORT}" \
                                     --log-file "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" \
-                                    --log-level "${SERVER_LOG_LEVEL}" ${rclone_args} ${SERVER_ARGS}
-
+                                    --log-format date,time,microseconds \
+                                    --log-level "${SERVER_LOG_LEVEL}" ${rclone_args} ${SERVER_ARGS} \
+                                    --stats-one-line
     ;;
     restic )
+    #--log "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" \
         print_start "Starting Restic REST server ${RESTIC_REST_SERVER_VERSION} at ${SERVER_REPOSITORY_PATH}"
         exec /usr/sbin/rest-server \
                                             --listen "${SERVER_LISTEN_IP}":"${SERVER_LISTEN_PORT}" \
-                                            --log "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" \
-                                            --path "${SERVER_REPOSITORY_PATH}" ${rest_server_args} ${SERVER_ARGS}
+                                            --path "${SERVER_REPOSITORY_PATH}" ${rest_server_args} ${SERVER_ARGS} \
+                                                \
+                                                | silent tee sudo -u restic tee -a "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
+
     ;;
 esac
