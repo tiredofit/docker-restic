@@ -9,6 +9,6 @@ check_service_initialized init
 
 liftoff
 
-print_start "Starting Rclone ${RCLONE_VERSION}"
+print_start "Starting Rclone ${R_CLONE_VERSION}"
 exec /usr/sbin/rclone \
                         ${RCLONE_ARGS}

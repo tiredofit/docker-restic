@@ -51,11 +51,13 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
         if var_false "${ENABLE_NGINX}" ; then
             service_stop 10-nginx
             service_stop 11-nginx-config-reload
+            rm -rf /etc/zabbix/zabbix_agentd.conf.d/nginx.conf
         fi
     else
         service_stop restic-rest-server
         service_stop 10-nginx
         service_stop 11-nginx-config-reload
+        rm -rf /etc/zabbix/zabbix_agentd.conf.d/nginx.conf
     fi
 
     if var_true "${ENABLE_RCLONE}" ; then

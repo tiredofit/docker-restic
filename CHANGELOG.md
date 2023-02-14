@@ -1,3 +1,10 @@
+## 0.11.1 2023-02-14 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add zabbix metrics sending for CHECK and PRUNE
+      - Add DRY_RUN capabilities to CHECK and PRUNE
+
+
 ## 0.11.0 2023-02-13 <dave at tiredofit dot ca>
 
    ### Added

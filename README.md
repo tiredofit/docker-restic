@@ -18,7 +18,7 @@ Features:
 - Cleanup/Snapshot retention support
 - Repository check support (multiple)
 - Repository prune support (multiple)
-- Restic REST Server Included
+- Restic REST Server included
 - RClone included for REST Server functionality/connecting to different backends
 - Multiple repository support
 - Metrics shipping to Zabbix server
