@@ -2,7 +2,7 @@
 
 source /assets/functions/00-container
 PROCESS_NAME="restic-rest-server"
-source /assets/defaults/10-restic
+source /assets/defaults/restic
 
 check_container_initialized
 
@@ -21,7 +21,7 @@ if var_true "${REST_SERVER_ENABLE_METRICS}" ; then
 fi
 
 liftoff
-#--log-file "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" \
+
 case "${SERVER_MODE,,}" in
     rclone )
     print_start "Starting RClone REST repository server ${R_CLONE_VERSION} at ${SERVER_REPOSITORY_PATH}"
