@@ -63,6 +63,9 @@ RUN source assets/functions/00-container && \
     \
     package remove .restic-build-deps && \
     package cleanup && \
-    rm -rf /usr/src/*
+    rm -rf \
+           /root/.cache \
+           /root/go \
+           /usr/src/*
 
 COPY install /

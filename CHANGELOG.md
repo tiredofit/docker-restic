@@ -1,3 +1,9 @@
+## 0.12.1 2023-02-15 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Reduce image size drastically by deleting build cache
+
+
 ## 0.12.0 2023-02-15 <dave at tiredofit dot ca>
 
    ### Added
