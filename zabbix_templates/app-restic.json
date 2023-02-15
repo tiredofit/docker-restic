@@ -1,7 +1,7 @@
 {
     "zabbix_export": {
         "version": "6.2",
-        "date": "2023-02-14T22:05:17Z",
+        "date": "2023-02-15T22:22:26Z",
         "template_groups": [
             {
                 "uuid": "3500ba09d0534297840ca620c9dd46bf",
@@ -197,27 +197,51 @@
                                         "uuid": "e6b41326cab742ce920b45545f8b1a69",
                                         "expression": "nodata(/Restic/restic.backup.start_date.[{#NAME}],2d)=1",
                                         "name": "[{#NAME}] No backups detected in 2 days",
-                                        "priority": "AVERAGE",
-                                        "manual_close": "YES"
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "bc54d2fa965e4a6c8fbcb1264635b4f6",
                                         "expression": "nodata(/Restic/restic.backup.start_date.[{#NAME}],3d)=1",
                                         "name": "[{#NAME}] No backups detected in 3 days",
-                                        "priority": "AVERAGE"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "fd66288606514cce9dfca5f2cf55eeaa",
                                         "expression": "nodata(/Restic/restic.backup.start_date.[{#NAME}],4d)=1",
                                         "name": "[{#NAME}] No backups detected in 4 days",
-                                        "priority": "HIGH",
-                                        "manual_close": "YES"
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "98f2de17a15c4fff9cb6c83ee40bc0ce",
                                         "expression": "nodata(/Restic/restic.backup.start_date.[{#NAME}],5d)=1",
                                         "name": "[{#NAME}] No backups detected in 5 days",
-                                        "priority": "HIGH"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     }
                                 ]
                             },
@@ -230,7 +254,7 @@
                                 "history": "7d",
                                 "description": "Maps exit codes output by Restic Backup procedure",
                                 "valuemap": {
-                                    "name": "Backup Exit Code"
+                                    "name": "Restic Exit Code"
                                 },
                                 "tags": [
                                     {
@@ -243,35 +267,65 @@
                                         "uuid": "14c4264d682f47b381e5775baeeebf7e",
                                         "expression": "last(/Restic/restic.backup.status.[{#NAME}])=130",
                                         "name": "[{#NAME}] Backup - Cancelled",
-                                        "priority": "WARNING",
-                                        "manual_close": "YES"
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "e4e9626728f64d6ca614f3347da3ab2a",
                                         "expression": "last(/Restic/restic.backup.status.[{#NAME}])=2",
                                         "name": "[{#NAME}] Backup - Failed (2)",
-                                        "priority": "WARNING",
-                                        "manual_close": "YES"
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "b3be0f7bb9394c87bf0fec83ce4e4444",
                                         "expression": "last(/Restic/restic.backup.status.[{#NAME}])=1",
                                         "name": "[{#NAME}] Backup - Failed Completely",
-                                        "priority": "HIGH",
-                                        "manual_close": "YES"
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "12b0f3c6e5954e8195c5217e19c41025",
                                         "expression": "last(/Restic/restic.backup.status.[{#NAME}])=3",
                                         "name": "[{#NAME}] Backup - Failed with errors",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "1340200a94c74988a768248aed1e8749",
                                         "expression": "(last(/Restic/restic.backup.status.[{#NAME}])>=4 and last(/Restic/restic.backup.status.[{#NAME}])<=129) or last(/Restic/restic.backup.status.[{#NAME}])>=131",
                                         "name": "[{#NAME}] Backup - Unknown Error",
-                                        "priority": "WARNING",
-                                        "manual_close": "YES"
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -408,7 +462,7 @@
                             },
                             {
                                 "uuid": "5c1785391f394afda66877e283725b7c",
-                                "name": "[{#NAME}] Last Check Date",
+                                "name": "[{#NAME}] Check - Last Date",
                                 "type": "TRAP",
                                 "key": "restic.check.start_date.[{#NAME}]",
                                 "delay": "0",
@@ -419,72 +473,124 @@
                                         "uuid": "fb560a7a00a34c328e333773e1206638",
                                         "expression": "nodata(/Restic/restic.check.start_date.[{#NAME}],2d)=1",
                                         "name": "[{#NAME}] No check detected in 2 days",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "8d373fcbe6f44cc49cf2fe5bb3c1b18d",
                                         "expression": "nodata(/Restic/restic.check.start_date.[{#NAME}],3d)=1",
                                         "name": "[{#NAME}] No check detected in 3 days",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "f5fbc53f2848425192cf73ac22d07fea",
                                         "expression": "nodata(/Restic/restic.check.start_date.[{#NAME}],4d)=1",
                                         "name": "[{#NAME}] No check detected in 4 days",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "804833632261491aafe6c452b91ab37d",
                                         "expression": "nodata(/Restic/restic.check.start_date.[{#NAME}],5d)=1",
                                         "name": "[{#NAME}] No check detected in 5 days",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     }
                                 ]
                             },
                             {
                                 "uuid": "a29535acf0844fe1ac56a25d1e5dd412",
-                                "name": "[{#NAME}] Last Check Status",
+                                "name": "[{#NAME}] Check - Last Status",
                                 "type": "TRAP",
                                 "key": "restic.check.status.[{#NAME}]",
                                 "delay": "0",
                                 "history": "7d",
                                 "description": "Maps exit codes output by Restic Check procedure",
                                 "valuemap": {
-                                    "name": "Backup Exit Code"
+                                    "name": "Restic Exit Code"
                                 },
                                 "trigger_prototypes": [
                                     {
                                         "uuid": "a65007ba00ba41e4b433843bfaa2ceb7",
                                         "expression": "last(/Restic/restic.check.status.[{#NAME}])=130",
                                         "name": "[{#NAME}] Check - Cancelled",
-                                        "priority": "WARNING",
-                                        "manual_close": "YES"
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "d96ad6803d2c4ce08bec8564a7f03940",
                                         "expression": "last(/Restic/restic.check.status.[{#NAME}])=2",
-                                        "name": "[{#NAME}] Check - Failed (2)"
+                                        "name": "[{#NAME}] Check - Failed (2)",
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "e3033771054b489d9bf64032b852ed69",
                                         "expression": "last(/Restic/restic.check.status.[{#NAME}])=1",
-                                        "name": "[{#NAME}] Check - Failed Completely"
+                                        "name": "[{#NAME}] Check - Failed Completely",
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "38de166f3839469982faf3d0723377ae",
                                         "expression": "last(/Restic/restic.check.status.[{#NAME}])=3",
-                                        "name": "[{#NAME}] Check - Failed with errors"
+                                        "name": "[{#NAME}] Check - Failed with errors",
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "0a49fb717f0e4fecb919723e2e49c611",
                                         "expression": "(last(/Restic/restic.check.status.[{#NAME}])>=4 and last(/Restic/restic.check.status.[{#NAME}])<=129) or last(/Restic/restic.check.status.[{#NAME}])>=131",
-                                        "name": "[{#NAME}] Check - Unknown Error"
-                                    },
-                                    {
-                                        "uuid": "5fd18ac4f81e4b618cc0e6bf647be4d8",
-                                        "expression": "(last(/Restic/restic.check.status.[{#NAME}])>=4 and last(/Restic/restic.check.status.[{#NAME}])<=129) or last(/Restic/restic.check.status.[{#NAME}])>=131",
-                                        "name": "[{#NAME}] Prune - Unknown Error",
-                                        "priority": "AVERAGE"
+                                        "name": "[{#NAME}] Check - Unknown Error",
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -507,6 +613,178 @@
                         ]
                     },
                     {
+                        "uuid": "7ca97a90dff2447aae4e78a898891523",
+                        "name": "Cleanup",
+                        "type": "TRAP",
+                        "key": "restic.cleanup",
+                        "delay": "0",
+                        "item_prototypes": [
+                            {
+                                "uuid": "6221c25cafd64e5cb7d8cb09a1ec72c7",
+                                "name": "[{#NAME}] Cleanup Duration",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.duration.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d",
+                                "units": "uptime",
+                                "description": "How long the cleanup procedure took."
+                            },
+                            {
+                                "uuid": "a14166c74e424892bf572e07c2e70714",
+                                "name": "[{#NAME}] Cleanup - Last Date",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.start_date.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d",
+                                "units": "unixtime",
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "0010711e610d498ba97b248bf3659aae",
+                                        "expression": "nodata(/Restic/restic.cleanup.start_date.[{#NAME}],2d)=1",
+                                        "name": "[{#NAME}] No cleanup detected in 2 days",
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "1ce6a9c83bf844219cf5cad75e2eb9b9",
+                                        "expression": "nodata(/Restic/restic.cleanup.start_date.[{#NAME}],3d)=1",
+                                        "name": "[{#NAME}] No cleanup detected in 3 days",
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "2e60613dbe9f479c81d007edd0678c7d",
+                                        "expression": "nodata(/Restic/restic.cleanup.start_date.[{#NAME}],4d)=1",
+                                        "name": "[{#NAME}] No cleanup detected in 4 days",
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "98fcf9922ec8434d97e1f676441c8a00",
+                                        "expression": "nodata(/Restic/restic.cleanup.start_date.[{#NAME}],5d)=1",
+                                        "name": "[{#NAME}] No cleanup detected in 5 days",
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "492884bb140d4a48881a6c763046ad45",
+                                "name": "[{#NAME}] Cleanup - Last Status",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.status.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d",
+                                "description": "Maps exit codes output by Restic Cleanup procedure",
+                                "valuemap": {
+                                    "name": "Restic Exit Code"
+                                },
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "460577490a474c47ac9007d2055f0deb",
+                                        "expression": "last(/Restic/restic.cleanup.status.[{#NAME}])=130",
+                                        "name": "[{#NAME}] Cleanup - Cancelled",
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "9610d81973c44cebafc06606e6f2f011",
+                                        "expression": "last(/Restic/restic.cleanup.status.[{#NAME}])=2",
+                                        "name": "[{#NAME}] Cleanup - Failed (2)",
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "d80e906f17b0403d924be7abc44aff1b",
+                                        "expression": "last(/Restic/restic.cleanup.status.[{#NAME}])=1",
+                                        "name": "[{#NAME}] Cleanup - Failed Completely",
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "3256fcbad3e84578991091d4b56fa011",
+                                        "expression": "last(/Restic/restic.cleanup.status.[{#NAME}])=3",
+                                        "name": "[{#NAME}] Cleanup - Failed with errors",
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "30f1f84453d24368bffd712d6781c5a4",
+                                        "expression": "(last(/Restic/restic.cleanup.status.[{#NAME}])>=4 and last(/Restic/restic.cleanup.status.[{#NAME}])<=129) or last(/Restic/restic.cleanup.status.[{#NAME}])>=131",
+                                        "name": "[{#NAME}] Cleanup - Unknown Error",
+                                        "priority": "INFO",
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "graph_prototypes": [
+                            {
+                                "uuid": "3417a956000b4111bea7e93c452bc39a",
+                                "name": "[{$NAME}] Cleanup Duration",
+                                "graph_items": [
+                                    {
+                                        "color": "199C0D",
+                                        "calc_fnc": "ALL",
+                                        "item": {
+                                            "host": "Restic",
+                                            "key": "restic.cleanup.duration.[{#NAME}]"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
                         "uuid": "736fba7ff7254855b341b7985e498c9e",
                         "name": "Prune",
                         "type": "TRAP",
@@ -515,7 +793,7 @@
                         "item_prototypes": [
                             {
                                 "uuid": "1c538a3c17514601ba7df361720abfcd",
-                                "name": "[{#NAME}] Prune Duration",
+                                "name": "[{#NAME}] Prune - Duration",
                                 "type": "TRAP",
                                 "key": "restic.prune.duration.[{#NAME}]",
                                 "delay": "0",
@@ -525,7 +803,7 @@
                             },
                             {
                                 "uuid": "12289e26393445329d9a35b7ca002deb",
-                                "name": "[{#NAME}] Last Prune Date",
+                                "name": "[{#NAME}] Prune - Last Date",
                                 "type": "TRAP",
                                 "key": "restic.prune.start_date.[{#NAME}]",
                                 "delay": "0",
@@ -536,69 +814,123 @@
                                         "uuid": "49a49d1088b442d7a936443413218cd4",
                                         "expression": "nodata(/Restic/restic.prune.start_date.[{#NAME}],2d)=1",
                                         "name": "[{#NAME}] No prune detected in 2 days",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "6d6c4822b6bf4e74b7d61d34ffa38368",
                                         "expression": "nodata(/Restic/restic.prune.start_date.[{#NAME}],3d)=1",
                                         "name": "[{#NAME}] No prune detected in 3 days",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "9ea5bf038da746dabe1825530081d55c",
                                         "expression": "nodata(/Restic/restic.prune.start_date.[{#NAME}],4d)=1",
                                         "name": "[{#NAME}] No prune detected in 4 days",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "ba50dbb5852c466ab92eb3df3056389e",
                                         "expression": "nodata(/Restic/restic.prune.start_date.[{#NAME}],5d)=1",
                                         "name": "[{#NAME}] No prune detected in 5 days",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     }
                                 ]
                             },
                             {
                                 "uuid": "41120a45b1e74ea9988f73986ed3a759",
-                                "name": "[{#NAME}] Last Prune Status",
+                                "name": "[{#NAME}] Prune - Last Status",
                                 "type": "TRAP",
                                 "key": "restic.prune.status.[{#NAME}]",
                                 "delay": "0",
                                 "history": "7d",
                                 "description": "Maps exit codes output by Restic Prune procedure",
                                 "valuemap": {
-                                    "name": "Backup Exit Code"
+                                    "name": "Restic Exit Code"
                                 },
                                 "trigger_prototypes": [
                                     {
                                         "uuid": "1f0f4fe517d547ffa779dec193b9eaf3",
                                         "expression": "last(/Restic/restic.prune.status.[{#NAME}])=130",
                                         "name": "[{#NAME}] Prune - Cancelled",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "dabaf8e173414e78b51ade288027f90b",
                                         "expression": "last(/Restic/restic.prune.status.[{#NAME}])=2",
                                         "name": "[{#NAME}] Prune - Failed (2)",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "65942e712d37440bb68b2d990dea3558",
                                         "expression": "last(/Restic/restic.prune.status.[{#NAME}])=1",
                                         "name": "[{#NAME}] Prune - Failed Completely",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "c13e0531edbc43869a1b08a6e2ccc96f",
                                         "expression": "last(/Restic/restic.prune.status.[{#NAME}])=3",
                                         "name": "[{#NAME}] Prune - Failed with errors",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     },
                                     {
                                         "uuid": "127a7b82fc074791b327f69e6c4909fd",
                                         "expression": "(last(/Restic/restic.prune.status.[{#NAME}])>=4 and last(/Restic/restic.prune.status.[{#NAME}])<=129) or last(/Restic/restic.prune.status.[{#NAME}])>=131",
                                         "name": "[{#NAME}] Prune - Unknown Error",
-                                        "priority": "WARNING"
+                                        "priority": "INFO",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic"
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -621,10 +953,86 @@
                         ]
                     }
                 ],
+                "dashboards": [
+                    {
+                        "uuid": "3b0da4ce4e114fee865738df55600251",
+                        "name": "New dashboard",
+                        "pages": [
+                            {
+                                "name": "Backup",
+                                "widgets": [
+                                    {
+                                        "type": "GRAPH_PROTOTYPE",
+                                        "width": "16",
+                                        "height": "5",
+                                        "fields": [
+                                            {
+                                                "type": "GRAPH_PROTOTYPE",
+                                                "name": "graphid",
+                                                "value": {
+                                                    "host": "Restic",
+                                                    "name": "[{#NAME}] Backup - Directories"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "GRAPH_PROTOTYPE",
+                                        "y": "5",
+                                        "width": "16",
+                                        "height": "4",
+                                        "fields": [
+                                            {
+                                                "type": "GRAPH_PROTOTYPE",
+                                                "name": "graphid",
+                                                "value": {
+                                                    "host": "Restic",
+                                                    "name": "[{#NAME}] Backup - Files"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "GRAPH_PROTOTYPE",
+                                        "y": "9",
+                                        "width": "16",
+                                        "height": "5",
+                                        "fields": [
+                                            {
+                                                "type": "GRAPH_PROTOTYPE",
+                                                "name": "graphid",
+                                                "value": {
+                                                    "host": "Restic",
+                                                    "name": "[{#NAME}] Backup: Size"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "GRAPH_PROTOTYPE",
+                                        "y": "14",
+                                        "width": "16",
+                                        "height": "5",
+                                        "fields": [
+                                            {
+                                                "type": "GRAPH_PROTOTYPE",
+                                                "name": "graphid",
+                                                "value": {
+                                                    "host": "Restic",
+                                                    "name": "[{#NAME}] Backup Duration"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
                 "valuemaps": [
                     {
                         "uuid": "aebad593396f456780779d9ab86485fd",
-                        "name": "Backup Exit Code",
+                        "name": "Restic Exit Code",
                         "mappings": [
                             {
                                 "value": "0",

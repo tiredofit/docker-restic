@@ -2,7 +2,7 @@
 
 source /assets/functions/00-container
 PROCESS_NAME="restic-rest-server"
-source /assets/defaults/restic
+source /assets/defaults/20-restic
 
 check_container_initialized
 

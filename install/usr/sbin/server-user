@@ -1,7 +1,7 @@
 #!/command/with-contenv bash
 
 source /assets/functions/00-container
-source /assets/defaults/10-restic
+source /assets/defaults/20-restic
 PROCESS_NAME="server-user"
 
 display_usage() {

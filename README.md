@@ -49,6 +49,9 @@ Features:
     - [Check Options](#check-options)
       - [Default Check Options](#default-check-options)
       - [Job Check Options](#job-check-options)
+    - [Cleanup Options](#cleanup-options)
+      - [Default Cleanup Options](#default-cleanup-options)
+      - [Job Cleanup Options](#job-cleanup-options)
     - [Prune Options](#prune-options)
       - [Default Prune Options](#default-prune-options)
     - [Server Options](#server-options)
@@ -123,58 +126,55 @@ Be sure to view the following repositories to understand all the customizable op
 
 #### Container Options
 
-| Variable              | Description                                         | Default    |
-| --------------------- | --------------------------------------------------- | ---------- |
-| `MODE`                | Run multiple modes by seperating with comma:        |            |
-|                       | `BACKUP` filesystem                                 |            |
-|                       | `CHECK` repository - See options below              |            |
-|                       | `PRUNE` repository - See options below              |            |
-|                       | `RCLONE` Run a copy of RClone                       |            |
-|                       | `SERVER` REST repository access - see options below |            |
-|                       | `STANDALONE` (Do nothing, just run container)       |            |
-| `CONFIG_PATH`         | Configuration files for Server                      | `/config/` |
-| `LOG_PATH`            | Log file path                                       | `/logs/`   |
-| `LOG_TYPE`            | `FILE` only at this time                            | `FILE`     |
-| `PROCESS_CONCURRENCY` | How many restic processes can run at once           | `2`        |
-| `SETUP_MODE`          | `AUTO` only at this time                            | `AUTO`     |
+| Variable      | Description                                         | Default    |
+| ------------- | --------------------------------------------------- | ---------- |
+| `MODE`        | Run multiple modes by seperating with comma:        |            |
+|               | `BACKUP` filesystem                                 |            |
+|               | `CHECK` repository - See options below              |            |
+|               | `CLEANUP` repository - See options below            |            |
+|               | `PRUNE` repository - See options below              |            |
+|               | `RCLONE` Run a copy of RClone                       |            |
+|               | `SERVER` REST repository access - see options below |            |
+|               | `STANDALONE` (Do nothing, just run container)       |            |
+| `CONFIG_PATH` | Configuration files for Server                      | `/config/` |
+| `LOG_PATH`    | Log file path                                       | `/logs/`   |
+| `LOG_TYPE`    | `FILE` only at this time                            | `FILE`     |
+| `SETUP_MODE`  | `AUTO` only at this time                            | `AUTO`     |
 
 
 #### Job Defaults
-If these are set and no other defaults or variables are set explicitly, they will be added to any of the `BACKUP`, `CHECK`, of `PRUNE` jobs.
+If these are set and no other defaults or variables are set explicitly, they will be added to any of the `BACKUP`, `CHECK`, `CLEANUP` or `PRUNE` jobs.
 
-| Variable                         | Description                                                                    |
-| -------------------------------- | ------------------------------------------------------------------------------ |
-| `DEFAULT_REPOSITORY_PATH`        | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |
-| `DEFAULT_REPOSITORY_PASS`        | Encryption Key for repository eg `secretpassword`                              |
-| `DEFAULT_UNLOCK_VERBOSITY_LEVEL` | Verbosity level of logs - Best not to change this.                             | `2` |
+| Variable                         | Description                                                                    | Default |
+| -------------------------------- | ------------------------------------------------------------------------------ | ------- |
+| `DEFAULT_REPOSITORY_PATH`        | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         |
+| `DEFAULT_REPOSITORY_PASS`        | Encryption Key for repository eg `secretpassword`                              |         |
+| `DEFAULT_UNLOCK_VERBOSITY_LEVEL` | Verbosity level of logs should an unlock exist - Best not to change this.      | `2`     |
 
 #### Backup Options
+
+This allows restic to take periodical snapshots to your repository.
+Multiple Backup Jobs can be scheduled at once. Be careful not so schedule jobs so that they bump up against `CHECK`, `CLEANUP`, or `PRUNE` jobs.
+
 ##### Default Backup Options
 
 If set, these variables will be passed to each backup job, unless each job explicitly sets otherwise.
 
-| Variable | Description | Default |
-| -------- | ----------- | ------- |
+| Variable                                  | Description                                                                          | Default |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ | ------- |
+| `BACKUP_JOB_CONCURRENCY`                  | How many restic backup processes can run at once                                     | `2`     |
+| `DEFAULT_BACKUP_ENABLE_CLEANUP`           | Enable cleanup operations post successful backup job                                 | `TRUE`  |
+| `DEFAULT_BACKUP_REPOSITORY_PATH`          | Path of repository eg `/repository` or `rest:user:password@http://rest.server`       |         |
+| `DEFAULT_BACKUP_REPOSITORY_PASS`          | Encryption Key for repository eg `secretpassword`                                    |         |
+| `DEFAULT_BACKUP_SNAPSHOT_ARGS`            | Arguments to pass to Restic Backup command line                                      |         |
+| `DEFAULT_BACKUP_SNAPSHOT_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                |         |
+| `DEFAULT_BACKUP_SNAPSHOT_EXCLUDE`         | Comma seperated list of files or paths to exclude from backup eg `.snapshots,.cache` |         |
+| `DEFAULT_BACKUP_SNAPSHOT_EXCLUDE_FILE`    | Line seperated list of files or directories to exclude                               |         |
+| `DEFAULT_BACKUP_SNAPSHOT_PATH`            | Folder or file to backup eg `/etc`                                                   |         |
+| `DEFAULT_BACKUP_SNAPSHOT_PATH_FILE`       | Line seperated list of files or directories to backup                                |         |
+| `DEFAULT_BACKUP_SNAPSHOT_TAGS`            | Comma seperated list of tags to attach to snapshot                                   |         |
+| `DEFAULT_BACKUP_SNAPSHOT_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                            | `2`     |
 
-| `DEFAULT_BACKUP_CLEANUP_ARGS`                   | Arguments to pass to Restic Backup cleanup command line                                | |
-| `DEFAULT_BACKUP_CLEANUP_DRY_RUN`  | Don't actually do anything, just emulate the procedure `TRUE` `FALSE` | |
-| `DEFAULT_BACKUP_CLEANUP_RETAIN_LATEST`  | How many latest backups to retain eg `3`                                       | |
-| `DEFAULT_BACKUP_CLEANUP_RETAIN_HOURLY`  | How many latest hourly backups to retain eg `24`                               | |
-| `DEFAULT_BACKUP_CLEANUP_RETAIN_DAILY`   | How many daily backups to retain eg `7`                                        | |
-| `DEFAULT_BACKUP_CLEANUP_RETAIN_WEEKLY`  | How many weekly backups to retain eg `5`                                       | |
-| `DEFAULT_BACKUP_CLEANUP_RETAIN_MONTHLY` | How many monthly backups to retain eg `18`                                     | |
-| `DEFAULT_BACKUP_CLEANUP_RETAIN_YEARLY`  | How many yearly backups to retrain eg `10`                                     | |
-| `DEFAULT_BACKUP_CLEANUP_VERBOSITY_LEVEL` | Cleanup operations log verbosity - Best not to change this | `2` |
-| `DEFAULT_BACKUP_ENABLE_CLEANUP`         | Enable cleanup operations post successful backup job                           | `TRUE` |
-| `DEFAULT_BACKUP_REPOSITORY_PATH`        | Path of repository eg `/repository` or `rest:user:password@http://rest.server` | |
-| `DEFAULT_BACKUP_REPOSITORY_PASS`        | Encryption Key for repository eg `secretpassword`                              | |
-| `DEFAULT_BACKUP_SNAPSHOT_ARGS`                   | Arguments to pass to Restic Backup command line                                | |
-| `DEFAULT_BACKUP_SNAPSHOT_DRY_RUN`  | Don't actually do anything, just emulate the procedure `TRUE` `FALSE` | |
-| `DEFAULT_BACKUP_SNAPSHOT_EXCLUDE`        | Comma seperated list of files or paths to exclude from backup eg `.snapshots,.cache`                                                           |
-| `DEFAULT_BACKUP_SNAPSHOT_EXCLUDE_FILE`   | Line seperated list of files or directories to exclude                                                                                         |
-| `DEFAULT_BACKUP_SNAPSHOT_PATH`        | Folder or file to backup eg `/etc`                                                           |
-| `DEFAULT_BACKUP_SNAPSHOT_PATH_FILE`   | Line seperated list of files or directories to backup                                                                                         |
-| `DEFAULT_BACKUP_SNAPSHOT_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this | `2` |
 
 ##### Job Backup Options
 
@@ -182,49 +182,54 @@ If `DEFAULT_BACKUP_` variables are set and you do not wish for the settings to c
 Additional backup jobs can be scheduled by using `BACKUP02_`,`BACKUP03_`,`BACKUP04_` ... prefixes.
 
 
-| Variable                           | Description                                                                                                                                    |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BACKUP01_ARGS`                    | Arguments to pass to Restic Backup command line                                                                                                |
-| `BACKUP01_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |     |
-| `BACKUP01_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                                       |     |
-| `BACKUP01_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                               |     |
-| `BACKUP01_CLEANUP_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                                        |     |
-| `BACKUP01_CLEANUP_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                                       |     |
-| `BACKUP01_CLEANUP_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                                     |     |
-| `BACKUP01_CLEANUP_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                                     |     |
-| `BACKUP01_CLEANUP_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2` |
-| `BACKUP01_ENABLE_CLEANUP`          | Enable Cleanup of old backups after successful backup                                                                                          |
-| `BACKUP01_REPOSITORY_PATH`         | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |
-| `BACKUP01_REPOSITORY_PASS`         | Encryption Key for repository eg `secretpassword`                                                                                              |
-| `BACKUP01_SNAPSHOT_BEGIN`          | What time to do the first snapshot. Defaults to immediate. Must be in one of two formats                                                       |
-|                                    | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |
-|                                    | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |
-| `BACKUP01_SNAPSHOT_DRY_RUN`        | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |     |
-| `BACKUP01_SNAPSHOT_INTERVAL`       | Frequency after first execution of firing backup routines again in                                                                             |
-| `BACKUP01_SNAPSHOT_NAME`           | A friendly name to reference your snapshot job eg home, or var_local                                                                           |
-| `BACKUP01_SNAPSHOT_PATH`           | The path to backup from your filesystem eg `/rootfs/home`                                                                                      |
-| `BACKUP01_SNAPSHOT_EXCLUDE`        | Comma seperated list of files or paths to exclude from backup eg `.snapshots,.cache`                                                           |
-| `BACKUP01_SNAPSHOT_EXCLUDE_FILE`   | Line seperated list of files or directories to exclude                                                                                         |
-| `BACKUP01_SNAPSHOT_PATH`           | Folder or file to backup eg `/etc`                                                                                                             |
-| `BACKUP01-_SNAPSHOT_PATH_FILE`     | Line seperated list of files or directories to backup                                                                                          |
-| `BACKUP01_VERBOSITY_LEVEL`         | Backup operations log verbosity - Best not to change this                                                                                      | `2` |
-
+| Variable                            | Description                                                                                                                                    | Default |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `BACKUP01_ARGS`                     | Arguments to pass to Restic Backup command line                                                                                                |         |
+| `BACKUP01_CLEANUP_DRY_RUN`          | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |
+| `BACKUP01_CLEANUP_RETAIN_LATEST`    | How many latest backups to retain eg `3`                                                                                                       |         |
+| `BACKUP01_CLEANUP_RETAIN_HOURLY`    | How many latest hourly backups to retain eg `24`                                                                                               |         |
+| `BACKUP01_CLEANUP_RETAIN_DAILY`     | How many daily backups to retain eg `7`                                                                                                        |         |
+| `BACKUP01_CLEANUP_RETAIN_WEEKLY`    | How many weekly backups to retain eg `5`                                                                                                       |         |
+| `BACKUP01_CLEANUP_RETAIN_MONTHLY`   | How many monthly backups to retain eg `18`                                                                                                     |         |
+| `BACKUP01_CLEANUP_RETAIN_YEARLY`    | How many yearly backups to retrain eg `10`                                                                                                     |         |
+| `BACKUP01_CLEANUP_VERBOSITY_LEVEL`  | Backup operations log verbosity - Best not to change this                                                                                      | `2`     |
+| `BACKUP01_ENABLE_CLEANUP`           | Enable Cleanup of old backups after successful backup                                                                                          |         |
+| `BACKUP01_SNAPSHOT_NAME`            | A friendly name to reference your backup snapshot job eg `var_local`                                                                           |         |
+| `BACKUP01_REPOSITORY_PATH`          | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         |
+| `BACKUP01_REPOSITORY_PASS`          | Encryption Key for repository eg `secretpassword`                                                                                              |         |
+| `BACKUP01_SNAPSHOT_BEGIN`           | What time to do the first snapshot. Defaults to immediate. Must be in one of two formats                                                       |         |
+|                                     | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
+|                                     | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
+| `BACKUP01_SNAPSHOT_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |
+| `BACKUP01_SNAPSHOT_INTERVAL`        | Frequency after first execution of firing backup routines again in                                                                             |         |
+| `BACKUP01_SNAPSHOT_NAME`            | A friendly name to reference your snapshot job eg home, or var_local                                                                           |         |
+| `BACKUP01_SNAPSHOT_PATH`            | The path to backup from your filesystem eg `/rootfs/home`                                                                                      |         |
+| `BACKUP01_SNAPSHOT_EXCLUDE`         | Comma seperated list of files or paths to exclude from backup eg `.snapshots,.cache`                                                           |         |
+| `BACKUP01_SNAPSHOT_EXCLUDE_FILE`    | Line seperated list of files or directories to exclude                                                                                         |         |
+| `BACKUP01_SNAPSHOT_PATH`            | Folder or file to backup eg `/etc`                                                                                                             |         |
+| `BACKUP01_SNAPSHOT_PATH_FILE`       | Line seperated list of files or directories to backup                                                                                          |         |
+| `BACKUP01_SNAPSHOT_TAGS`            | Comma seperated list of tags to attach to snapshot                                                                                             |         |
+| `BACKUP01_SNAPSHOT_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`     |
 
 
 #### Check Options
+
+This allows restic to check your repository for errors. There is functionality to check minimally, a subset of the fata, or all data.
+A Check job requires exlcusive access to the Restic Repository, therefore no other jobs should be running on them at any time.
+
 ##### Default Check Options
 
 If set, these variables will be passed to each prune job, unless each job explicitly sets otherwise.
 
-| Variable                        | Description                                                                    |
-| ------------------------------- | ------------------------------------------------------------------------------ |
-| `DEFAULT_CHECK_AMOUNT`          | Amount of repository to check                                                  |
-| `DEFAULT_CHECK_ARGS`            | Arguments to pass to Restic Check command line                                 |
-| `DEFAULT_CHECK_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`          |     |
-| `DEFAULT_CHECK_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |
-| `DEFAULT_CHECK_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |
-| `DEFAULT_CHECK_USE_CACHE`       | Use cache                                                                      |
-| `DEFAULT_CHECK_VERBOSITY_LEVEL` | Check operations log verbosity - Best not to change this                       | `2` |
+| Variable                        | Description                                                                    | Default |
+| ------------------------------- | ------------------------------------------------------------------------------ | ------- |
+| `DEFAULT_CHECK_AMOUNT`          | Amount of repository to check                                                  |         |
+| `DEFAULT_CHECK_ARGS`            | Arguments to pass to Restic Check command line                                 |         |
+| `DEFAULT_CHECK_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`          |         |
+| `DEFAULT_CHECK_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         |
+| `DEFAULT_CHECK_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |         |
+| `DEFAULT_CHECK_USE_CACHE`       | Use cache                                                                      |         |
+| `DEFAULT_CHECK_VERBOSITY_LEVEL` | Check operations log verbosity - Best not to change this                       | `2`     |
 
 
 ##### Job Check Options
@@ -233,50 +238,109 @@ If `DEFAULT_CHECK_` variables are set and you do not wish for the settings to ca
 Additional check jobs can be scheduled by using `CHECK02_`,`CHECK03_`,`CHECK04_` ... prefixes.
 
 
-| Variable                  | Description                                                                                                                                    |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CHECK01_AMOUNT`          | Amount of repository to check                                                                                                                  |
-| `CHECK01_ARGS`            | Arguments to pass to Restic check command line                                                                                                 |
-| `CHECK01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |     |
-| `CHECK01_BEGIN`           | What time to do the first check. Defaults to immediate. Must be in one of two formats                                                          |
-|                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |
-|                           | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |
-| `CHECK01_INTERVAL`        | Frequency after first execution of firing check routines again in minutes                                                                      |
-| `CHECK01_NAME`            | A friendly name to reference your check snapshot job eg `consistency_check`                                                                    |
-| `CHECK01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |
-| `CHECK01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |
-| `CHECK01_USE_CACHE`       | Use cache                                                                                                                                      |
-| `CHECK01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2` |
+| Variable                  | Description                                                                                                                                    | Default |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `CHECK01_AMOUNT`          | Amount of repository to check (Read Data)                                                                                                      |         |
+| `CHECK01_ARGS`            | Arguments to pass to Restic check command line                                                                                                 |         |
+| `CHECK01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |
+| `CHECK01_BEGIN`           | What time to do the first check. Defaults to immediate. Must be in one of two formats                                                          |         |
+|                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
+|                           | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
+| `CHECK01_INTERVAL`        | Frequency after first execution of firing check routines again in minutes                                                                      |         |
+| `CHECK01_NAME`            | A friendly name to reference your check snapshot job eg `consistency_check`                                                                    |         |
+| `CHECK01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         |
+| `CHECK01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         |
+| `CHECK01_USE_CACHE`       | Use cache                                                                                                                                      |         |
+| `CHECK01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`     |
+
+#### Cleanup Options
+
+This allows restic to cleanup old backups from your repository, only retaining snapshots that have a certain criteria.
+By default this does not actually delete the files from your repository, only the snapshot references. You can run a seperate `PRUNE` job, or use the included `AUTO_PRUNE` environment variable.
+A Cleanup job requires exlcusive access to the Restic Repository, therefore no other jobs should be running on them at any time.
+
+##### Default Cleanup Options
+
+If set, these variables will be passed to each cleanup job, unless each job explicitly sets otherwise.
+
+| Variable                          | Description                                                                                                               | Default |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `DEFAULT_CLEANUP_ARGS`            | Arguments to pass to Restic cleanup command line                                                                          |         |
+| `DEFAULT_CLEANUP_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                         |         |
+| `DEFAULT_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                     |         |
+| `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data |         |
+| `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                  |         |
+| `DEFAULT_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                          |         |
+| `DEFAULT_CLEANUP_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                   |         |
+| `DEFAULT_CLEANUP_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                  |         |
+| `DEFAULT_CLEANUP_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                |         |
+| `DEFAULT_CLEANUP_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                |         |
+| `DEFAULT_CLEANUP_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                           |         |
+| `DEFAULT_CLEANUP_VERBOSITY_LEVEL` | Cleanup operations log verbosity - Best not to change this                                                                | `2`     |
+| `DEFAULT_CLEANUP_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                            |         |
+| `DEFAULT_CLEANUP_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                         |         |
+
+##### Job Cleanup Options
+
+If `DEFAULT_CLEANUP_` variables are set and you do not wish for the settings to carry over into your jobs, you can set the appropriate environment variable with the value of `unset`.
+Additional backup jobs can be scheduled by using `CLEANUP02_`,`CLEANUP03_`,`CLEANUP04_` ... prefixes.
+
+| Variable                    | Description                                                                                                                                    | Default |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `CLEANUP01_ARGS`            | Arguments to pass to Restic Cleanup command line                                                                                               |         |
+| `CLEANUP01_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                                              |         |
+| `CLEANUP01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |
+| `CLEANUP01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |         |
+|                             | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
+|                             | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
+| `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
+| `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |         |
+| `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data                      |         |
+| `CLEANUP01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         |
+| `CLEANUP01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         |
+| `CLEANUP01_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                                       |         |
+| `CLEANUP01_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                               |         |
+| `CLEANUP01_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                                        |         |
+| `CLEANUP01_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                                       |         |
+| `CLEANUP01_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                                     |         |
+| `CLEANUP01_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                                     |         |
+| `CLEANUP01_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                                |         |
+| `CLEANUP01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`     |
+
 
 #### Prune Options
+
+This allows restic to delete from the repository filesystem the snapshots that have been marked as "cleaned up".
+A Prune job requires exlcusive access to the Restic Repository, therefore no other jobs should be running on them at any time.
+
 ##### Default Prune Options
 
 If set, these variables will be passed to each prune job, unless each job explicitly sets otherwise.
 
-| Variable                        | Description                                                                    |
-| ------------------------------- | ------------------------------------------------------------------------------ |
-| `DEFAULT_PRUNE_ARGS`            | Arguments to pass to Restic Prune command line                                 |
-| `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`          |     |
-| `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |
-| `DEFAULT_PRUNE_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |
-| `DEFAULT_PRUNE_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                       | `2` |
+| Variable                        | Description                                                                    | Default |
+| ------------------------------- | ------------------------------------------------------------------------------ | ------- |
+| `DEFAULT_PRUNE_ARGS`            | Arguments to pass to Restic Prune command line                                 |         |
+| `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`          |         |
+| `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         |
+| `DEFAULT_PRUNE_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |         |
+| `DEFAULT_PRUNE_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                       | `2`     |
 
 
 If `DEFAULT_PRUNE_` variables are set and you do not wish for the settings to carry over into your jobs, you can set the appropriate environment variable with the value of `unset`.
 Additional prune jobs can be scheduled by using `PRUNE02_`,`PRUNE03_`,`PRUNE04_` ... prefixes.
 
-| Variable                  | Description                                                                                                                                    |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PRUNE01_ARGS`            | Arguments to pass to Restic prune command line                                                                                                 |
-| `PRUNE01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |
-|                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |
-|                           | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |
-| `PRUNE01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |     |
-| `PRUNE01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |
-| `PRUNE01_NAME`            | A friendly name to reference your prune snapshot job eg `prune_filesystem`                                                                     |
-| `PRUNE01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |
-| `PRUNE01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |
-| `PRUNE01_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                                                                       | `2` |
+| Variable                  | Description                                                                                                                                    | Default |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `PRUNE01_ARGS`            | Arguments to pass to Restic prune command line                                                                                                 |         |
+| `PRUNE01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |         |
+|                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
+|                           | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
+| `PRUNE01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |
+| `PRUNE01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
+| `PRUNE01_NAME`            | A friendly name to reference your prune snapshot job eg `repository_name`                                                                      |         |
+| `PRUNE01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         |
+| `PRUNE01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         |
+| `PRUNE01_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                                                                       | `2`     |
 
 #### Server Options
 
@@ -304,21 +368,20 @@ See the maintenance section to [create users and passwords](#creating-server-use
 If set in `MODE` this will spawn an RClone instance
 | Variable      | Description                                                                                   | Default |
 | ------------- | --------------------------------------------------------------------------------------------- | ------- |
-| `RCLONE_ARGS` | This will pass arguments to a RClone process that will startup after container initialization |
-
+| `RCLONE_ARGS` | This will pass arguments to a RClone process that will startup after container initialization |         |
 
 #### Unlock Options
 Sometimes repositories will get stuck and in a `locked` state. The image attempts to perform automatic unlocking if it detects errors. These settings shouldn't need to be touched.
 
 | Variable                 | Description                                                | Default |
 | ------------------------ | ---------------------------------------------------------- | ------- |
-| `UNLOCK_ARGS`            | Pass arguments to the restic unlock command                |
-| `UNLOCK_REMOVE_ALL`      | Remove all locks even active ones `TRUE` `FALSE`           |
+| `UNLOCK_ARGS`            | Pass arguments to the restic unlock command                |         |
+| `UNLOCK_REMOVE_ALL`      | Remove all locks even active ones `TRUE` `FALSE`           |         |
 | `UNLOCK_VERBOSITY_LEVEL` | Verbosity level of unlock command. Best not to change this | `2`     |
 
 
-
 ### Networking
+
 | Port | Protocol | Description                 |
 | ---- | -------- | --------------------------- |
 | 8000 | `tcp`    | Restic / RClone REST Server |

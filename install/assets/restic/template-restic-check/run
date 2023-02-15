@@ -3,10 +3,10 @@
 source /assets/functions/00-container
 PROCESS_NAME="restic-check{{CHECK_NUMBER}}-scheduler"
 check_container_initialized
-check_service_initialized init restic
+check_service_initialized init 20-restic
 check_service_initialized restic-initialize_repository
-source /assets/functions/restic
-source /assets/defaults/restic
+source /assets/functions/20-restic
+source /assets/defaults/20-restic
 
 setup_container_mode
 bootstrap_variables upgrade CHECK

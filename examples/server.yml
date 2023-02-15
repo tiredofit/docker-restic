@@ -5,7 +5,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.restic-server-app.rule=Host(`resticserver.example.com`)
-      - traefik.http.services.restic-server-app.loadbalancer.server.port=8000
+      - traefik.http.services.restic-server-app.loadbalancer.server.port=80
     volumes:
       - ./config:/config
       - ./data:/repository
@@ -19,23 +19,45 @@ services:
       - TIMEZONE=America/Vancouver
       - CONTAINER_NAME=restic-server-app
 
-      - MODE=SERVER,CHECK,PRUNE
+      - MODE=SERVER,CHECK,CLEANUP,PRUNE
 
       - SKIP_INIT=TRUE
 
       - SERVER_MODE=RESTIC
       - SERVER_REPOSITORY_PATH=/repository/
+      - SERVER_LISTEN_PORT=8000
+
+      - ENABLE_NGINX
+      - NGINX_LISTEN_PORT=80
 
       #- SERVER_MODE=RCLONE
       #- SERVER_REPOSITORY_PATH=/repository/
       #- SERVER_REPOSITORY_PATH=rcloneremote:/
       - SERVER_REPOSITORY_PASS=password
 
-      - CHECK_START_TIME=0000
-      - CHECK_INTERVAL=1440
+      - DEFAULT_CLEANUP_RETAIN_HOURLY=24
+      - DEFAULT_CLEANUP_RETAIN_DAILY=7
+      - DEFAULT_CLEANUP_RETAIN_WEEKLY=5
+      - DEFAULT_CLEANUP_RETAIN_MONTHLY=24
+      - DEFAULT_CLEANUP_RETAIN_YEARLY=10
+      - DEFAULT_CLEANUP_RETAIN_TAG=important,more_important
 
-      - PRUNE_START_TIME=0100
-      - PRUNE_INTERVAL=1440
+      - CHECK01_NAME=repository_name
+      - CHECK01_START_TIME=0000
+      - CHECK01_INTERVAL=1440
+      - CHECK01_REPOSITORY_PATH=rest:http://check:password@127.0.0.1:8000/
+
+      - CLEANUP01_NAME=repository_name
+      - CLEANUP01_START_TIME=0045
+      - CLEANUP01_INTERVAL=1440
+      - CLEANUP01_AUTO_PRUNE=TRUE
+      - CLEANUP01_REPOSITORY_PATH=rest:http://cleanup:password@127.0.0.1:8000/
+
+      - PRUNE01_NAME=repository_name
+      - PRUNE01_START_TIME=0030
+      - PRUNE01_INTERVAL=1440
+      - PRUNE01_REPOSITORY_PATH=rest:http://prune:password@127.0.0.1:8000/
+
     networks:
       - proxy
       - services

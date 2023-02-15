@@ -1,3 +1,14 @@
+## 0.12.0 2023-02-15 <dave at tiredofit dot ca>
+
+   ### Added
+      - Split CLEANUP into its own MODE due to the fact it requires exclusive repository access
+      - Added Zabbix statistics for CLEANUP
+      - Rework internal variables for consistency
+      - Add CLEANUP_RETAIN_TAG to not remove specific tags
+      - Add BACKUP_SNAPSHOT_TAG to add specific tag to snapshot
+      - Change JOB_CONCURRENCY to BACKUP_JOB_CONCURRENCY for multiple snapshots at once
+
+
 ## 0.11.1 2023-02-14 <dave at tiredofit dot ca>
 
    ### Added

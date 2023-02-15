@@ -3,9 +3,9 @@
 source /assets/functions/00-container
 PROCESS_NAME="restic-initialize_repository"
 check_container_initialized
-check_service_initialized init 10-restic
-source /assets/functions/10-restic
-source /assets/defaults/10-restic
+check_service_initialized init 20-restic
+source /assets/functions/20-restic
+source /assets/defaults/20-restic
 
 if [[ "${MODE,,}" =~ "standalone" ]] || [ "${1,,}" = "manual" ] || [ "${1,,}" = "now" ]; then
     print_debug "Detected Manual Mode"

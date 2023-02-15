@@ -17,21 +17,14 @@ services:
       #- DEFAULT_REPOSITORY_PATH=/data/
       #- DEFAULT_REPOSITORY_PATH=rest:https://user:password@restic-server
 
-      - DEFAULT_BACKUP_CLEANUP_RETAIN_HOURLY=24
-      - DEFAULT_BACKUP_CLEANUP_RETAIN_DAILY=7
-      - DEFAULT_BACKUP_CLEANUP_RETAIN_WEEKLY=5
-      - DEFAULT_BACKUP_CLEANUP_RETAIN_MONTHLY=24
-      - DEFAULT_BACKUP_CLEANUP_RETAIN_YEARLY=10
-
       - BACKUP01_REPOSITORY_PATH=rest:https://user:password@restic-server/path1
       - BACKUP01_REPOSITORY_PASS=superduper
       - BACKUP01_SNAPSHOT_NAME=home
       - BACKUP01_SNAPSHOT_PATH=/rootfs/home
       - BACKUP01_SNAPSHOT_EXCLUDE=.snapshots,cache
-
+      - BACKUP01_SNAPSHOT_TAG=important
       - BACKUP01_SNAPSHOT_BEGIN=1230
       - BACKUP01_SNAPSHOT_INTERVAL=60
-      - BACKUP01_ENABLE_CLEANUP=TRUE
 
       - BACKUP02_REPOSITORY_PATH=rest:https://user:password@restic-server/path2
       - BACKUP02_REPOSITORY_PASS=dupersuper
