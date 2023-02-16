@@ -588,7 +588,7 @@ EOF
 
         if [ -n "${backup_job_snapshot_tags}" ] ; then
             backup_snapshot_tags=$(echo "${backup_job_snapshot_tags}" | tr "," "\n")
-            for backup_snapshot_tag in ${backup_snapshot_job_tags} ; do
+            for backup_snapshot_tag in ${backup_snapshot_tags} ; do
                 backup_job_arg+="--tag ${backup_snapshot_tag} "
             done
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
@@ -597,11 +597,7 @@ EOF
                                 )
         fi
 
-        if [ -n "${backup_job_snapshot_tags}" ] ; then
-            backup_job_args+="${backup_job_snapshot_path} "
-        fi
-
-        if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
+         if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
             command_string="restic --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_args} ${backup_job_snapshot_path}"
             print_debug "Command execution string: '${command_string}'"
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
