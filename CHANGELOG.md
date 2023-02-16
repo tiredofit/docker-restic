@@ -1,3 +1,9 @@
+## 0.13.0 2023-02-16 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add BACKUP|CHECK|CLEANUP|PRUNE BLACKOUT_BEGIN / BLACKOUT_END variables to skip performing operations when in between these time frames
+
+
 ## 0.12.3 2023-02-16 <dave at tiredofit dot ca>
 
    ### Changed

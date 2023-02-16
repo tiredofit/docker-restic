@@ -46,17 +46,22 @@ else
 fi
 
 while true; do
-    backup_routines_start_time=$(date +"%s")
-    print_debug "Repository Backup Snapshot {{BACKUP_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
     bootstrap_variables backup_init {{BACKUP_NUMBER}}
-    repository backup {{BACKUP_NUMBER}}
-    repository unlock "BACKUP {{BACKUP_NUMBER}}"
-    backup_routines_finish_time=$(date +"%s")
-    backup_routines_total_time=$(echo $((backup_routines_finish_time-backup_routines_start_time)))
-    PROCESS_NAME="restic-backup{{BACKUP_NUMBER}}-snapshot-scheduler"
-    if [ -z "${exitcode_backup}" ] ; then exitcode_backup="0" ; fi
-    print_info "Repository backup {{BACKUP_NUMBER}} routines finish time: $(date -d @${backup_routines_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_backup}"
-    print_notice "Repository backup {{BACKUP_NUMBER}} routines time taken: $(echo ${backup_routines_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
+    hour_minute=$(date +%H%M)
+    if [[ "${hour_minute}" > "${backup_job_snapshot_blackout_start}" ]] || [[ "${hour_minute}" < "${backup_job_snapshot_blackout_finish}" ]] ; then
+        print_notice "Detected Blackout Period - Not performing backup operations"
+    else
+        backup_routines_start_time=$(date +"%s")
+        print_debug "Repository Backup Snapshot {{BACKUP_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
+        repository backup {{BACKUP_NUMBER}}
+        repository unlock "BACKUP {{BACKUP_NUMBER}}"
+        backup_routines_finish_time=$(date +"%s")
+        backup_routines_total_time=$(echo $((backup_routines_finish_time-backup_routines_start_time)))
+        PROCESS_NAME="restic-backup{{BACKUP_NUMBER}}-snapshot-scheduler"
+        if [ -z "${exitcode_backup}" ] ; then exitcode_backup="0" ; fi
+        print_info "Repository backup {{BACKUP_NUMBER}} routines finish time: $(date -d @${backup_routines_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_backup}"
+        print_notice "Repository backup {{BACKUP_NUMBER}} routines time taken: $(echo ${backup_routines_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
+    fi
 
     if var_false "${persist}" ; then
         print_debug "Exiting due to manual mode"

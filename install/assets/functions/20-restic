@@ -89,6 +89,8 @@ bootstrap_variables() {
 
         transform_backup_instance_variable "${backup_instance_number}" REPOSITORY_PATH backup_job_respository_path
         transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_ARGS backup_job_backup_args
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_BLACKOUT_BEGIN backup_job_snapshot_blackout_start
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_BLACKOUT_END backup_job_snapshot_blackout_finish
         transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_DRY_RUN backup_job_snapshot_dryrun
         transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_EXCLUDE backup_job_snapshot_exclude
         transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_EXCLUDE_FILE backup_job_snapshot_exclude_file
@@ -128,6 +130,8 @@ bootstrap_variables() {
         }
 
         transform_check_instance_variable "${check_instance_number}" ARGS check_job_check_args
+        transform_check_instance_variable "${check_instance_number}" BLACKOUT_BEGIN check_job_blackout_start
+        transform_check_instance_variable "${check_instance_number}" BLACKOUT_END check_job_blackout_finish
         transform_check_instance_variable "${check_instance_number}" CHECK_AMOUNT check_job_check_amount
         transform_check_instance_variable "${check_instance_number}" DRY_RUN check_job_check_dryrun
         transform_check_instance_variable "${check_instance_number}" NAME check_job_check_name
@@ -167,6 +171,8 @@ bootstrap_variables() {
 
         transform_cleanup_instance_variable "${cleanup_instance_number}" AUTO_PRUNE cleanup_job_auto_prune
         transform_cleanup_instance_variable "${cleanup_instance_number}" ARGS cleanup_job_cleanup_args
+        transform_cleanup_instance_variable "${cleanup_instance_number}" BLACKOUT_BEGIN cleanup_job_blackout_start
+        transform_cleanup_instance_variable "${cleanup_instance_number}" BLACKOUT_END cleanup_job_blackout_finish
         transform_cleanup_instance_variable "${cleanup_instance_number}" DRY_RUN cleanup_job_cleanup_dryrun
         transform_cleanup_instance_variable "${cleanup_instance_number}" NAME cleanup_job_cleanup_name
         transform_cleanup_instance_variable "${cleanup_instance_number}" REPACK cleanup_job_cleanup_repack
@@ -211,6 +217,8 @@ bootstrap_variables() {
         }
 
         transform_prune_instance_variable "${prune_instance_number}" ARGS prune_job_prune_args
+        transform_prune_instance_variable "${prune_instance_number}" BLACKOUT_BEGIN prune_job_blackout_start
+        transform_prune_instance_variable "${prune_instance_number}" BLACKOUT_END prune_job_blackout_finish
         transform_prune_instance_variable "${prune_instance_number}" DRY_RUN prune_job_prune_dryrun
         transform_prune_instance_variable "${prune_instance_number}" NAME prune_job_prune_name
         transform_prune_instance_variable "${prune_instance_number}" REPOSITORY_PASS prune_job_repository_pass

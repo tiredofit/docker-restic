@@ -42,17 +42,22 @@ else
 fi
 
 while true; do
-    cleanup_start_time=$(date +"%s")
-    print_debug "Repository Check {{CLEANUP_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
     bootstrap_variables cleanup_init {{CLEANUP_NUMBER}}
-    repository cleanup {{CLEANUP_NUMBER}}
-    repository unlock "CLEANUP {{CLEANUP_NUMBER}}"
-    cleanup_finish_time=$(date +"%s")
-    cleanup_total_time=$(echo $((cleanup_finish_time-cleanup_start_time)))
-    PROCESS_NAME="restic-cleanup{{CLEANUP_NUMBER}}-scheduler"
-    if [ -z "${exitcode_cleanup}" ] ; then exitcode_cleanup="0" ; fi
-    print_info "Repository cleanup {{CLEANUP_NUMBER}} routines finish time: $(date -d @${cleanup_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_cleanup}"
-    print_notice "Repository cleanup {{CLEANUP_NUMBER}} routines time taken: $(echo ${cleanup_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
+    hour_minute=$(date +%H%M)
+    if [[ "${hour_minute}" > "${cleanup_job_blackout_start}" ]] || [[ "${hour_minute}" < "${cleanup_job_blackout_finish}" ]] ; then
+        print_notice "Detected Blackout Period - Not performing backup operations"
+    else
+        cleanup_start_time=$(date +"%s")
+        print_debug "Repository Cleanup {{CLEANUP_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
+        repository cleanup {{CLEANUP_NUMBER}}
+        repository unlock "CLEANUP {{CLEANUP_NUMBER}}"
+        cleanup_finish_time=$(date +"%s")
+        cleanup_total_time=$(echo $((cleanup_finish_time-cleanup_start_time)))
+        PROCESS_NAME="restic-cleanup{{CLEANUP_NUMBER}}-scheduler"
+        if [ -z "${exitcode_cleanup}" ] ; then exitcode_cleanup="0" ; fi
+        print_info "Repository cleanup {{CLEANUP_NUMBER}} routines finish time: $(date -d @${cleanup_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_cleanup}"
+        print_notice "Repository cleanup {{CLEANUP_NUMBER}} routines time taken: $(echo ${cleanup_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
+    fi
 
     if var_false "${persist}" ; then
         print_debug "Exiting due to manual mode"
