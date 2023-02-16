@@ -47,8 +47,13 @@ fi
 
 while true; do
     bootstrap_variables backup_init {{BACKUP_NUMBER}}
-    hour_minute=$(date +%H%M)
-    if [[ "${hour_minute}" > "${backup_job_snapshot_blackout_start}" ]] || [[ "${hour_minute}" < "${backup_job_snapshot_blackout_finish}" ]] ; then
+    if [ -n "${backup_job_snapshot_blackout_start}" ] && [ -n "${backup_job_snapshot_blackout_finish}" ] ; then
+        hour_minute=$(date +%H%M)
+        if [[ "${hour_minute}" > "${backup_job_snapshot_blackout_start}" ]] || [[ "${hour_minute}" < "${backup_job_snapshot_blackout_finish}" ]] ; then
+            blackout=true
+        fi
+    fi
+    if var_true "${blackout}" ; then
         print_notice "Detected Blackout Period - Not performing backup operations"
     else
         backup_routines_start_time=$(date +"%s")

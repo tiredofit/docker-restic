@@ -1,3 +1,9 @@
+## 0.13.1 2023-02-16 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Refinement to blackout checks
+
+
 ## 0.13.0 2023-02-16 <dave at tiredofit dot ca>
 
    ### Added

@@ -42,8 +42,13 @@ fi
 
 while true; do
     bootstrap_variables prune_init {{PRUNE_NUMBER}}
-    hour_minute=$(date +%H%M)
-    if [[ "${hour_minute}" > "${prune_job_blackout_start}" ]] || [[ "${hour_minute}" < "${prune_job_blackout_finish}" ]] ; then
+    if [ -n "${prune_job_blackout_start}" ] && [ -n "${prune_job_blackout_finish}" ] ; then
+        hour_minute=$(date +%H%M)
+        if [[ "${hour_minute}" > "${prune_job_blackout_start}" ]] || [[ "${hour_minute}" < "${prune_job_blackout_finish}" ]] ; then
+            blackout=true
+        fi
+    fi
+    if var_true "${blackout}" ; then
         print_notice "Detected Blackout Period - Not performing prune operations"
     else
         prune_start_time=$(date +"%s")
