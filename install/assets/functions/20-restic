@@ -581,15 +581,15 @@ EOF
         else
             backup_job_log_suffix=${backup_instance_number}
         fi
-
+set -x
         if [ -n "${backup_job_snapshot_path}" ] ; then
             backup_job_args+="${backup_job_snapshot_path} "
         fi
-
+set +x
         if [ -n "${backup_job_snapshot_tags}" ] ; then
             backup_snapshot_tags=$(echo "${backup_job_snapshot_tags}" | tr "," "\n")
             for backup_snapshot_tag in ${backup_snapshot_tags} ; do
-                backup_job_arg+="--tag ${backup_snapshot_tag} "
+                backup_job_args+="--tag ${backup_snapshot_tag} "
             done
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
 ## Backup Tags added:                  ${backup_job_snapshot_tags}
@@ -605,16 +605,17 @@ EOF
 EOF
                             )
         fi
-
+set -x
         print_info "Starting Backup Snapshot ${backup_job_log_suffix}"
         restic \
                 --repo "${backup_job_repository_path}" \
                 backup \
-                    --host "${CONTAINER_NAME}" "${backup_job_args}" \
+                    --host "${CONTAINER_NAME}" ${backup_job_args} \
                     --tag auto \
                 2> /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error \
                 > /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log
         exitcode_backup=$?
+set +x
         backup_process_finish_time="$(date +%s)"
         backup_process_total_time="$(echo $((backup_process_finish_time-backup_routines_start_time)))"
 
@@ -654,7 +655,7 @@ EOF
         esac
 
         backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +"%Y-%m-%d %H:%M:%S") ("${backup_process_finish_time}")
+## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +"%Y-%m-%d %H:%M:%S") (${backup_process_finish_time})
 ## Backup procedure total time:         $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
 ## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
 
@@ -882,9 +883,9 @@ EOF
 
         check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 
-## Check procedure finished:            $(date -d @"${check_process_finish_time}" +"%Y-%m-%d %H:%M:%S") ("${check_process_finish_time}")
-## Check procedure total time:          $(echo "${check_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') ("${check_process_total_time}")
-## Check procedure completion:          "${exitcode_check_description}" ("${exitcode_check}")
+## Check procedure finished:            $(date -d @"${check_process_finish_time}" +"%Y-%m-%d %H:%M:%S") (${check_process_finish_time})
+## Check procedure total time:          $(echo "${check_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_total_time})
+## Check procedure completion:          "${exitcode_check_description}" (${exitcode_check})
 
 ### Check Details
 $(cat /tmp/check-"${check_routines_start_time}".log)

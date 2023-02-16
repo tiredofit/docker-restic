@@ -1,3 +1,12 @@
+## 0.12.3 2023-02-16 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix issue with adding tags
+      - Fix verbosity level
+      - Fix backup paths appearing multiple times in logs
+      - Fix minor quoting issues
+
+
 ## 0.12.2 2023-02-15 <dave at tiredofit dot ca>
 
    ### Changed
