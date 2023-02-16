@@ -598,7 +598,7 @@ EOF
         fi
 
          if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
-            command_string="restic --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_args} ${backup_job_snapshot_path}"
+            command_string="restic --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args} ${backup_job_snapshot_path}"
             print_debug "Command execution string: '${command_string}'"
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
 ## Debug Command String:               ${command_string}
