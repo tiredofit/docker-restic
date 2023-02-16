@@ -61,20 +61,20 @@ bootstrap_variables() {
             unset "$(echo "${backup_instance_var}" | cut -d = -f 1)"
         done < "${backup_instance_vars}"
 
-        if [ -v "$(echo BACKUP${backup_instance_number}_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
-            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)
+        if [ -v "$(echo BACKUP"${backup_instance_number}"_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
+            export RESTIC_PASSWORD="$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)"
         elif [ -n "${DEFAULT_BACKUP_REPOSITORY_PASS}" ] && [ "${DEFAULT_BACKUP_REPOSITORY_PASS}" != "unset" ]; then
-            export RESTIC_PASSWORD=${DEFAULT_BACKUP_REPOSITORY_PASS}
+            export RESTIC_PASSWORD="${DEFAULT_BACKUP_REPOSITORY_PASS}"
         elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "unset" ]; then
-            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+            export RESTIC_PASSWORD="${REPOSITORY_PASS}"
         fi
 
         if [ -v "$(echo BACKUP${backup_instance_number}_REPOSITORY_PATH)" ] && [ "$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
-            export backup_job_repository_path=$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)
+            export backup_job_repository_path="$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)"
         elif [ -n "${DEFAULT_BACKUP_REPOSITORY_PATH}" ] && [ "${DEFAULT_BACKUP_REPOSITORY_PASS}" != "unset" ]; then
-            export backup_job_repository_path=${DEFAULT_BACKUP_REPOSITORY_PATH}
+            export backup_job_repository_path="${DEFAULT_BACKUP_REPOSITORY_PATH}"
         elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "unset" ]; then
-            export backup_job_repository_path=${REPOSITORY_PATH}
+            export backup_job_repository_path="${REPOSITORY_PATH}"
         fi
 
         set -o posix ; set | grep -E "^BACKUP${backup_instance_number}_|^DEFAULT_BACKUP_" | tr " " "\n" > "${backup_instance_vars}"
@@ -192,8 +192,8 @@ bootstrap_variables() {
             unset "$(echo "${prune_instance_var}" | cut -d = -f 1)"
         done < "${prune_instance_vars}"
 
-        if [ -v "$(echo PRUNE${prune_instance_number}_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^PRUNE${prune_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
-            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^PRUNE${prune_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)
+        if [ -v "$(echo PRUNE"${prune_instance_number}"_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^PRUNE${prune_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
+            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^PRUNE"${prune_instance_number}"_REPOSITORY_PASS" | cut -d = -f 2)
         elif [ -n "${DEFAULT_PRUNE_REPOSITORY_PASS}" ] && [ "${DEFAULT_PRUNE_REPOSITORY_PASS}" != "unset" ]; then
             export RESTIC_PASSWORD=${DEFAULT_PRUNE_REPOSITORY_PASS}
         elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "unset" ]; then
@@ -231,16 +231,16 @@ bootstrap_variables() {
 
         if [ -v "$(echo ${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
             export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PASS" | cut -d = -f 2)
-        elif [ -v $(echo DEFAULT_${unlock_called_from}_REPOSITORY_PASS) ] && [ "$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PASS)" | cut -d = -f 2)" != "unset" ] ; then
-            export RESTIC_PASSWORD=$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PASS)" | cut -d = -f 2)
+        elif [ -v "$(echo DEFAULT_"${unlock_called_from}"_REPOSITORY_PASS)" ] && [ "$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PASS)" | cut -d = -f 2)" != "unset" ] ; then
+            export RESTIC_PASSWORD="$(grep -E "^$(echo DEFAULT_"${unlock_called_from}"_REPOSITORY_PASS)" | cut -d = -f 2)"
         elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "unset" ]; then
-            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+            export RESTIC_PASSWORD="${REPOSITORY_PASS}"
         fi
 
-        if [ -v "$(echo ${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PATH)" ] && [ "$(set -o posix; set | grep -E "^${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
-            export unlock_job_repository_path=$(set -o posix; set | grep -E "^${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PATH" | cut -d = -f 2)
-        elif [ -v $(echo DEFAULT_${unlock_called_from}_REPOSITORY_PATH) ] && [ "$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PATH)" | cut -d = -f 2)" != "unset" ] ; then
-            export unlock_job_repository_path=$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PATH)" | cut -d = -f 2)
+        if [ -v "$(echo "${unlock_called_from}""${unlock_called_from_instance}"_REPOSITORY_PATH)" ] && [ "$(set -o posix; set | grep -E "^${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
+            export unlock_job_repository_path="$(set -o posix; set | grep -E "^${unlock_called_from}${unlock_called_from_instance}_REPOSITORY_PATH" | cut -d = -f 2)"
+        elif [ -v "$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PATH)" ] && [ "$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PATH)" | cut -d = -f 2)" != "unset" ] ; then
+            export unlock_job_repository_path="$(grep -E "^$(echo DEFAULT_${unlock_called_from}_REPOSITORY_PATH)" | cut -d = -f 2)"
         elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "unset" ]; then
             export unlock_job_repository_path=${REPOSITORY_PATH}
         fi
@@ -266,10 +266,10 @@ bootstrap_variables() {
         upgrade_lonely_variables_tmp=$(mktemp)
         set -o posix; set | grep "^$1" | grep -v "^$1[0-9]._" > "${upgrade_lonely_variables_tmp}"
         while read -r exist_var ; do
-            if [ ! -v "$1"01_"$(echo "${exist_var}" | cut -d = -f1 | cut -d _ -f2)" ] ; then
-                export "$1"01_"$(echo "${exist_var}" | cut -d = -f1 | cut -d _ -f2-9)"="$(echo "${exist_var}" | cut -d = -f2)"
+            if [ ! -v "${1}"01_"$(echo "${exist_var}" | cut -d = -f1 | cut -d _ -f2)" ] ; then
+                export "${1}"01_"$(echo "${exist_var}" | cut -d = -f1 | cut -d _ -f2-9)"="$(echo "${exist_var}" | cut -d = -f2)"
             else
-                print_error "Variable $101_$(echo "${exist_var}" | cut -d = -f1 | cut -d _ -f2) already exists, fix your variables and start again.."
+                print_error "Variable ${1}01_$(echo "${exist_var}" | cut -d = -f1 | cut -d _ -f2) already exists, fix your variables and start again.."
                 exit 1
             fi
         done < "${upgrade_lonely_variables_tmp}"
@@ -610,13 +610,13 @@ EOF
         restic \
                 --repo "${backup_job_repository_path}" \
                 backup \
-                    --host "${CONTAINER_NAME}" ${backup_job_args} \
+                    --host "${CONTAINER_NAME}" "${backup_job_args}" \
                     --tag auto \
                 2> /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error \
                 > /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log
         exitcode_backup=$?
-        backup_process_finish_time=$(date +%s)
-        backup_process_total_time=$(echo $((backup_process_finish_time-backup_routines_start_time)))
+        backup_process_finish_time="$(date +%s)"
+        backup_process_total_time="$(echo $((backup_process_finish_time-backup_routines_start_time)))"
 
         case "${exitcode_backup}" in
             0 )
@@ -882,12 +882,12 @@ EOF
 
         check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 
-## Check procedure finished:            $(date -d @${check_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${check_process_finish_time})
-## Check procedure total time:          $(echo ${check_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_total_time})
-## Check procedure completion:          ${exitcode_check_description} (${exitcode_check})
+## Check procedure finished:            $(date -d @"${check_process_finish_time}" +"%Y-%m-%d %H:%M:%S") ("${check_process_finish_time}")
+## Check procedure total time:          $(echo "${check_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') ("${check_process_total_time}")
+## Check procedure completion:          "${exitcode_check_description}" ("${exitcode_check}")
 
 ### Check Details
-$(cat /tmp/check-${check_routines_start_time}.log)
+$(cat /tmp/check-"${check_routines_start_time}".log)
 
 EOF
                         )
@@ -1193,7 +1193,7 @@ EOF
 
     init() {
         while read -r repository_to_init ; do
-            if [ -v $(echo "${repository_to_init}" | awk '{print $1}')_SKIP_INIT ] && [ "$(set -o posix; set | grep -E "^${repository_to_init}_SKIP_INIT" | cut -d = -f 2)" = "TRUE" ]; then
+            if [ -v "$(echo "${repository_to_init}" | awk '{print $1}')"_SKIP_INIT ] && [ "$(set -o posix; set | grep -E "^${repository_to_init}_SKIP_INIT" | cut -d = -f 2)" = "TRUE" ]; then
                 skip_init=true
             elif [ -n "${DEFAULT_SKIP_INIT}" ] && [ "${DEFAULT_SKIP_INIT}" != "true" ]; then
                 skip_init=true
@@ -1275,7 +1275,7 @@ EOF
                                 --host "${CONTAINER_NAME}" \
                                 --quiet ${repository_init_arg}
                 exitcode_init=$?
-                print_debug "[check_init_repository] [${repository_to_init}] Check exit code ${init_status}"
+                print_debug "[check_init_repository] [${repository_to_init}] Check exit code ${exitcode_init}"
 
                 if [ "${exitcode_init}" != "0" ]; then
                     print_debug "[check_repository] No repository found"
@@ -1689,6 +1689,7 @@ process_limiter() {
                 esac
             fi
             sleep 15
+            (( counter+=15))
         else
             break
         fi
