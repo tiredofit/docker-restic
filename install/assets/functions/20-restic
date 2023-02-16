@@ -1653,7 +1653,8 @@ ${unlock_job_file_log}
 EOF
         fi
 
-        unset unlock_args
+        unset unlock_job_args
+        rm -rf /tmp/unlock-"${unlock_routines_start_time}".*
     }
 
     case "${1}" in
