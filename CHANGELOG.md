@@ -1,3 +1,9 @@
+## 0.12.2 2023-02-15 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Bugfixes with showing right output for Check, Cleanup, and Backup Errors
+
+
 ## 0.12.1 2023-02-15 <dave at tiredofit dot ca>
 
    ### Changed

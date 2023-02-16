@@ -616,8 +616,8 @@ EOF
                 backup \
                     --host "${CONTAINER_NAME}" ${backup_job_args} \
                     --tag auto \
-                2> /tmp/"${backup_instance_number}"-backup-${backup_routines_start_time}.error \
-                > /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log
+                2> /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error \
+                > /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log
         exitcode_backup=$?
         backup_process_finish_time=$(date +%s)
         backup_process_total_time=$(echo $((backup_process_finish_time-backup_routines_start_time)))
@@ -639,7 +639,7 @@ EOF
             3 )
                 exitcode_backup_description="ERROR"
                 if grep -q "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
-                    backup_error_count=$(grep -c "^error: .*" /tmp/"${backup_number}"-"${backup_routines_start_time}".error)
+                    backup_error_count="$(grep -c "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error)"
                 fi
                 backup_error_description="#### Error Count: ${backup_error_count}"
                 print_error "Backup completed with ${backup_error_count} errors detected"
@@ -658,8 +658,8 @@ EOF
         esac
 
         backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Backup procedure finished:           $(date -d @${backup_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${backup_process_finish_time})
-## Backup procedure total time:         $(echo ${backup_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
+## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +"%Y-%m-%d %H:%M:%S") ("${backup_process_finish_time}")
+## Backup procedure total time:         $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
 ## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
 
 ### Backup Details
@@ -673,9 +673,8 @@ EOF
 
 #### Error Log
 ${backup_error_description}
-${backup_error_description}
 
-$(cat /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.error)
+$(cat "${backup_instance_number}"-backup-"${backup_routines_start_time}".error)
 
 EOF
                             )
@@ -686,7 +685,7 @@ ${backup_job_file_log}
 
 EOF
 
-        backup_job_backup_summary_files=$(grep "^Files:" /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log | xargs | sed "s|Files:||g")
+        backup_job_backup_summary_files=$(grep "^Files:" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | xargs | sed "s|Files:||g")
         print_debug "[summary] Backup Summary Files: ${backup_job_backup_summary_files}"
         backup_job_backup_summary_files_new=$(echo "${backup_job_backup_summary_files}" | awk '{print $1}')
         print_debug "[summary] Files new: ${backup_job_backup_summary_files_new}"
@@ -694,7 +693,7 @@ EOF
         print_debug "[summary] Files changed: ${backup_job_backup_summary_files_changed}"
         backup_job_backup_summary_files_unmodified=$(echo "${backup_job_backup_summary_files}" | awk '{print $5}')
         print_debug "[summary] Files unmodified: ${backup_job_backup_summary_files_unmodified}"
-        backup_job_backup_summary_directory=$(grep "^Dirs:" /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log | xargs | sed "s|Dirs:||g")
+        backup_job_backup_summary_directory=$(grep "^Dirs:" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | xargs | sed "s|Dirs:||g")
         print_debug "[summary] Backup_summary_directory: ${backup_job_backup_summary_directory}"
         backup_job_backup_summary_directory_new=$(echo "${backup_job_backup_summary_directory}" | awk '{print $1}')
         print_debug "[summary] Directory new: ${backup_job_backup_summary_directory_new}"
@@ -702,7 +701,7 @@ EOF
         print_debug "[summary] Directory changed: ${backup_job_backup_summary_directory_changed}"
         backup_job_backup_summary_directory_unmodified=$(echo "${backup_job_backup_summary_directory}" | awk '{print $5}')
         print_debug "[summary] Directory unmodified: ${backup_job_backup_summary_directory_unmodified}"
-        backup_job_backup_summary_added=$(grep "^Added to the repository:" /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log | xargs | sed "s|Added to the repository:||g" | tr "," "\n")
+        backup_job_backup_summary_added=$(grep "^Added to the repository:" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | xargs | sed "s|Added to the repository:||g" | tr "," "\n")
         print_debug "[summary] Backup_summary added: ${backup_job_backup_summary_added}"
         backup_job_backup_summary_added_size_bytes=$(echo "${backup_job_backup_summary_added}" | awk '{print$1 $2}')
         if [ "${backup_job_backup_summary_added_size_bytes}" = "0B" ] ; then
@@ -718,7 +717,7 @@ EOF
             backup_job_backup_summary_added_size_stored_bytes=$(echo "${backup_job_backup_summary_added}" | awk '{print$3 $4}' | sed -e "s|(||g" -e "s|)||g" | numfmt --from=iec-i --to=none --suffix=B 2>/dev/null| sed "s|B$||g")
         fi
         print_debug "[summary] Added size stored bytes: ${backup_job_backup_summary_added_size_stored_bytes}"
-        backup_job_backup_summary_processed=$(grep "^processed" /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.log | sed "s|processed||g" )
+        backup_job_backup_summary_processed=$(grep "^processed" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | sed "s|processed||g" )
         print_debug "[summary] Backup_summary processed: ${backup_job_backup_summary_processed}"
         backup_job_backup_summary_proccessed_files=$(echo "${backup_job_backup_summary_processed}" | awk '{print $1}')
         print_debug "[summary] Processed files: ${backup_job_backup_summary_proccessed_files}"
@@ -729,7 +728,7 @@ EOF
             backup_job_backup_summary_processed_size_bytes=$(echo "${backup_job_backup_summary_processed}" | awk '{print $3 $4}' | numfmt --from=iec-i --to=none --suffix=B 2>/dev/null | sed "s|B$||g")
         fi
         print_debug "[summary] Processed size bytes: ${backup_job_backup_summary_processed_size_bytes}"
-        rm -rf /tmp/${backup_instance_number}-backup-${backup_routines_start_time}.*
+        rm -rf /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".*
 
         PROCESS_NAME=post_backup${backup_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
