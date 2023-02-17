@@ -38,7 +38,7 @@ else
     fi
     print_debug "Wait Time: ${waittime} Target time: ${target_time} Current Time: ${current_time}"
     print_info "Next Check at $(date -d @${target_time} +"%Y-%m-%d %T %Z")"
-    sleep $waittime
+    silent sleep $waittime
 fi
 
 while true; do
@@ -73,7 +73,7 @@ while true; do
             s6-svc -d /var/run/s6/legacy-services/restic-check{{CHECK_NUMBER}}
         else
             print_notice "Sleeping for another $(($CHECK{{CHECK_NUMBER}}_INTERVAL*60-check_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($CHECK{{CHECK_NUMBER}}_INTERVAL*60-check_total_time))))" +"%Y-%m-%d %T %Z") "
-            sleep $(($CHECK{{CHECK_NUMBER}}_INTERVAL*60-check_total_time))
+            silent sleep $(($CHECK{{CHECK_NUMBER}}_INTERVAL*60-check_total_time))
         fi
     fi
 done

@@ -38,7 +38,7 @@ else
     fi
     print_debug "Wait Time: ${waittime} Target time: ${target_time} Current Time: ${current_time}"
     print_info "Next Cleanup at $(date -d @${target_time} +"%Y-%m-%d %T %Z")"
-    sleep $waittime
+    silent sleep $waittime
 fi
 
 while true; do

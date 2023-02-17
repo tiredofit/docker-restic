@@ -16,7 +16,7 @@ if [[ "${MODE,,}" =~ "standalone" ]] || [ "${1,,}" = "manual" ] || [ "${1,,}" = 
     persist=false
     PRUNE{{PRUNE_NUMBER}}_BEGIN=+0
 else
-    sleep {{PRUNE_NUMBER}}
+    silent sleep {{PRUNE_NUMBER}}
     if [ -z "${PRUNE{{PRUNE_NUMBER}}_INTERVAL}" ] ; then
         print_error "No Environment variable for PRUNE{{PRUNE_NUMBER}}_INTERVAL set! Please set a value. Halting Check Number {{PRUNE_NUMBER}}."
         s6-svc -d /var/run/s6/legacy-services/restic-prune{{PRUNE_NUMBER}}
@@ -37,7 +37,7 @@ else
     fi
     print_debug "Wait Time: ${waittime} Target time: ${target_time} Current Time: ${current_time}"
     print_info "Next Prune at $(date -d @${target_time} +"%Y-%m-%d %T %Z")"
-    sleep $waittime
+    silent sleep $waittime
 fi
 
 while true; do
@@ -72,7 +72,7 @@ while true; do
             s6-svc -d /var/run/s6/legacy-services/restic-prune{{PRUNE_NUMBER}}
         else
             print_notice "Sleeping for another $(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time))))" +"%Y-%m-%d %T %Z") "
-            sleep $(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time))
+            silent sleep $(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time))
         fi
     fi
 done

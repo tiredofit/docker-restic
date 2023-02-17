@@ -41,7 +41,7 @@ bootstrap_filesystem() {
     case "${LOG_TYPE,,}" in
         file )
             source /assets/defaults/05-logging
-            echo "0 0 * * * for logfile in \"\${LOG_PATH}\"/\"\$(date --date=\"2 days ago\" +\"%Y%m%d\")*.log ; do sudo -u restic zstd --rm --rsyncable \"${logfile}\" ; done ; find \"${LOG_PATH}\"/* -type d -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \;" > /assets/cron/restic_logrotate
+            echo "0 0 * * * \"for logfile in \"\${LOG_PATH}\"/\"\$(date --date=\"2 days ago\" +\"%Y%m%d\")\"*.log ; do sudo -u restic zstd --rm --rsyncable \"${logfile}\" ; done ; find \"${LOG_PATH}\"/* -type d -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \; for symbolic_link in \"\${LOG_PATH}\"/latest*.log ; do if [ ! -e \"\${symbolic_link}\" ] ; then rm -rf \"\${symbolic_link}\" ; fi ; done ; \"" > /assets/cron/restic_logrotate
             if var_true "${ENABLE_SERVER}" ; then
                 sudo -u restic touch "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
                 chown restic:restic "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
@@ -596,7 +596,7 @@ EOF
 EOF
                                 )
         fi
-set -x
+
         if [ -n "${backup_job_snapshot_path}" ] ; then
             backup_job_args+="${backup_job_snapshot_path} "
         fi
@@ -616,16 +616,17 @@ EOF
 
 
         print_info "Starting Backup Snapshot ${backup_job_log_suffix}"
-set -x
+        restic_repository=$(mktemp)
+        echo "${backup_job_repository_path}" > "${restic_repository}"
         restic \
-                --repo "${backup_job_repository_path}" \
+                --repository-file "${restic_repository}" \
                 backup \
                     --host "${CONTAINER_NAME}" --tag auto ${backup_job_args} \
                 2> /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error \
                 > /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log
-set +x
-        exitcode_backup=$?
 
+        exitcode_backup=$?
+        rm -rf "${restic_repository}"
         backup_process_finish_time="$(date +%s)"
         backup_process_total_time="$(echo $((backup_process_finish_time-backup_routines_start_time)))"
 
@@ -692,7 +693,8 @@ EOF
 ${backup_job_file_log}
 
 EOF
-        ln -sf "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log "${LOG_PATH}"/latest-backup-"${backup_job_log_suffix}".log
+        cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
+        ln -sf "$(date +"%Y%m%d")/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log ../latest-backup-"${backup_job_log_suffix}".log
 
         backup_job_backup_summary_files=$(grep "^Files:" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | xargs | sed "s|Files:||g")
         print_debug "[summary] Backup Summary Files: ${backup_job_backup_summary_files}"
@@ -870,8 +872,10 @@ EOF
         fi
 
         process_limiter restic 1 check
+        restic_repository=$(mktemp)
+        echo "${check_job_repository_path}" > "${restic_repository}"
         restic \
-                -r "${check_job_repository_path}" \
+                --repository-file "${restic_repository}" \
                 check ${check_job_args} \
                 2> /tmp/check-${check_routines_start_time}.error \
                 > /tmp/check-${check_routines_start_time}.log
@@ -934,7 +938,8 @@ ${check_job_file_log}
 
 EOF
 
-        ln -sf "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date +"%Y%m%d")"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log "${LOG_PATH}"/latest-check-"${check_job_log_suffix}".log
+        cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
+        ln -sf "$(date +"%Y%m%d")/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log ../../latest-check-"${check_job_log_suffix}".log
 
         PROCESS_NAME=post_check${check_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1123,16 +1128,18 @@ EOF
             fi
 
             print_info "Starting cleanup of old backups"
+            restic_repository=$(mktemp)
+            echo "${cleanup_job_repository_path}" > "${restic_repository}"
             restic \
-                    -r "${cleanup_job_repository_path}" \
+                    --repository-file "${restic_repository}" \
                     forget \
-                            --host "${CONTAINER_NAME}" \
-                            --group-by '' ${cleanup_job_args} \
-                            2> /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".error \
-                            > /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".log
+                    --host "${CONTAINER_NAME}" \
+                    --group-by '' ${cleanup_job_args} \
+                    2> /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".error \
+                    > /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".log
 
             exitcode_cleanup="$?"
-
+            rm  -rf "${restic_repository}"
             cleanup_process_finish_time="$(date +%s)"
             cleanup_process_total_time="$(echo $((cleanup_process_finish_time-cleanup_routines_start_time)))"
 
@@ -1192,7 +1199,8 @@ EOF
 ${cleanup_job_file_log}
 EOF
 
-        ln -sf "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date +"%Y%m%d")"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log "${LOG_PATH}"/latest-cleanup-"${cleanup_job_log_suffix}".log
+        cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
+        ln -sf "$(date +"%Y%m%d")/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log ../../latest-cleanup-"${cleanup_job_log_suffix}".log
 
         PROCESS_NAME=post_cleanup${cleanup_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1294,27 +1302,36 @@ EOF
                     repository_init_arg=${DEFAULT_INIT_ARGS}
                 fi
 
+                restic_repository=$(mktemp)
+                echo "${repository_to_init}" | awk '{print $2}' > "${restic_repository}"
                 silent restic \
-                                -r "$(echo "${repository_to_init}" | awk '{print $2}')" \
+                                --repository-file "${restic_repository}" \
                                 snapshots \
                                 --host "${CONTAINER_NAME}" \
                                 --quiet ${repository_init_arg}
                 exitcode_init=$?
+                rm -rf "${restic_repository}"
                 print_debug "[check_init_repository] [${repository_to_init}] Check exit code ${exitcode_init}"
 
                 if [ "${exitcode_init}" != "0" ]; then
                     print_debug "[check_repository] No repository found"
                     print_notice "[check_repository] Initializing Repository '$(echo "${repository_to_init}" | awk '{print $1}')'"
+
+                    restic_repository=$(mktemp)
+                    echo "${repository_to_init}" | awk '{print $2}' > "${restic_repository}"
                     silent restic \
-                                    -r "$(echo "${repository_to_init}" | awk '{print $2}')" \
+                                    --repository-file "${restic_repository}" \
                                     init ${repository_init_arg}
                     exitcode_init=$?
+                    rm -rf "${restic_repository}"
 
                     if [ "${exitcode_init}" != 0 ]; then
                         print_error "Failed to init the repository: '$(echo "${repository_to_init}" | awk '{print $1}')':"
+                        restic_repository=$(mktemp)
+                        echo "${repository_to_init}" | awk '{print $2}' > "${restic_repository}"
                         restic \
-                            -r "$(echo "${repository_to_init}" | awk '{print $2}')" \
-                            init ${repository_init_arg}
+                                --repository-file "${restic_repository}" \
+                                init ${repository_init_arg}
                         return "${exitcode_init}"
                     else
                         return "${exitcode_init}"
@@ -1400,14 +1417,16 @@ EOF
         fi
 
         process_limiter restic 1 prune
+        restic_repository=$(mktemp)
+        echo "${prune_job_repository_path}" > "${restic_repository}"
         restic \
-                -r "${prune_job_repository_path}" \
+                --repository-file "${restic_repository}" \
                 prune ${prune_job_args} \
                 2> /tmp/prune-${prune_routines_start_time}.error \
                 > /tmp/prune-${prune_routines_start_time}.log
 
         exitcode_prune=$?
-
+        rm -rf "${restic_repository}"
         prune_process_finish_time=$(date +%s)
         prune_process_total_time=$(echo $((prune_process_finish_time-prune_process_start_time)))
         case "${exitcode_prune}" in
@@ -1503,7 +1522,8 @@ ${prune_job_file_log}
 
 EOF
 
-        ln -sf "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock-"${unlock_job_log_suffix}".log "${LOG_PATH}"/latest-unlock-"${unlock_job_log_suffix}".log
+        cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
+        ln -sf "$(date +"%Y%m%d")/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock-"${unlock_job_log_suffix}".log ../../latest-unlock-"${unlock_job_log_suffix}".log
 
         PROCESS_NAME=post_prune${prune_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1674,7 +1694,8 @@ EOF
 ${unlock_job_file_log}
 
 EOF
-            ln -sf "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock-"${unlock_job_log_suffix}".log "${LOG_PATH}"/latest-unlock-"${unlock_job_log_suffix}".log
+            cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
+            ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock-"${unlock_job_log_suffix}".log ../../latest-unlock-"${unlock_job_log_suffix}".log
         fi
 
         unset unlock_job_args
