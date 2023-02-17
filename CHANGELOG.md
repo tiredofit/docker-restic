@@ -1,3 +1,12 @@
+## 0.14.0 2023-02-17 <dave at tiredofit dot ca>
+
+   ### Added
+      - Revamp logging to write to foldered YYYMMDD areas. Folders 2 days and older automatically get each logfile zstd commpressed
+      - Symbolic links created to point to "latest" log file
+      - Add error counting for Zabbix monitoring
+      - Code cleanup
+
+
 ## 0.13.2 2023-02-16 <dave at tiredofit dot ca>
 
    ### Changed
