@@ -45,7 +45,7 @@ while true; do
     bootstrap_variables check_init {{CHECK_NUMBER}}
     hour_minute=$(date +%H%M)
     if [ -n "${check_job_blackout_start}" ] && [ -n "${check_job_blackout_finish}" ] ; then
-        if [[ "${hour_minute}" > "${check_job_blackout_start}" ]] || [[ "${hour_minute}" < "${check_job_blackout_finish}" ]] ; then
+        if [[ "${hour_minute}" > "${check_job_blackout_start}" ]] && [[ "${hour_minute}" < "${check_job_blackout_finish}" ]] ; then
             blackout=true
         fi
     fi

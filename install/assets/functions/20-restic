@@ -41,7 +41,7 @@ bootstrap_filesystem() {
     case "${LOG_TYPE,,}" in
         file )
             source /assets/defaults/05-logging
-            echo "0 0 * * * find ${LOG_PATH} -name \"\$(date --date=\"yesterday\" +\"%Y%m%d\")_*.log\" -print0 | xargs -0 tar cfa ${LOG_PATH}/\$(date --date=\"yesterday\" +\"%Y%m%d\").tar.zst --remove-files  2>/dev/null ; find /logs -name '*.zst' -mtime +${LOGROTATE_REAIN_DAYS}7 -exec rm {} \;" > /assets/cron/restic_log
+            echo "0 0 * * * find ${LOG_PATH} -name \"\$(date --date=\"yesterday\" +\"%Y%m%d\")_*.log\" -print0 | xargs -0 sudo -u restic tar cfa ${LOG_PATH}/\$(date --date=\"yesterday\" +\"%Y%m%d\").tar.zst --remove-files  2>/dev/null ; find /logs -name '*.zst' -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \;" > /assets/cron/restic_log
             if var_true "${ENABLE_SERVER}" ; then
                 sudo -u restic touch "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
                 chown restic:restic "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
@@ -589,11 +589,11 @@ EOF
         else
             backup_job_log_suffix=${backup_instance_number}
         fi
-set -x
+
         if [ -n "${backup_job_snapshot_path}" ] ; then
             backup_job_args+="${backup_job_snapshot_path} "
         fi
-set +x
+
         if [ -n "${backup_job_snapshot_tags}" ] ; then
             backup_snapshot_tags=$(echo "${backup_job_snapshot_tags}" | tr "," "\n")
             for backup_snapshot_tag in ${backup_snapshot_tags} ; do
@@ -613,7 +613,7 @@ EOF
 EOF
                             )
         fi
-set -x
+
         print_info "Starting Backup Snapshot ${backup_job_log_suffix}"
         restic \
                 --repo "${backup_job_repository_path}" \
@@ -623,7 +623,7 @@ set -x
                 2> /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error \
                 > /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log
         exitcode_backup=$?
-set +x
+
         backup_process_finish_time="$(date +%s)"
         backup_process_total_time="$(echo $((backup_process_finish_time-backup_routines_start_time)))"
 

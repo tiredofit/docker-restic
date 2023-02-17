@@ -44,7 +44,7 @@ while true; do
     bootstrap_variables prune_init {{PRUNE_NUMBER}}
     if [ -n "${prune_job_blackout_start}" ] && [ -n "${prune_job_blackout_finish}" ] ; then
         hour_minute=$(date +%H%M)
-        if [[ "${hour_minute}" > "${prune_job_blackout_start}" ]] || [[ "${hour_minute}" < "${prune_job_blackout_finish}" ]] ; then
+        if [[ "${hour_minute}" > "${prune_job_blackout_start}" ]] && [[ "${hour_minute}" < "${prune_job_blackout_finish}" ]] ; then
             blackout=true
         fi
     fi
