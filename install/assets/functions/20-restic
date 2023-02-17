@@ -41,7 +41,7 @@ bootstrap_filesystem() {
     case "${LOG_TYPE,,}" in
         file )
             source /assets/defaults/05-logging
-            echo "0 0 * * * find ${LOG_PATH} -name \"\$(date --date=\"yesterday\" +\"%Y%m%d\")_*.log\" -print0 | xargs -0 sudo -u restic tar cfa ${LOG_PATH}/\$(date --date=\"yesterday\" +\"%Y%m%d\").tar.zst --remove-files  2>/dev/null ; find /logs -name '*.zst' -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \;" > /assets/cron/restic_log
+            echo "0 0 * * * "for logfile in \${LOG_PATH}/\"\$(date --date=\"2 days ago\" +\"%Y%m%d\")*.log ; do sudo -u restic zstd --rm --rsyncable \"${logfile}\" ; done ; find \"${LOG_PATH}\"/* -type d -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \;" > /assets/cron/restic_logrotate
             if var_true "${ENABLE_SERVER}" ; then
                 sudo -u restic touch "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
                 chown restic:restic "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
@@ -685,7 +685,8 @@ EOF
                             )
         fi
 
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-${backup_job_log_suffix}.log
+        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-${backup_job_log_suffix}.log
 ${backup_job_file_log}
 
 EOF
@@ -733,6 +734,11 @@ EOF
             backup_job_backup_summary_processed_size_bytes=$(echo "${backup_job_backup_summary_processed}" | awk '{print $3 $4}' | numfmt --from=iec-i --to=none --suffix=B 2>/dev/null | sed "s|B$||g")
         fi
         print_debug "[summary] Processed size bytes: ${backup_job_backup_summary_processed_size_bytes}"
+        if [ -n "${backup_error_count}" ] ; then
+            backup_job_backup_summary_error_count="${backup_error_count}"
+        else
+            backup_job_backup_summary_error_count="0"
+        fi
         rm -rf /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".*
 
         PROCESS_NAME=post_backup${backup_instance_number}
@@ -753,6 +759,7 @@ EOF
 - restic.backup.size.bytes.added.[${backup_job_log_suffix}] "${backup_job_backup_summary_added_size_bytes}"
 - restic.backup.size.bytes.stored.[${backup_job_log_suffix}] "${backup_job_backup_summary_added_size_stored_bytes}"
 - restic.backup.size.bytes.processed.[${backup_job_log_suffix}] "${backup_job_backup_summary_processed_size_bytes}"
+- restic.backup.error.count.[${backup_job_log_suffix}] "${backup_job_backup_summary_error_count}"
 EOF
         fi
 
@@ -918,7 +925,8 @@ EOF
                             )
         fi
 
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log
+        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log
 ${check_job_file_log}
 
 EOF
@@ -1174,7 +1182,8 @@ EOF
         fi
 
         rm -rf /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".*
-        cat << EOF | silent sudo -u restic tee -a "${LOG_PATH}"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-${cleanup_job_log_suffix}.log
+        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
+        cat << EOF | silent sudo -u restic tee -a "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-${cleanup_job_log_suffix}.log
 ${cleanup_job_file_log}
 EOF
 
@@ -1481,8 +1490,8 @@ $(cat /tmp/prune-${prune_routines_start_time}.error)
 EOF
                             )"
         fi
-
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-${prune_job_log_suffix}.log
+        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-${prune_job_log_suffix}.log
 ${prune_job_file_log}
 
 EOF
@@ -1651,7 +1660,8 @@ EOF
         fi
 
         if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] || [ -s /tmp/unlock-"${unlock_routines_start_time}".log ] ; then
-            cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log
+            sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
+            cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log
 ${unlock_job_file_log}
 
 EOF
