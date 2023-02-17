@@ -41,7 +41,7 @@ bootstrap_filesystem() {
     case "${LOG_TYPE,,}" in
         file )
             source /assets/defaults/05-logging
-            echo "0 0 * * * "for logfile in \${LOG_PATH}/\"\$(date --date=\"2 days ago\" +\"%Y%m%d\")*.log ; do sudo -u restic zstd --rm --rsyncable \"${logfile}\" ; done ; find \"${LOG_PATH}\"/* -type d -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \;" > /assets/cron/restic_logrotate
+            echo "0 0 * * * for logfile in \"\${LOG_PATH}\"/\"\$(date --date=\"2 days ago\" +\"%Y%m%d\")*.log ; do sudo -u restic zstd --rm --rsyncable \"${logfile}\" ; done ; find \"${LOG_PATH}\"/* -type d -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \;" > /assets/cron/restic_logrotate
             if var_true "${ENABLE_SERVER}" ; then
                 sudo -u restic touch "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
                 chown restic:restic "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
@@ -686,10 +686,11 @@ EOF
         fi
 
         sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-${backup_job_log_suffix}.log
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log
 ${backup_job_file_log}
 
 EOF
+        ln -sf "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log "${LOG_PATH}"/latest-backup-"${backup_job_log_suffix}".log
 
         backup_job_backup_summary_files=$(grep "^Files:" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | xargs | sed "s|Files:||g")
         print_debug "[summary] Backup Summary Files: ${backup_job_backup_summary_files}"
@@ -930,6 +931,8 @@ EOF
 ${check_job_file_log}
 
 EOF
+
+        ln -sf "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date +"%Y%m%d")"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log "${LOG_PATH}"/latest-check-"${check_job_log_suffix}".log
 
         PROCESS_NAME=post_check${check_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1186,6 +1189,8 @@ EOF
         cat << EOF | silent sudo -u restic tee -a "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-${cleanup_job_log_suffix}.log
 ${cleanup_job_file_log}
 EOF
+
+        ln -sf "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date +"%Y%m%d")"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log "${LOG_PATH}"/latest-cleanup-"${cleanup_job_log_suffix}".log
 
         PROCESS_NAME=post_cleanup${cleanup_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1496,6 +1501,8 @@ ${prune_job_file_log}
 
 EOF
 
+        ln -sf "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock-"${unlock_job_log_suffix}".log "${LOG_PATH}"/latest-unlock-"${unlock_job_log_suffix}".log
+
         PROCESS_NAME=post_prune${prune_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
@@ -1665,6 +1672,7 @@ EOF
 ${unlock_job_file_log}
 
 EOF
+            ln -sf "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock-"${unlock_job_log_suffix}".log "${LOG_PATH}"/latest-unlock-"${unlock_job_log_suffix}".log
         fi
 
         unset unlock_job_args
