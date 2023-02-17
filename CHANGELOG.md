@@ -1,3 +1,9 @@
+## 0.13.2 2023-02-16 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Log rotation permission fixes
+
+
 ## 0.13.1 2023-02-16 <dave at tiredofit dot ca>
 
    ### Changed
