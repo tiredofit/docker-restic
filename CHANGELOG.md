@@ -1,3 +1,9 @@
+## 0.14.1 2023-02-17 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Bugfix to 0.14.0
+
+
 ## 0.14.0 2023-02-17 <dave at tiredofit dot ca>
 
    ### Added

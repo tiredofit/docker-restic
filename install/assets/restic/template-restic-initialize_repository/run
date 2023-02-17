@@ -15,7 +15,6 @@ else
     repository init
     init_routines_finish_time=$(date +"%s")
     init_routines_total_time=$(echo $((init_routines_finish_time-init_routines_start_time)))
-
     if [ -z "${exitcode_init}" ] ; then exitcode_init="0" ; fi
 
     if [ "${exitcode_init}" = "0" ] ; then
