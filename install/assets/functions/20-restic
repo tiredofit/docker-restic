@@ -560,10 +560,6 @@ EOF
                             )
         fi
 
-        if [ -n "${backup_job_snapshot_path_file}" ] ; then
-            backup_job_args+="-files-from ${backup_job_snapshot_path_file} "
-        fi
-
         if [ -n "${backup_job_snapshot_verbosity_level}" ] ; then
             case "${backup_job_snapshot_verbosity_level,,}" in
                 0 | normal | standard )
@@ -590,10 +586,6 @@ EOF
             backup_job_log_suffix=${backup_instance_number}
         fi
 
-        if [ -n "${backup_job_snapshot_path}" ] ; then
-            backup_job_args+="${backup_job_snapshot_path} "
-        fi
-
         if [ -n "${backup_job_snapshot_tags}" ] ; then
             backup_snapshot_tags=$(echo "${backup_job_snapshot_tags}" | tr "," "\n")
             for backup_snapshot_tag in ${backup_snapshot_tags} ; do
@@ -604,8 +596,16 @@ EOF
 EOF
                                 )
         fi
+set -x
+        if [ -n "${backup_job_snapshot_path}" ] ; then
+            backup_job_args+="${backup_job_snapshot_path} "
+        fi
 
-         if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
+        if [ -n "${backup_job_snapshot_path_file}" ] ; then
+            backup_job_args+="--files-from ${backup_job_snapshot_path_file} "
+        fi
+
+        if var_true "${DEBUG_MODE}" || [ "${CONTAINER_LOG_LEVEL,,}" = "debug" ]; then
             command_string="restic --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args} ${backup_job_snapshot_path}"
             print_debug "Command execution string: '${command_string}'"
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
@@ -614,14 +614,16 @@ EOF
                             )
         fi
 
+
         print_info "Starting Backup Snapshot ${backup_job_log_suffix}"
+set -x
         restic \
                 --repo "${backup_job_repository_path}" \
                 backup \
-                    --host "${CONTAINER_NAME}" ${backup_job_args} \
-                    --tag auto \
+                    --host "${CONTAINER_NAME}" --tag auto ${backup_job_args} \
                 2> /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error \
                 > /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log
+set +x
         exitcode_backup=$?
 
         backup_process_finish_time="$(date +%s)"
