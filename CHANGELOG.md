@@ -1,3 +1,9 @@
+## 0.14.2 2023-02-19 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Unstick blackout mode
+
+
 ## 0.14.1 2023-02-17 <dave at tiredofit dot ca>
 
    ### Changed

@@ -47,6 +47,8 @@ while true; do
     if [ -n "${check_job_blackout_start}" ] && [ -n "${check_job_blackout_finish}" ] ; then
         if [[ "${hour_minute}" > "${check_job_blackout_start}" ]] && [[ "${hour_minute}" < "${check_job_blackout_finish}" ]] ; then
             blackout=true
+        else
+            blackout=false
         fi
     fi
     if var_true "${blackout}" ; then

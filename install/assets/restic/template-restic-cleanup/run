@@ -47,6 +47,8 @@ while true; do
         hour_minute=$(date +%H%M)
         if [[ "${hour_minute}" > "${cleanup_job_blackout_start}" ]] && [[ "${hour_minute}" < "${cleanup_job_blackout_finish}" ]] ; then
             blackout=true
+        else
+            blackout=false
         fi
     fi
     if var_true "${blackout}" ; then
