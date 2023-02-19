@@ -1,3 +1,9 @@
+## 0.14.3 2023-02-19 <dave at tiredofit dot ca>
+
+   ### Added
+      - Set NGINX_CLIENT_BODY_BUFFER_SIZE to 20m
+
+
 ## 0.14.2 2023-02-19 <dave at tiredofit dot ca>
 
    ### Changed

@@ -14,6 +14,7 @@ ENV RESTIC_VERSION=v0.15.1 \
     RESTIC_REST_SERVER_REPO_URL=https://github.com/restic/rest-server \
     R_CLONE_VERSION=v1.61.1 \
     R_CLONE_REPO_URL=https://github.com/rclone/rclone \
+    NGINX_CLIENT_BODY_BUFFER_SIZE=20M \
     NGINX_SITE_ENABLED="restic-rest-server" \
     NGINX_ENABLE_CREATE_SAMPLE_HTML=FALSE \
     NGINX_WORKER_PROCESSES=1 \
