@@ -1,3 +1,9 @@
+## 0.14.4 2023-02-20 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix during setup_container_mode function
+
+
 ## 0.14.3 2023-02-19 <dave at tiredofit dot ca>
 
    ### Added

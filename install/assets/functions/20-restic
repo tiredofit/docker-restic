@@ -1755,7 +1755,7 @@ post_backup() {
 }
 
 setup_container_mode() {
-    if [ -f "/tmp/.container/restic/CONTAINER_MODE" ]; then
+    if [ -f "/tmp/.container/toi_restic/CONTAINER_MODE" ]; then
         print_debug "Importing MODE environment generated variables"
         source /tmp/.container/toi_restic/CONTAINER_MODE
     else
