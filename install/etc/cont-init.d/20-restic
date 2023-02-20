@@ -8,12 +8,6 @@ setup_container_mode
 bootstrap_filesystem
 
 if [ ! -f "/tmp/.container/container-restart" ] ; then
-    if var_true "${ENABLE_STANDALONE}" ; then
-        print_debug "Configuring Standlone"
-        liftoff
-        exit 0
-    fi
-
     if var_true "${ENABLE_BACKUP}" ; then
         print_debug "Configuring Backup"
         create_schedulers backup
@@ -69,6 +63,12 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
         print_debug "Configuring RClone"
     else
         service_stop rclone
+    fi
+
+    if var_true "${ENABLE_STANDALONE}" ; then
+        print_debug "Configuring Standlone"
+        liftoff
+        exit 0
     fi
 
     create_schedulers init
