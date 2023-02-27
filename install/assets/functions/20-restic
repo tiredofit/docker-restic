@@ -41,7 +41,7 @@ bootstrap_filesystem() {
     case "${LOG_TYPE,,}" in
         file )
             source /assets/defaults/05-logging
-            echo "0 0 * * * \"for logfile in \"\${LOG_PATH}\"/\"\$(date --date=\"2 days ago\" +\"%Y%m%d\")\"*.log ; do sudo -u restic zstd --rm --rsyncable \"${logfile}\" ; done ; find \"${LOG_PATH}\"/* -type d -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \; for symbolic_link in \"\${LOG_PATH}\"/latest*.log ; do if [ ! -e \"\${symbolic_link}\" ] ; then rm -rf \"\${symbolic_link}\" ; fi ; done ; \"" > /assets/cron/restic_logrotate
+            echo "0 0 * * * \"for logfile in "${LOG_PATH}"/\$(date --date='2 days ago' +'%Y%m%d')*.log ; do sudo -u restic zstd --rm --rsyncable \"\${logfile}\" ; done ; find ${LOG_PATH}/* -type d -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \; for symbolic_link in ${LOG_PATH}/latest*.log ; do if [ ! -e \"\${symbolic_link}\" ] ; then rm -rf \"\${symbolic_link}\" ; fi ; done ; \"" > /assets/cron/restic_logrotate
             if var_true "${ENABLE_SERVER}" ; then
                 sudo -u restic touch "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
                 chown restic:restic "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
@@ -939,7 +939,7 @@ ${check_job_file_log}
 EOF
 
         cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log ../../latest-check-"${check_job_log_suffix}".log
+        ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log ../latest-check-"${check_job_log_suffix}".log
 
         PROCESS_NAME=post_check${check_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1200,7 +1200,7 @@ ${cleanup_job_file_log}
 EOF
 
         cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log ../../latest-cleanup-"${cleanup_job_log_suffix}".log
+        ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log ../latest-cleanup-"${cleanup_job_log_suffix}".log
 
         PROCESS_NAME=post_cleanup${cleanup_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1527,7 +1527,7 @@ ${prune_job_file_log}
 EOF
 
         cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock-"${unlock_job_log_suffix}".log ../../latest-unlock-"${unlock_job_log_suffix}".log
+        ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-"${prune_job_log_suffix}".log ../latest-prune-"${prune_job_log_suffix}".log
 
         PROCESS_NAME=post_prune${prune_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1699,7 +1699,7 @@ ${unlock_job_file_log}
 
 EOF
             cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
-            ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock-"${unlock_job_log_suffix}".log ../../latest-unlock-"${unlock_job_log_suffix}".log
+            ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock-"${unlock_job_log_suffix}".log ../latest-unlock-"${unlock_job_log_suffix}".log
         fi
 
         unset unlock_job_args
@@ -1723,7 +1723,7 @@ process_limiter() {
 
     while true ; do
         counter=0
-        process_amount=$(pidof ${process} | wc -w)
+        process_amount="$(pidof "${process}" | wc -w)"
         if [ "${process_amount}" -ge "${limiter}" ] ; then
             if [[ "${counter}" =~ 0|45|90|135|180|225|315|360|405|450|495|540|585|630|675|720|765|810|855|900|945|990 ]] ; then
                 if [ "${counter}" != 0 ] ; then counter_verbose=" (${counter} seconds so far)" ; fi

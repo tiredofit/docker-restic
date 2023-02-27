@@ -1,3 +1,9 @@
+## 0.14.4 2023-02-27 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Cleanup "latest" symbolic link work and fix logrotate issues
+
+
 ## 0.14.4 2023-02-20 <dave at tiredofit dot ca>
 
    ### Changed

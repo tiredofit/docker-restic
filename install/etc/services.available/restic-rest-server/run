@@ -36,7 +36,6 @@ case "${SERVER_MODE,,}" in
                                     --stats-one-line
     ;;
     restic )
-    #--log "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}" \
         print_start "Starting Restic REST server ${RESTIC_REST_SERVER_VERSION} at ${SERVER_REPOSITORY_PATH}"
         exec /usr/sbin/rest-server \
                                             --listen "${SERVER_LISTEN_IP}":"${SERVER_LISTEN_PORT}" \
