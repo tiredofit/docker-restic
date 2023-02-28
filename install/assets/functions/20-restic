@@ -608,7 +608,7 @@ EOF
         fi
 
         if var_true "${DEBUG_MODE}" || [ "${CONTAINER_LOG_LEVEL,,}" = "debug" ]; then
-            command_string="restic --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args} ${backup_job_snapshot_args}"
+            command_string="restic --cache-dir ${CACHE_PATH} --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args} ${backup_job_snapshot_args}"
             print_info "Command execution string: '${command_string}'"
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
 ## Debug Command String:                ${command_string}
@@ -620,6 +620,7 @@ EOF
         restic_repository=$(mktemp)
         echo "${backup_job_repository_path}" > "${restic_repository}"
         restic \
+                --cache-dir "${CACHE_PATH}" \
                 --repository-file "${restic_repository}" \
                 backup \
                     --host "${CONTAINER_NAME}" --tag auto ${backup_job_args} ${backup_job_snapshot_args} \
@@ -877,6 +878,7 @@ EOF
         restic_repository=$(mktemp)
         echo "${check_job_repository_path}" > "${restic_repository}"
         restic \
+                --cache-dir "${CACHE_PATH}" \
                 --repository-file "${restic_repository}" \
                 check ${check_job_args} \
                 2> /tmp/check-${check_routines_start_time}.error \
@@ -1133,6 +1135,7 @@ EOF
             restic_repository=$(mktemp)
             echo "${cleanup_job_repository_path}" > "${restic_repository}"
             restic \
+                    --cache-dir "${CACHE_PATH}" \
                     --repository-file "${restic_repository}" \
                     forget \
                     --host "${CONTAINER_NAME}" \

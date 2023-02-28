@@ -1,3 +1,12 @@
+## 0.15.0 2023-02-28 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add CACHE_PATH and expose cache to drastically speed up operations
+      - Stop leaking repository password when repository needs to be unlocked
+      - Moved around repostiory backup paths to a different level of the backup function for better seperation
+      - Document SKIP_INIT environment variable to skip repository initialization routines (note: CACHE_PATH works wonders!)
+
+
 ## 0.14.8 2023-02-28 <dave at tiredofit dot ca>
 
    ### Changed

@@ -3,8 +3,9 @@ services:
     image: tiredofit/restic
     container_name: restic-app
     volumes:
+      - ./cache:/cache
       - ./config:/config
-      - ./data:/repository
+      #- ./data:/repository
       - ./logs:/logs
       - /:/rootfs:ro
     environment:
@@ -31,10 +32,8 @@ services:
       - BACKUP02_SNAPSHOT_NAME=var_local
       - BACKUP02_SNAPSHOT_PATH=/rootfs/var/local/data
       - BACKUP02_SNAPSHOT_EXCLUDE=restic/*,service/*
-
       - BACKUP02_SNAPSHOT_BEGIN=+10
       - BACKUP02_INTERVAL=60
-      - BACKUP02_ENABLE_CLEANUP=FALSE
     networks:
       - services
     restart: always

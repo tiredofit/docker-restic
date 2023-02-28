@@ -107,6 +107,7 @@ The following directories are used for configuration and can be mapped for persi
 
 | Directory | Description                               |
 | --------- | ----------------------------------------- |
+| `/cache`  | Cached files from repository for quicker operations |
 | `/config` | (server) Configuration and Password Files |
 | `/logs`   | Logfiles                                  |
 
@@ -136,6 +137,7 @@ Be sure to view the following repositories to understand all the customizable op
 |               | `RCLONE` Run a copy of RClone                       |            |
 |               | `SERVER` REST repository access - see options below |            |
 |               | `STANDALONE` (Do nothing, just run container)       |            |
+| `CACHE_PATH`  | Cached files to optimize performance                | `/cache/`  |
 | `CONFIG_PATH` | Configuration files for Server                      | `/config/` |
 | `LOG_PATH`    | Log file path                                       | `/logs/`   |
 | `LOG_TYPE`    | `FILE` only at this time                            | `FILE`     |
