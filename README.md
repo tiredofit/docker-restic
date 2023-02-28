@@ -140,7 +140,7 @@ Be sure to view the following repositories to understand all the customizable op
 | `LOG_PATH`    | Log file path                                       | `/logs/`   |
 | `LOG_TYPE`    | `FILE` only at this time                            | `FILE`     |
 | `SETUP_MODE`  | `AUTO` only at this time                            | `AUTO`     |
-
+| `SKIP_INIT`   | Skip Repository Initialization Checks               | `FALSE`    |
 
 #### Job Defaults
 If these are set and no other defaults or variables are set explicitly, they will be added to any of the `BACKUP`, `CHECK`, `CLEANUP` or `PRUNE` jobs.
@@ -216,17 +216,17 @@ A Check job requires exlcusive access to the Restic Repository, therefore no oth
 
 If set, these variables will be passed to each prune job, unless each job explicitly sets otherwise.
 
-| Variable                        | Description                                                                    | Default |
-| ------------------------------- | ------------------------------------------------------------------------------ | ------- |
-| `DEFAULT_CHECK_AMOUNT`          | Amount of repository to check                                                  |         |
-| `DEFAULT_CHECK_ARGS`            | Arguments to pass to Restic Check command line                                 |         |
-| `DEFAULT_CHECK_BLACKOUT_BEGIN`  | Use `HHMM` notation to set the start of a blackout period where no checks occur eg `0420`      |         |
-| `DEFAULT_CHECK_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no checks occur eg `0430`           |         |
-| `DEFAULT_CHECK_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`          |         |
-| `DEFAULT_CHECK_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         |
-| `DEFAULT_CHECK_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |         |
-| `DEFAULT_CHECK_USE_CACHE`       | Use cache                                                                      |         |
-| `DEFAULT_CHECK_VERBOSITY_LEVEL` | Check operations log verbosity - Best not to change this                       | `2`     |
+| Variable                        | Description                                                                               | Default |
+| ------------------------------- | ----------------------------------------------------------------------------------------- | ------- |
+| `DEFAULT_CHECK_AMOUNT`          | Amount of repository to check                                                             |         |
+| `DEFAULT_CHECK_ARGS`            | Arguments to pass to Restic Check command line                                            |         |
+| `DEFAULT_CHECK_BLACKOUT_BEGIN`  | Use `HHMM` notation to set the start of a blackout period where no checks occur eg `0420` |         |
+| `DEFAULT_CHECK_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no checks occur eg `0430`                 |         |
+| `DEFAULT_CHECK_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                     |         |
+| `DEFAULT_CHECK_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`            |         |
+| `DEFAULT_CHECK_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                         |         |
+| `DEFAULT_CHECK_USE_CACHE`       | Use cache                                                                                 |         |
+| `DEFAULT_CHECK_VERBOSITY_LEVEL` | Check operations log verbosity - Best not to change this                                  | `2`     |
 
 
 ##### Job Check Options
@@ -239,8 +239,8 @@ Additional check jobs can be scheduled by using `CHECK02_`,`CHECK03_`,`CHECK04_`
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
 | `CHECK01_AMOUNT`          | Amount of repository to check (Read Data)                                                                                                      |         |
 | `CHECK01_ARGS`            | Arguments to pass to Restic check command line                                                                                                 |         |
-| `CHECK01_BLACKOUT_BEGIN`  | Use `HHMM` notation to set the start of a blackout period where no checks occur eg `0420`      |         |
-| `CHECK01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no checks occur eg `0430`           |         |
+| `CHECK01_BLACKOUT_BEGIN`  | Use `HHMM` notation to set the start of a blackout period where no checks occur eg `0420`                                                      |         |
+| `CHECK01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no checks occur eg `0430`                                                                      |         |
 | `CHECK01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |
 | `CHECK01_BEGIN`           | What time to do the first check. Defaults to immediate. Must be in one of two formats                                                          |         |
 |                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
@@ -266,8 +266,8 @@ If set, these variables will be passed to each cleanup job, unless each job expl
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------- |
 | `DEFAULT_CLEANUP_ARGS`            | Arguments to pass to Restic cleanup command line                                                                          |         |
 | `DEFAULT_CLEANUP_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                         |         |
-| `DEFAULT_CLEANUP_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`      |         |
-| `DEFAULT_CLEANUP_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`           |         |
+| `DEFAULT_CLEANUP_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                         |         |
+| `DEFAULT_CLEANUP_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                     |         |
 | `DEFAULT_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                     |         |
 | `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data |         |
 | `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                  |         |
@@ -294,8 +294,8 @@ Additional backup jobs can be scheduled by using `CLEANUP02_`,`CLEANUP03_`,`CLEA
 | `CLEANUP01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |         |
 |                             | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
 |                             | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
-| `CLEANUP01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`      |         |
-| `CLEANUP01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`           |         |
+| `CLEANUP01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |         |
+| `CLEANUP01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |         |
 | `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
 | `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |         |
 | `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data                      |         |
@@ -320,15 +320,15 @@ A Prune job requires exlcusive access to the Restic Repository, therefore no oth
 
 If set, these variables will be passed to each prune job, unless each job explicitly sets otherwise.
 
-| Variable                        | Description                                                                    | Default |
-| ------------------------------- | ------------------------------------------------------------------------------ | ------- |
-| `DEFAULT_PRUNE_ARGS`            | Arguments to pass to Restic Prune command line                                 |         |
-| `DEFAULT_PRUNE_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no prune operations occur eg `0420`      |         |
-| `DEFAULT_PRUNE_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no prune operations occur eg `0430`           |         |
-| `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`          |         |
-| `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         |
-| `DEFAULT_PRUNE_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |         |
-| `DEFAULT_PRUNE_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                       | `2`     |
+| Variable                        | Description                                                                                     | Default |
+| ------------------------------- | ----------------------------------------------------------------------------------------------- | ------- |
+| `DEFAULT_PRUNE_ARGS`            | Arguments to pass to Restic Prune command line                                                  |         |
+| `DEFAULT_PRUNE_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no prune operations occur eg `0420` |         |
+| `DEFAULT_PRUNE_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no prune operations occur eg `0430`             |         |
+| `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                           |         |
+| `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                  |         |
+| `DEFAULT_PRUNE_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                               |         |
+| `DEFAULT_PRUNE_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                        | `2`     |
 
 
 If `DEFAULT_PRUNE_` variables are set and you do not wish for the settings to carry over into your jobs, you can set the appropriate environment variable with the value of `unset`.
@@ -340,8 +340,8 @@ Additional prune jobs can be scheduled by using `PRUNE02_`,`PRUNE03_`,`PRUNE04_`
 | `PRUNE01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |         |
 |                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
 |                           | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
-| `PRUNE01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`      |         |
-| `PRUNE01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`           |         |
+| `PRUNE01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |         |
+| `PRUNE01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |         |
 | `PRUNE01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |
 | `PRUNE01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
 | `PRUNE01_NAME`            | A friendly name to reference your prune snapshot job eg `repository_name`                                                                      |         |

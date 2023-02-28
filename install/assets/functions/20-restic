@@ -1,6 +1,11 @@
 #!/command/with-contenv bash
 
 bootstrap_filesystem() {
+    if [ ! -d "${CACHE_PATH}" ]; then
+        mkdir -p "${CACHE_PATH}"
+    fi
+    if [ "$(stat -c %U "${CACHE_PATH}")" != "restic" ] ; then chown -R restic:restic "${CACHE_PATH}" ; fi
+
     if [ ! -d "${CONFIG_PATH}" ]; then
         mkdir -p "${CONFIG_PATH}"
     fi
@@ -556,7 +561,7 @@ EOF
 EOF
                             )
         fi
-set -x
+
         if [ -n "${backup_job_backup_args}" ] ; then
             backup_job_args+="${backup_job_backup_args} "
             backup_job_file_log=$(cat <<EOF
@@ -564,7 +569,7 @@ set -x
 EOF
                             )
         fi
-set +x
+
         if [ -n "${backup_job_snapshot_verbosity_level}" ] ; then
             case "${backup_job_snapshot_verbosity_level,,}" in
                 0 | normal | standard )
@@ -590,7 +595,7 @@ EOF
         else
             backup_job_log_suffix=${backup_instance_number}
         fi
-set -x
+
         if [ -n "${backup_job_snapshot_tags}" ] ; then
             backup_snapshot_tags=$(echo "${backup_job_snapshot_tags}" | tr "," "\n")
             for backup_snapshot_tag in ${backup_snapshot_tags} ; do
@@ -602,16 +607,15 @@ EOF
                                 )
         fi
 
-        #if var_true "${DEBUG_MODE}" || [ "${CONTAINER_LOG_LEVEL,,}" = "debug" ]; then
+        if var_true "${DEBUG_MODE}" || [ "${CONTAINER_LOG_LEVEL,,}" = "debug" ]; then
             command_string="restic --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args} ${backup_job_snapshot_args}"
             print_info "Command execution string: '${command_string}'"
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
 ## Debug Command String:                ${command_string}
 EOF
                             )
-        #fi
+        fi
 
-set -x
         print_info "Starting Backup Snapshot ${backup_job_log_suffix}"
         restic_repository=$(mktemp)
         echo "${backup_job_repository_path}" > "${restic_repository}"
@@ -623,7 +627,7 @@ set -x
                 > /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log
 
         exitcode_backup=$?
-set +x
+
         rm -rf "${restic_repository}"
         backup_process_finish_time="$(date +%s)"
         backup_process_total_time="$(echo $((backup_process_finish_time-backup_routines_start_time)))"
@@ -1303,6 +1307,7 @@ EOF
                 restic_repository=$(mktemp)
                 echo "${repository_to_init}" | awk '{print $2}' > "${restic_repository}"
                 silent restic \
+                                --cache-dir "${CACHE_PATH}" \
                                 --repository-file "${restic_repository}" \
                                 snapshots \
                                 --host "${CONTAINER_NAME}" \
@@ -1320,6 +1325,7 @@ EOF
                     echo "${repository_to_init}" | awk '{print $2}' > "${restic_repository}"
 
                     silent restic \
+                                    --cache-dir "${CACHE_PATH}" \
                                     --repository-file "${restic_repository}" \
                                     init ${repository_init_arg}
                     exitcode_init=$?
@@ -1331,6 +1337,7 @@ EOF
                         restic_repository=$(mktemp)
                         echo "${repository_to_init}" | awk '{print $2}' > "${restic_repository}"
                         restic \
+                                --cache-dir "${CACHE_PATH}" \
                                 --repository-file "${restic_repository}" \
                                 init ${repository_init_arg}
 
@@ -1422,6 +1429,7 @@ EOF
         restic_repository=$(mktemp)
         echo "${prune_job_repository_path}" > "${restic_repository}"
         restic \
+                --cache-dir "${CACHE_PATH}" \
                 --repository-file "${restic_repository}" \
                 prune ${prune_job_args} \
                 2> /tmp/prune-${prune_routines_start_time}.error \
@@ -1625,15 +1633,18 @@ EOF
                             )
         fi
 
+        restic_repository=$(mktemp)
+        echo "${unlock_job_repository_path}" > "${restic_repository}"
         process_limiter restic 1 unlock
         restic \
-                -r "${unlock_job_repository_path}" \
+                --cache-dir "${CACHE_PATH}" \
+                --repository-file "${restic_repository}" \
                 unlock ${unlock_job_args} \
                 2> /tmp/unlock-${unlock_routines_start_time}.error \
                 > /tmp/unlock-${unlock_routines_start_time}.log
 
         exitcode_unlock=$?
-
+        rm -rf "${restic_repository}"
         unlock_process_finish_time=$(date +%s)
         unlock_process_total_time=$(echo $((unlock_process_finish_time-unlock_process_start_time)))
         case "${exitcode_unlock}" in
@@ -1740,8 +1751,8 @@ process_limiter() {
                     ;;
                 esac
             fi
-            sleep 15
-            (( counter+=15))
+            sleep 30
+            (( counter+=30))
         else
             break
         fi
