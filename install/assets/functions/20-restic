@@ -1699,7 +1699,7 @@ ${unlock_job_file_log}
 
 EOF
             cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
-            ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock-"${unlock_job_log_suffix}".log ../latest-unlock-"${unlock_job_log_suffix}".log
+            ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log ../latest-unlock.log
         fi
 
         unset unlock_job_args
