@@ -551,7 +551,7 @@ EOF
 EOF
                             )
         fi
-
+set -x
         if [ -n "${backup_job_backup_args}" ] ; then
             backup_job_args+="${backup_job_backup_args} "
             backup_job_file_log=$(cat <<EOF
@@ -559,7 +559,7 @@ EOF
 EOF
                             )
         fi
-
+set +x
         if [ -n "${backup_job_snapshot_verbosity_level}" ] ; then
             case "${backup_job_snapshot_verbosity_level,,}" in
                 0 | normal | standard )
@@ -585,7 +585,7 @@ EOF
         else
             backup_job_log_suffix=${backup_instance_number}
         fi
-
+set -x
         if [ -n "${backup_job_snapshot_tags}" ] ; then
             backup_snapshot_tags=$(echo "${backup_job_snapshot_tags}" | tr "," "\n")
             for backup_snapshot_tag in ${backup_snapshot_tags} ; do
@@ -596,7 +596,7 @@ EOF
 EOF
                                 )
         fi
-
+set +x
         if [ -n "${backup_job_snapshot_path}" ] ; then
             backup_job_args+="${backup_job_snapshot_path} "
         fi
@@ -605,16 +605,16 @@ EOF
             backup_job_args+="--files-from ${backup_job_snapshot_path_file} "
         fi
 
-        if var_true "${DEBUG_MODE}" || [ "${CONTAINER_LOG_LEVEL,,}" = "debug" ]; then
-            command_string="restic --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args} ${backup_job_snapshot_path}"
-            print_debug "Command execution string: '${command_string}'"
+        #if var_true "${DEBUG_MODE}" || [ "${CONTAINER_LOG_LEVEL,,}" = "debug" ]; then
+            command_string="restic --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args}"
+            print_info "Command execution string: '${command_string}'"
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
 ## Debug Command String:               ${command_string}
 EOF
                             )
-        fi
+        #fi
 
-
+set -x
         print_info "Starting Backup Snapshot ${backup_job_log_suffix}"
         restic_repository=$(mktemp)
         echo "${backup_job_repository_path}" > "${restic_repository}"
@@ -626,6 +626,7 @@ EOF
                 > /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log
 
         exitcode_backup=$?
+set +x
         rm -rf "${restic_repository}"
         backup_process_finish_time="$(date +%s)"
         backup_process_total_time="$(echo $((backup_process_finish_time-backup_routines_start_time)))"
