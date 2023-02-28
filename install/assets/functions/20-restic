@@ -490,17 +490,22 @@ EOF
 EOF
                             )
         fi
-        if [ -n "${backup_job_snapshot_path}" ] ; then
-        backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Backup Path:                         ${backup_job_snapshot_path}
-EOF
-                        )
-        fi
+
         if [ -n "${backup_job_snapshot_path_file}" ] ; then
-        backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
+            backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
 ## Backup Path File:                    ${backup_job_backup_file}
 EOF
                         )
+            backup_job_snapshot_args+="--files-from ${backup_job_snapshot_path_file} "
+        fi
+
+        if [ -n "${backup_job_snapshot_path}" ] ; then
+            backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
+## Backup Path:                         ${backup_job_snapshot_path}
+        backup_job_snapshot_args=
+EOF
+                        )
+            backup_job_snapshot_args+="${backup_job_snapshot_path} "
         fi
 
         backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
@@ -596,20 +601,12 @@ set -x
 EOF
                                 )
         fi
-set +x
-        if [ -n "${backup_job_snapshot_path}" ] ; then
-            backup_job_args+="${backup_job_snapshot_path} "
-        fi
-
-        if [ -n "${backup_job_snapshot_path_file}" ] ; then
-            backup_job_args+="--files-from ${backup_job_snapshot_path_file} "
-        fi
 
         #if var_true "${DEBUG_MODE}" || [ "${CONTAINER_LOG_LEVEL,,}" = "debug" ]; then
-            command_string="restic --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args}"
+            command_string="restic --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args} ${backup_job_snapshot_args}"
             print_info "Command execution string: '${command_string}'"
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Debug Command String:               ${command_string}
+## Debug Command String:                ${command_string}
 EOF
                             )
         #fi
@@ -621,7 +618,7 @@ set -x
         restic \
                 --repository-file "${restic_repository}" \
                 backup \
-                    --host "${CONTAINER_NAME}" --tag auto ${backup_job_args} \
+                    --host "${CONTAINER_NAME}" --tag auto ${backup_job_args} ${backup_job_snapshot_args} \
                 2> /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error \
                 > /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log
 
