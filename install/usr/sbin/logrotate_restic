@@ -1,7 +1,7 @@
 #!/command/with-contenv bash
 
 source /assets/functions/00-container
-source /assets/assets/defaults/05-logging
+source /assets/defaults/05-logging
 source /assets/defaults/20-restic
 
 ## Compress each log 2 days old
