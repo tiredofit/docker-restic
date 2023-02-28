@@ -40,8 +40,8 @@ bootstrap_filesystem() {
 
     case "${LOG_TYPE,,}" in
         file )
-            source /assets/defaults/05-logging
-            echo "0 0 * * * \"for logfile in "${LOG_PATH}"/\$(date --date='2 days ago' +'%Y%m%d')*.log ; do sudo -u restic zstd --rm --rsyncable \"\${logfile}\" ; done ; find ${LOG_PATH}/* -type d -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \; for symbolic_link in ${LOG_PATH}/latest*.log ; do if [ ! -e \"\${symbolic_link}\" ] ; then rm -rf \"\${symbolic_link}\" ; fi ; done ; \"" > /assets/cron/restic_logrotate
+            echo "0 0 * * * /usr/sbin/logrotate_restic >/dev/null 2>&1" > /assets/cron/restic_logrotate
+
             if var_true "${ENABLE_SERVER}" ; then
                 sudo -u restic touch "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"
                 chown restic:restic "${SERVER_LOG_PATH}"/"${SERVER_LOG_FILE}"

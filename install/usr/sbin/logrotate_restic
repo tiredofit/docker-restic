@@ -1,0 +1,21 @@
+#!/command/with-contenv bash
+
+source /assets/functions/00-container
+source /assets/assets/defaults/05-logging
+source /assets/defaults/20-restic
+PROCESS_NAME="server-user"
+
+## Compress each log 2 days old
+for logfile in "${LOG_PATH}"/$(date --date='2 days ago' +'%Y%m%d')/$(date --date='2 days ago' +'%Y%m%d')_*.log ; do
+    sudo -u restic zstd --rm --rsyncable "${logfile}"
+done
+
+# Look fook files older than certain day and delete
+find "${LOG_PATH}"/* -type d -mtime +${LOGROTATE_RETAIN_DAYS} -exec rm {} \
+
+# Look for stale symbolic links and delete accordingly
+for symbolic_link in "${LOG_PATH}"/latest*.log ; do
+    if [ ! -e "${symbolic_link}" ] ; then
+        rm -rf "${symbolic_link}"
+    fi
+done

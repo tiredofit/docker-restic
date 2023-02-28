@@ -1,3 +1,9 @@
+## 0.14.6 2023-02-28 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Convert restic logrotate crontab to a script
+
+
 ## 0.14.5 2023-02-27 <dave at tiredofit dot ca>
 
    ### Changed
