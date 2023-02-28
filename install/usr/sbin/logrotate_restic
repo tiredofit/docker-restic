@@ -3,7 +3,6 @@
 source /assets/functions/00-container
 source /assets/assets/defaults/05-logging
 source /assets/defaults/20-restic
-PROCESS_NAME="server-user"
 
 ## Compress each log 2 days old
 for logfile in "${LOG_PATH}"/$(date --date='2 days ago' +'%Y%m%d')/$(date --date='2 days ago' +'%Y%m%d')_*.log ; do
