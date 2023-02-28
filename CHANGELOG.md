@@ -1,3 +1,9 @@
+## 0.14.7 2023-02-28 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Safer logrotate
+
+
 ## 0.14.6 2023-02-28 <dave at tiredofit dot ca>
 
    ### Changed
