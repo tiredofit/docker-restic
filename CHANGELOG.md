@@ -1,3 +1,9 @@
+## 0.16.0 2023-03-01 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add Notifications (Email, Matrix, Mattermost, Rocketchat, Custom script) on job exit code other than 0/OK
+
+
 ## 0.15.0 2023-02-28 <dave at tiredofit dot ca>
 
    ### Added

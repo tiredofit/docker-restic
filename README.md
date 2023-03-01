@@ -57,6 +57,12 @@ Features:
     - [Server Options](#server-options)
     - [RClone Options](#rclone-options)
     - [Unlock Options](#unlock-options)
+    - [Notifications](#notifications)
+      - [Custom Notifications](#custom-notifications)
+      - [Email Notifications](#email-notifications)
+      - [Matrix Notifications](#matrix-notifications)
+      - [Mattermost Notifications](#mattermost-notifications)
+      - [Rocketchat Notifications](#rocketchat-notifications)
   - [Networking](#networking)
 - [Maintenance](#maintenance)
   - [Shell Access](#shell-access)
@@ -127,22 +133,23 @@ Be sure to view the following repositories to understand all the customizable op
 
 #### Container Options
 
-| Variable      | Description                                         | Default    |
-| ------------- | --------------------------------------------------- | ---------- |
-| `MODE`        | Run multiple modes by seperating with comma:        |            |
-|               | `BACKUP` filesystem                                 |            |
-|               | `CHECK` repository - See options below              |            |
-|               | `CLEANUP` repository - See options below            |            |
-|               | `PRUNE` repository - See options below              |            |
-|               | `RCLONE` Run a copy of RClone                       |            |
-|               | `SERVER` REST repository access - see options below |            |
-|               | `STANDALONE` (Do nothing, just run container)       |            |
-| `CACHE_PATH`  | Cached files to optimize performance                | `/cache/`  |
-| `CONFIG_PATH` | Configuration files for Server                      | `/config/` |
-| `LOG_PATH`    | Log file path                                       | `/logs/`   |
-| `LOG_TYPE`    | `FILE` only at this time                            | `FILE`     |
-| `SETUP_MODE`  | `AUTO` only at this time                            | `AUTO`     |
-| `SKIP_INIT`   | Skip Repository Initialization Checks               | `FALSE`    |
+| Variable      | Description                                               | Default    |
+| ------------- | --------------------------------------------------------- | ---------- |
+| `MODE`        | Run multiple modes by seperating with comma:              |            |
+|               | `BACKUP` filesystem                                       |            |
+|               | `CHECK` repository - See options below                    |            |
+|               | `CLEANUP` repository - See options below                  |            |
+|               | `PRUNE` repository - See options below                    |            |
+|               | `RCLONE` Run a copy of RClone                             |            |
+|               | `SERVER` REST repository access - see options below       |            |
+|               | `STANDALONE` (Do nothing, just run container)             |            |
+| `CACHE_PATH`  | Cached files to optimize performance                      | `/cache/`  |
+| `CONFIG_PATH` | Configuration files for Server                            | `/config/` |
+| `LOG_PATH`    | Log file path                                             | `/logs/`   |
+| `LOG_TYPE`    | `FILE` only at this time                                  | `FILE`     |
+| `SETUP_MODE`  | `AUTO` only at this time                                  | `AUTO`     |
+| `DELAY_INIT`  | Delay Repository Initialization routines by `int` seconds |            |
+| `SKIP_INIT`   | Skip Repository Initialization Checks                     | `FALSE`    |
 
 #### Job Defaults
 If these are set and no other defaults or variables are set explicitly, they will be added to any of the `BACKUP`, `CHECK`, `CLEANUP` or `PRUNE` jobs.
@@ -387,6 +394,74 @@ Sometimes repositories will get stuck and in a `locked` state. The image attempt
 | `UNLOCK_ARGS`            | Pass arguments to the restic unlock command                |         |
 | `UNLOCK_REMOVE_ALL`      | Remove all locks even active ones `TRUE` `FALSE`           |         |
 | `UNLOCK_VERBOSITY_LEVEL` | Verbosity level of unlock command. Best not to change this | `2`     |
+
+#### Notifications
+
+This image has capabilities on sending notifications via a handful of services when a restic process fails.
+
+| Parameter              | Description                                                                       | Default |
+| ---------------------- | --------------------------------------------------------------------------------- | ------- |
+| `ENABLE_NOTIFICATIONS` | Enable Notifications                                                              | `FALSE` |
+| `NOTIFICATION_TYPE`    | `CUSTOM` `EMAIL` `MATRIX` `MATTERMOST` `ROCKETCHAT` - Seperate Multiple by commas |         |
+
+##### Custom Notifications
+
+The following is sent to the custom script. Use how you wish:
+
+````
+$1 unix timestamp
+$2 logfile
+$3 errorcode
+$4 subject
+$5 body/error message
+````
+
+| Parameter                    | Description                                             | Default |
+| ---------------------------- | ------------------------------------------------------- | ------- |
+| `NOTIFICATION_CUSTOM_SCRIPT` | Path and name of custom script to execute notification. |         |
+
+
+##### Email Notifications
+| Parameter   | Description                                                                               | Default |
+| ----------- | ----------------------------------------------------------------------------------------- | ------- |
+| `MAIL_FROM` | What email address to send mail from for errors                                           |         |
+| `MAIL_TO`   | What email address to send mail to for errors. Send to multiple by seperating with comma. |         |
+| `SMTP_HOST` | What SMTP server to use for sending mail                                                  |         |
+| `SMTP_PORT` | What SMTP port to use for sending mail                                                    |         |
+
+##### Matrix Notifications
+
+Fetch a `MATRIX_ACCESS_TOKEN`:
+
+````
+curl -XPOST -d '{"type":"m.login.password", "user":"myuserid", "password":"mypass"}' "https://matrix.org/_matrix/client/r0/login"
+````
+
+Copy the JSON response `access_token` that will look something like this:
+
+````
+{"access_token":"MDAxO...blahblah","refresh_token":"MDAxO...blahblah","home_server":"matrix.org","user_id":"@myuserid:matrix.org"}
+````
+
+| Parameter             | Description                                                                              | Default |
+| --------------------- | ---------------------------------------------------------------------------------------- | ------- |
+| `MATRIX_HOST`         | URL (https://matrix.example.com) of Matrix Homeserver                                    |         |
+| `MATRIX_ROOM`         | Room ID eg `\!abcdef:example.com` to send to. Send to multiple by seperating with comma. |         |
+| `MATRIX_ACCESS_TOKEN` | Access token of user authorized to send to room                                          |         |
+
+##### Mattermost Notifications
+| Parameter                | Description                                                                                  | Default |
+| ------------------------ | -------------------------------------------------------------------------------------------- | ------- |
+| `MATTERMOST_WEBHOOK_URL` | Full URL to send webhook notifications to                                                    |         |
+| `MATTERMOST_RECIPIENT`   | Channel or User to send Webhook notifications to. Send to multiple by seperating with comma. |         |
+| `MATTERMOST_USERNAME`    | Username to send as eg `GCDS`                                                                |         |
+
+##### Rocketchat Notifications
+| Parameter                | Description                                                                                  | Default |
+| ------------------------ | -------------------------------------------------------------------------------------------- | ------- |
+| `ROCKETCHAT_WEBHOOK_URL` | Full URL to send webhook notifications to                                                    |         |
+| `ROCKETCHAT_RECIPIENT`   | Channel or User to send Webhook notifications to. Send to multiple by seperating with comma. |         |
+| `ROCKETCHAT_USERNAME`    | Username to send as eg `GCDS`                                                                |         |
 
 
 ### Networking

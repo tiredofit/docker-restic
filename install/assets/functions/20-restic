@@ -203,7 +203,7 @@ bootstrap_variables() {
             unset "$(echo "${prune_instance_var}" | cut -d = -f 1)"
         done < "${prune_instance_vars}"
 
-        if [ -v "$(echo PRUNE"${prune_instance_number}"_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^PRUNE${prune_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
+        if [ -v $(echo PRUNE"${prune_instance_number}"_REPOSITORY_PASS) ] && [ "$(set -o posix; set | grep -E "^PRUNE${prune_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
             export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^PRUNE"${prune_instance_number}"_REPOSITORY_PASS" | cut -d = -f 2)
         elif [ -n "${DEFAULT_PRUNE_REPOSITORY_PASS}" ] && [ "${DEFAULT_PRUNE_REPOSITORY_PASS}" != "unset" ]; then
             export RESTIC_PASSWORD=${DEFAULT_PRUNE_REPOSITORY_PASS}
@@ -476,6 +476,137 @@ EOF
     esac
 }
 
+notify() {
+    notification_custom() {
+        if [ -n "${NOTIFICATION_SCRIPT}" ] ; then
+            if var_true "${NOTIFICATION_SCRIPT_SKIP_X_VERIFY}" ; then
+                eval "${NOTIFICATION_SCRIPT}" "${1}" "${2}" "${3}" "${4}" "${5}"
+            else
+                if [ -x "${NOTIFICATION_SCRIPT}" ] ; then
+                    print_notice "Found POST_SCRIPT environment variable. Executing '${NOTIFICATION_SCRIPT}"
+                    # script timestamp logfile errorcode subject body
+                    eval "${NOTIFICATION_SCRIPT}" "${1}" "${2}" "${3}" "${4}" "${5}"
+                else
+                    print_error "Can't execute NOTIFICATION_SCRIPT environment variable '${NOTIFICATION_SCRIPT}' as its filesystem bit is not executible!"
+                fi
+            fi
+        else
+            print_error "[notifications] No NOTIFICATION_SCRIPT variable set - Skipping sending Custom notifications"
+        fi
+    }
+
+    notification_email() {
+        if [ -z "${MAIL_FROM}" ] ; then print_error "[notifications] No MAIL_FROM variable set - Skipping sending Email notifications" ; skip_mail=true ; fi
+        if [ -z "${MAIL_TO}" ] ; then print_error "[notifications] No MAIL_TO variable set - Skipping sending Email notifications" ; skip_mail=true ; fi
+        if [ -z "${SMTP_HOST}" ] ; then print_error "[notifications] No SMTP_HOST variable set - Skipping sending Email notifications" ; skip_mail=true ; fi
+        if [ -z "${SMTP_PORT}" ] ; then print_error "[notifications] No SMTP_PORT variable set - Skipping sending Email notifications" ; skip_mail=true ; fi
+        if var_nottrue "${skip_mail}" ; then
+            mail_recipients=$(echo "${MAIL_TO}" | tr "," "\n")
+            for mail_recipient in $mail_recipients ; do
+                cat <<EOF | s-nail -v \
+                                        -r "${MAIL_FROM}" \
+                                        -s "[restic] [${DOMAIN}] ${3}" \
+                                        -S smtp="${SMTP_HOST}":"${SMTP_PORT}" \
+                                        "${mail_recipient}"
+Time: ${1}
+Log File: {2}
+Error Code: ${3}
+
+${4}
+EOF
+            done
+        fi
+    }
+
+    notification_mattermost() {
+        if [ -z "${MATTERMOST_RECIPIENT}" ] ; then print_error "[notifications] No MATTERMOST_RECIPIENT variable set - Skipping sending Mattermost notifications" ; skip_mattermost=true ; fi
+        if [ -z "${MATTERMOST_USERNAME}" ] ; then print_error "[notifications] No MATTERMOST_USERNAME variable set - Skipping sending Mattermost notifications" ; skip_mattermost=true ; fi
+        if [ -z "${MATTERMOST_WEBHOOK_URL}" ] ; then print_error "[notifications] No MATTERMOST_WEBHOOK_URL variable set - Skipping sending Mattermost notifications" ; skip_mattermost=true ; fi
+        if var_nottrue "${skip_mattermost}" ; then
+        emoji=":bomb:"
+        message="*[restic] ${3}*\n${4}\n*Timestamp:* ${1}\n*Logfile:* ${2}\n*Error Code: ${3}"
+        mattermost_recipients=$(echo "${MATTERMOST_RECIPIENT}" | tr "," "\n")
+            for mattermost_recipient in $mattermost_recipients ; do
+                payload="payload={\"channel\": \"${mattermost_recipient//\"/\\\"}\", \"username\": \"${MATTERMOST_USERNAME//\"/\\\"}\", \"text\": \"${message//\"/\\\"}\", \"icon_emoji\": \"${emoji}\"}"
+                silent /usr/bin/curl \
+                                        -m 5 \
+                                        --data-urlencode "${payload}" \
+                                        "${MATTERMOST_WEBHOOK_URL}"
+            done
+        fi
+    }
+
+    notification_matrix() {
+        if [ -z "${MATRIX_HOST}" ] ; then print_error "[notifications] No MATRIX_HOST variable set - Skipping sending matrix notifications" ; skip_matrix=true ; fi
+        if [ -z "${MATRIX_ROOM}" ] ; then print_error "[notifications] No MATRIX_ROOM variable set - Skipping sending matrix notifications" ; skip_matrix=true ; fi
+        if [ -z "${MATRIX_ACCESS_TOKEN}" ] ; then print_error "[notifications] No MATRIX_ACCESS_TOKEN variable set - Skipping sending matrix notifications" ; skip_matrix=true ; fi
+        if var_nottrue "${skip_matrix}" ; then
+            matrix_rooms=$(echo "${MATRIX_ROOM}" | tr "," "\n")
+            for matrix_room in $matrix_rooms ; do
+                curl \
+                        -XPOST \
+                        -d "{\"msgtype\":\"m.text\", \"body\":\"*[restic] ${3}*\n${4}\n*Timestamp:* ${1}\n*Logfile:* ${2}\n*Error Code: ${3}\"*hello}" \
+                        "${MATRIX_HOST}/_matrix/client/r0/rooms/${matrix_room}/send/m.room.message?access_token=${MATRIX_ACCESS_TOKEN}"
+            done
+        fi
+    }
+
+    notification_rocketchat() {
+        if [ -z "${ROCKETCHAT_RECIPIENT}" ] ; then print_error "[notifications] No ROCKETCHAT_RECIPIENT variable set - Skipping sending Rocket.Chat notifications" ; skip_rocketchat=true ; fi
+        if [ -z "${ROCKETCHAT_USERNAME}" ] ; then print_error "[notifications] No ROCKETCHAT_USERNAME variable set - Skipping sending Rocket.Chat notifications" ; skip_rocketchat=true ; fi
+        if [ -z "${ROCKETCHAT_WEBHOOK_URL}" ] ; then print_error "[notifications] No ROCKETCHAT_WEBHOOK_URL variable set - Skipping sending Rocket.Chat notifications" ; skip_rocketchat=true ; fi
+        if var_nottrue "${skip_rocketchat}" ; then
+            emoji=":bomb:"
+            message="*[restic] ${3}*\n${4}\n*Timestamp:* ${1}\n*Logfile:* ${2}\n*Error Code: ${3}"
+            rocketchat_recipients=$(echo "${ROCKETCHAT_RECIPIENT}" | tr "," "\n")
+            for rocketchat_recipient in $rocketchat_recipients ; do
+                payload="payload={\"channel\": \"${rocketchat_recipient//\"/\\\"}\", \"username\": \"${ROCKETCHAT_USERNAME//\"/\\\"}\", \"text\": \"${message//\"/\\\"}\", \"icon_emoji\": \"${emoji}\"}"
+                silent /usr/bin/curl \
+                                        -m 5 \
+                                        --data-urlencode "${payload}" \
+                                        "${ROCKETCHAT_WEBHOOK_URL}"
+            done
+        fi
+    }
+
+    # $1 timeststamp
+    # $2 logfile
+    # $2 errorcode
+    # $3 subject
+    # $4 body
+
+    if var_true "${ENABLE_NOTIFICATIONS}" ; then
+        notification_types=$(echo "${NOTIIFICATION_TYPE}" | tr "," "\n")
+        for notification_type in $notification_types ; do
+            case "${notification_type,,}" in
+                "custom" )
+                    print_debug "Sending Notification via custom"
+                    notification_custom "${1}" "${2}" "${3}" "${4}" "${5}"
+                ;;
+                "email" | "mail" )
+                    print_debug "Sending Notification via email"
+                    notification_email "${1}" "${2}" "${3}" "${4}" "${5}"
+                ;;
+                "matrix" )
+                    print_debug "Sending Notification via Matrix"
+                    notification_matrix "${1}" "${2}" "${3}" "${4}" "${5}"
+                ;;
+                "mattermost" )
+                    print_debug "Sending Notification via Mattermost"
+                    notification_mattermost "${1}" "${2}" "${3}" "${4}" "${5}"
+                ;;
+                "rocketchat" )
+                    print_debug "Sending Notification via Rocketchat"
+                    notification_rocketchat "${1}" "${2}" "${3}" "${4}" "${5}"
+                ;;
+                * )
+                    print_error "Unknown 'NOTIFICATION_TYPE=${notification_type}' environment value. "
+                ;;
+            esac
+        done
+    fi
+}
+
 repository() {
     backup() {
         process_limiter restic "${BACKUP_JOB_CONCURRENCY}" backup
@@ -513,7 +644,7 @@ EOF
         fi
 
         backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Backup procedure started:            $(date -d @"${backup_process_start_time}" +"%Y-%m-%d %H:%M:%S") (${backup_process_start_time})
+## Backup procedure started:            $(date -d @"${backup_process_start_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_start_time})
 EOF
                         )
         backup_process_delay_time=$(echo $((backup_process_start_time-backup_routines_start_time)))
@@ -632,43 +763,8 @@ EOF
         backup_process_finish_time="$(date +%s)"
         backup_process_total_time="$(echo $((backup_process_finish_time-backup_routines_start_time)))"
 
-        case "${exitcode_backup}" in
-            0 )
-                print_info "Backup Successful"
-                exitcode_backup_description="OK"
-            ;;
-            1 )
-                exitcode_backup_description="FAIL"
-                backup_job_error_log=true
-                if grep -q "^Fatal: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
-                    backup_fatal_error="- Fatal errors detected"
-                fi
-                print_error "Backup Failed completely ${backup_fatal_error}"
-                backup_job_error_log=true
-            ;;
-            3 )
-                exitcode_backup_description="ERROR"
-                if grep -q "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
-                    backup_error_count="$(grep -c "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error)"
-                fi
-                backup_error_description="#### Error Count: ${backup_error_count}"
-                print_error "Backup completed with ${backup_error_count} errors detected"
-                backup_job_error_log=true
-            ;;
-            130 )
-                print_error "Backup Failed due to user cancellation"
-                exitcode_backup_description="CANCELLED"
-                backup_job_error_log=true
-            ;;
-            * )
-                print_error "Backup Failed with exit code ${exitcode_backup}"
-                exitcode_backup_description="UNKNOWN"
-                backup_job_error_log=true
-            ;;
-        esac
-
         backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +"%Y-%m-%d %H:%M:%S") (${backup_process_finish_time})
+## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
 ## Backup procedure total time:         $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
 ## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
 
@@ -690,13 +786,67 @@ EOF
                             )
         fi
 
-        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log
+        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log
 ${backup_job_file_log}
 
 EOF
-        cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log ../latest-backup-"${backup_job_log_suffix}".log
+
+        case "${exitcode_backup}" in
+            0 )
+                print_info "Backup Successful"
+                exitcode_backup_description="OK"
+            ;;
+            1 )
+                exitcode_backup_description="FAIL"
+                backup_job_error_log=true
+                if grep -q "^Fatal: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
+                    backup_fatal_error="- Fatal errors detected"
+                fi
+                print_error "Backup Failed completely ${backup_fatal_error}"
+                backup_job_error_log=true
+                notify \
+                        "$(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_routines_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
+                        "{exitcode_backup}" \
+                        "[FATAL] [${backup_job_log_suffix}] Backup failed completely" \
+                        "Restic is failing to backup the '${backup_job_log_suffix}' job."
+            ;;
+            3 )
+                exitcode_backup_description="ERROR"
+                if grep -q "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
+                    backup_error_count="$(grep -c "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error)"
+                fi
+                backup_error_description="#### Error Count: ${backup_error_count}"
+                print_error "Backup completed with ${backup_error_count} errors detected"
+                backup_job_error_log=true
+                notify \
+                        "$(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_routines_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
+                        "{exitcode_backup}" \
+                        "[WARN] [${backup_job_log_suffix}] Backup completed with errors" \
+                        "Restic is failing to perform a full backup of the '${backup_job_log_suffix}' job."
+            ;;
+            130 )
+                print_error "Backup Failed due to user cancellation"
+                exitcode_backup_description="CANCELLED"
+                backup_job_error_log=true
+            ;;
+            * )
+                print_error "Backup Failed with exit code ${exitcode_backup}"
+                exitcode_backup_description="UNKNOWN"
+                backup_job_error_log=true
+                notify \
+                        "$(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_routines_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
+                        "{exitcode_backup}" \
+                        "[WARN] [${backup_job_log_suffix}] Backup failed due to unknown errors" \
+                        "Restic is throwing an unknown error code while trying to backup the '${backup_job_log_suffix}' job."
+            ;;
+        esac
+
+        cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
+        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log ../latest-backup-"${backup_job_log_suffix}".log
 
         backup_job_backup_summary_files=$(grep "^Files:" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | xargs | sed "s|Files:||g")
         print_debug "[summary] Backup Summary Files: ${backup_job_backup_summary_files}"
@@ -793,7 +943,7 @@ EOF
         process_limiter restic 1 check
         check_process_start_time=$(date +%s)
         check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
-## Check procedure started:             $(date -d @${check_process_start_time} +"%Y-%m-%d %H:%M:%S") (${check_process_start_time})
+## Check procedure started:             $(date -d @${check_process_start_time} +'%Y-%m-%d %H:%M:%S') (${check_process_start_time})
 EOF
                         )
 
@@ -887,28 +1037,10 @@ EOF
 
         check_process_finish_time=$(date +%s)
         check_process_total_time=$(echo $((check_process_finish_time-check_process_start_time)))
-        case "${exitcode_check}" in
-            0 )
-                print_info "[check] Check Successful"
-                exitcode_check_description="OK"
-            ;;
-            1 )
-                print_error "[check] Check Failed completely"
-                exitcode_check_description="FAIL"
-            ;;
-            3 )
-                print_error "[check] Check completed with errors"
-                exitcode_check_description="ERROR"
-            ;;
-            * )
-                print_error "[check] Check Failed with exit_code ${exitcode_check}"
-                exitcode_check_description="UNKNOWN"
-            ;;
-        esac
 
         check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 
-## Check procedure finished:            $(date -d @"${check_process_finish_time}" +"%Y-%m-%d %H:%M:%S") (${check_process_finish_time})
+## Check procedure finished:            $(date -d @"${check_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${check_process_finish_time})
 ## Check procedure total time:          $(echo "${check_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_total_time})
 ## Check procedure completion:          "${exitcode_check_description}" (${exitcode_check})
 
@@ -935,14 +1067,51 @@ EOF
                             )
         fi
 
-        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log
+        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log
 ${check_job_file_log}
 
 EOF
 
-        cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log ../latest-check-"${check_job_log_suffix}".log
+        cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
+        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log ../latest-check-"${check_job_log_suffix}".log
+
+        case "${exitcode_check}" in
+            0 )
+                print_info "[check] Check Successful"
+                exitcode_check_description="OK"
+            ;;
+            1 )
+                print_error "[check] Check Failed completely"
+                exitcode_check_description="FAIL"
+                notify \
+                        "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
+                        "{exitcode_check}" \
+                        "[FATAL] [${check_job_log_suffix}] Check failed completely" \
+                        "Restic is failing to check the '${check_job_log_suffix}' job."
+            ;;
+            3 )
+                print_error "[check] Check completed with errors"
+                exitcode_check_description="ERROR"
+                notify \
+                        "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
+                        "{exitcode_check}" \
+                        "[WARN] [${check_job_log_suffix}] Check completed with errors" \
+                        "Restic is failing to perform a full check of the '${check_job_log_suffix}' job."
+            ;;
+            * )
+                print_error "[check] Check Failed with exit_code ${exitcode_check}"
+                exitcode_check_description="UNKNOWN"
+                notify \
+                        "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
+                        "{exitcode_check}" \
+                        "[WARN] [${check_job_log_suffix}] Check failed due to unknown errors" \
+                        "Restic is throwing an unknown error code while trying to check the '${check_job_log_suffix}' job."
+            ;;
+        esac
 
         PROCESS_NAME=post_check${check_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -979,7 +1148,7 @@ EOF
             process_limiter restic 1 cleanup
             cleanup_process_start_time=$(date +%s)
             cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
-## Cleanup procedure started:          $(date -d @${cleanup_process_start_time} +"%Y-%m-%d %H:%M:%S") (${cleanup_process_start_time})
+## Cleanup procedure started:          $(date -d @${cleanup_process_start_time} +'%Y-%m-%d %H:%M:%S') (${cleanup_process_start_time})
 EOF
                             )
             cleanup_process_delay_time=$(echo $((cleanup_process_finish_time-cleanup_process_start_time)))
@@ -1147,31 +1316,8 @@ EOF
             cleanup_process_finish_time="$(date +%s)"
             cleanup_process_total_time="$(echo $((cleanup_process_finish_time-cleanup_routines_start_time)))"
 
-            case "${exitcode_cleanup}" in
-                0 )
-                    print_info "[cleanup] Cleanup successful"
-                    exitcode_cleanup_description="OK"
-                ;;
-                1 )
-                    print_error "[cleanup] Cleanup failed completely"
-                    exitcode_cleanup_description="FAIL"
-                ;;
-                3 )
-                    print_error "[cleanup] Cleanup completed with errors"
-                    exitcode_cleanup_description="ERROR"
-                ;;
-                130 )
-                    print_error "[cleanup] Cleanup failed due to user cancellation"
-                    exitcode_cleanup_description="CANCELLED"
-                ;;
-                * )
-                    print_error "[cleanup] Cleanup Failed with exit_code ${exitcode_cleanup}"
-                    exitcode_cleanup_description="UNKNOWN"
-                ;;
-            esac
-
             cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
-## Cleanup procedure finished:         $(date -d @${cleanup_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${cleanup_process_finish_time})
+## Cleanup procedure finished:         $(date -d @${cleanup_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${cleanup_process_finish_time})
 ## Cleanup procedure total time:       $(echo ${cleanup_routines_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${cleanup_process_total_time})
 ## Cleanup procedure completion:       ${exitcode_cleanup_description} (${exitcode_cleanup})
 
@@ -1198,13 +1344,54 @@ EOF
         fi
 
         rm -rf /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".*
-        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        cat << EOF | silent sudo -u restic tee -a "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-${cleanup_job_log_suffix}.log
+        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
+        cat << EOF | silent sudo -u restic tee -a "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-${cleanup_job_log_suffix}.log
 ${cleanup_job_file_log}
 EOF
 
-        cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log ../latest-cleanup-"${cleanup_job_log_suffix}".log
+        cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
+        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log ../latest-cleanup-"${cleanup_job_log_suffix}".log
+
+        case "${exitcode_cleanup}" in
+            0 )
+                print_info "[cleanup] Cleanup successful"
+                exitcode_cleanup_description="OK"
+            ;;
+            1 )
+                print_error "[cleanup] Cleanup failed completely"
+                exitcode_cleanup_description="FAIL"
+                notify \
+                    "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                    "{exitcode_cleanup}" \
+                    "[FATAL] [${cleanup_job_log_suffix}] Cleanup failed completely" \
+                    "Restic is failing to cleanup the '${cleanup_job_log_suffix}' job."
+            ;;
+            3 )
+                print_error "[cleanup] Cleanup completed with errors"
+                exitcode_cleanup_description="ERROR"
+                notify \
+                    "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                    "{exitcode_cleanup}" \
+                    "[WARN] [${cleanup_job_log_suffix}] Cleanup completed with errors" \
+                    "Restic is failing to perform a full cleanup of the '${cleanup_job_log_suffix}' job."
+            ;;
+            130 )
+                print_error "[cleanup] Cleanup failed due to user cancellation"
+                exitcode_cleanup_description="CANCELLED"
+            ;;
+            * )
+                print_error "[cleanup] Cleanup Failed with exit_code ${exitcode_cleanup}"
+                exitcode_cleanup_description="UNKNOWN"
+                notify \
+                    "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                    "{exitcode_cleanup}" \
+                    "[WARN] [${cleanup_job_log_suffix}] Cleanup failed due to unknown errors" \
+                    "Restic is throwing an unknown error code while trying to cleanup the '${cleanup_job_log_suffix}' job."
+            ;;
+        esac
 
         PROCESS_NAME=post_cleanup${cleanup_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1343,6 +1530,13 @@ EOF
                                 --repository-file "${restic_repository}" \
                                 init ${repository_init_arg}
 
+                        notify \
+                            "$(date +'%Y%m%d_%H%M%S')" \
+                            "See container console logs" \
+                            "{exitcode_init}" \
+                            "[FATAL] [${repository_to_init}] Cannot initialize repository" \
+                            "Restic is failing to perform a initialize the repository  '${repository_to_init}' job."
+
                         return "${exitcode_init}"
                     else
                         return "${exitcode_init}"
@@ -1368,21 +1562,21 @@ EOF
 
 ## Task:                                Prune
 EOF
-                        )
+                            )
 
         process_limiter restic 1 prune
         prune_process_start_time=$(date +%s)
         prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
-## Prune procedure started:             $(date -d @${prune_process_start_time} +"%Y-%m-%d %H:%M:%S") (${prune_process_start_time})
+## Prune procedure started:             $(date -d @${prune_process_start_time} +'%Y-%m-%d %H:%M:%S') (${prune_process_start_time})
 EOF
-                        )
+                            )
 
         prune_process_delay_time=$(echo $((prune_process_start_time-prune_routines_start_time)))
         if [ "${prune_process_delay_time}" -ge 5 ] ; then
             prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
 ## Delay in starting:                   $(echo ${prune_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${prune_process_delay_time})
 EOF
-                        )
+                                )
         fi
 
         if [ -n "${prune_job_check_name}" ] ; then
@@ -1441,28 +1635,10 @@ EOF
         rm -rf "${restic_repository}"
         prune_process_finish_time=$(date +%s)
         prune_process_total_time=$(echo $((prune_process_finish_time-prune_process_start_time)))
-        case "${exitcode_prune}" in
-            0 )
-                print_info "[prune] Prune Successful"
-                exitcode_prune_description="OK"
-            ;;
-            1 )
-                print_error "[prune] Prune Failed completely"
-                exitcode_prune_description="FAIL"
-            ;;
-            3 )
-                print_error "[prune] Prune completed with errors"
-                exitcode_prune_description="ERROR"
-            ;;
-            * )
-                print_error "[prune] Prune Failed with exit_code ${exitcode_prune}"
-                exitcode_prune_description="UNKNOWN"
-            ;;
-        esac
 
         prune_job_file_log="$(echo "${prune_job_file_log}" ; cat <<EOF
 
-## Prune procedure finished:            $(date -d @${prune_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${prune_process_finish_time})
+## Prune procedure finished:            $(date -d @${prune_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${prune_process_finish_time})
 ## Prune procedure total time:          $(echo ${prune_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${prune_process_total_time})
 ## Prune procedure completion:          ${exitcode_prune_description} (${exitcode_prune})
 
@@ -1528,14 +1704,51 @@ $(cat /tmp/prune-${prune_routines_start_time}.error)
 EOF
                             )"
         fi
-        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-${prune_job_log_suffix}.log
+        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-${prune_job_log_suffix}.log
 ${prune_job_file_log}
 
 EOF
 
-        cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
-        ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-"${prune_job_log_suffix}".log ../latest-prune-"${prune_job_log_suffix}".log
+        cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
+        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-"${prune_job_log_suffix}".log ../latest-prune-"${prune_job_log_suffix}".log
+
+        case "${exitcode_prune}" in
+            0 )
+                print_info "[prune] Prune Successful"
+                exitcode_prune_description="OK"
+            ;;
+            1 )
+                print_error "[prune] Prune Failed completely"
+                exitcode_prune_description="FAIL"
+                notify \
+                        "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
+                        "{exitcode_prune}" \
+                        "[FATAL] [${prune_job_log_suffix}] Prune failed completely" \
+                        "Restic is failing to prune the '${prune_job_log_suffix}' job."
+            ;;
+            3 )
+                print_error "[prune] Prune completed with errors"
+                exitcode_prune_description="ERROR"
+                notify \
+                        "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
+                        "{exitcode_prune}" \
+                        "[WARN] [${prune_job_log_suffix}] Prune completed with errors" \
+                        "Restic is failing to perform a full prune of the '${prune_job_log_suffix}' job."
+            ;;
+            * )
+                print_error "[prune] Prune Failed with exit_code ${exitcode_prune}"
+                exitcode_prune_description="UNKNOWN"
+                notify \
+                        "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
+                        "{exitcode_prune}" \
+                        "[WARN] [${prune_job_log_suffix}] Prune failed due to unknown errors" \
+                        "Restic is throwing an unknown error code while trying to prune the '${backup_job_log_suffix}' job."
+            ;;
+        esac
 
         PROCESS_NAME=post_prune${prune_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1588,7 +1801,7 @@ EOF
         process_limiter restic 1 unlock
         unlock_process_start_time=$(date +%s)
         unlock_job_file_log=$(echo "${unlock_job_file_log}" ; cat <<EOF
-## Unlock procedure started:            $(date -d @${unlock_process_start_time} +"%Y-%m-%d %H:%M:%S") (${unlock_process_start_time})
+## Unlock procedure started:            $(date -d @${unlock_process_start_time} +'%Y-%m-%d %H:%M:%S') (${unlock_process_start_time})
 EOF
                         )
 
@@ -1649,34 +1862,10 @@ EOF
         rm -rf "${restic_repository}"
         unlock_process_finish_time=$(date +%s)
         unlock_process_total_time=$(echo $((unlock_process_finish_time-unlock_process_start_time)))
-        case "${exitcode_unlock}" in
-            0 )
-                if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] || [ -s /tmp/unlock-"${unlock_routines_start_time}".log ] ; then
-                    print_info "[unlock] Unlock Successful"
-                    exitcode_unlock_description="OK"
-                else
-                    print_debug "[unlock] Unlock unnecessary"
-                    exitcode_unlock_description="NOT_NECESSARY"
-                    exitcode_unlock=23
-                fi
-            ;;
-            1 )
-                print_error "[unlock] Unlock Failed completely"
-                exitcode_unlock_description="FAIL"
-            ;;
-            3 )
-                print_error "[unlock] Unlock completed with errors"
-                exitcode_unlock_description="ERROR"
-            ;;
-            * )
-                print_error "[unlock] Unlock Failed with exit_code ${exitcode_unlock}"
-                exitcode_unlock_description="UNKNOWN"
-            ;;
-        esac
 
         unlock_job_file_log=$(echo "${unlock_job_file_log}" ; cat <<EOF
 
-## Unlock procedure finished:           $(date -d @${unlock_process_finish_time} +"%Y-%m-%d %H:%M:%S") (${unlock_process_finish_time})
+## Unlock procedure finished:           $(date -d @${unlock_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${unlock_process_finish_time})
 ## Unlock procedure total time:         $(echo ${unlock_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${unlock_process_total_time})
 ## Unlock procedure completion:         ${exitcode_unlock_description} (${exitcode_unlock})
 
@@ -1704,14 +1893,57 @@ EOF
         fi
 
         if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] || [ -s /tmp/unlock-"${unlock_routines_start_time}".log ] ; then
-            sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +"%Y%m%d")"
-            cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log
+            sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
+            cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log
 ${unlock_job_file_log}
 
 EOF
-            cd "${LOG_PATH}"/"$(date +"%Y%m%d")"
-            ln -sf "$(date +"%Y%m%d")"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log ../latest-unlock.log
+            cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
+            ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log ../latest-unlock.log
         fi
+
+        case "${exitcode_unlock}" in
+            0 )
+                if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] || [ -s /tmp/unlock-"${unlock_routines_start_time}".log ] ; then
+                    print_info "[unlock] Unlock Successful"
+                    exitcode_unlock_description="OK"
+                else
+                    print_debug "[unlock] Unlock unnecessary"
+                    exitcode_unlock_description="NOT_NECESSARY"
+                    exitcode_unlock=23
+                fi
+            ;;
+            1 )
+                print_error "[unlock] Unlock Failed completely"
+                exitcode_unlock_description="FAIL"
+                notify \
+                        "$(date -d @"${unlock_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${unlock_routines_start_time} +'%Y%m%d_%H%M%S')-unlock-${unlock_job_log_suffix}.log" \
+                        "{exitcode_unlock}" \
+                        "[FATAL] [${unlock_job_log_suffix}] Unlock failed completely" \
+                        "Restic is failing to unlock the '${unlock_job_log_suffix}' job."
+            ;;
+            3 )
+                print_error "[unlock] Unlock completed with errors"
+                exitcode_unlock_description="ERROR"
+                notify \
+                        "$(date -d @"${unlock_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${unlock_routines_start_time} +'%Y%m%d_%H%M%S')-unlock-${unlock_job_log_suffix}.log" \
+                        "{exitcode_unlock}" \
+                        "[WARN] [${unlock_job_log_suffix}] Unlock completed with errors" \
+                        "Restic is failing to perform a full unlock of the '${unlock_job_log_suffix}' job."
+            ;;
+            * )
+                print_error "[unlock] Unlock Failed with exit_code ${exitcode_unlock}"
+                exitcode_unlock_description="UNKNOWN"
+                notify \
+                        "$(date -d @"${unlock_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${unlock_routines_start_time} +'%Y%m%d_%H%M%S')-unlock-${unlock_job_log_suffix}.log" \
+                        "{exitcode_unlock}" \
+                        "[WARN] [${unlock_job_log_suffix}] Unlock failed due to unknown errors" \
+                        "Restic is throwing an unknown error code while trying to backup the '${unlock_job_log_suffix}' job."
+            ;;
+        esac
 
         unset unlock_job_args
         rm -rf /tmp/unlock-"${unlock_routines_start_time}".*

@@ -42,6 +42,7 @@ RUN source assets/functions/00-container && \
                     apache2-utils \
                     coreutils \
                     fuse3 \
+                    s-nail \
                     tar \
                     && \
     \
