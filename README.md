@@ -105,11 +105,11 @@ Images are built primarily for `amd64` architecture, and may also include builds
 
 The following directories are used for configuration and can be mapped for persistent storage.
 
-| Directory | Description                               |
-| --------- | ----------------------------------------- |
+| Directory | Description                                         |
+| --------- | --------------------------------------------------- |
 | `/cache`  | Cached files from repository for quicker operations |
-| `/config` | (server) Configuration and Password Files |
-| `/logs`   | Logfiles                                  |
+| `/config` | (server) Configuration and Password Files           |
+| `/logs`   | Logfiles                                            |
 
 * * *
 ### Environment Variables

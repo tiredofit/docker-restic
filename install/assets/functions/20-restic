@@ -507,7 +507,6 @@ EOF
         if [ -n "${backup_job_snapshot_path}" ] ; then
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
 ## Backup Path:                         ${backup_job_snapshot_path}
-        backup_job_snapshot_args=
 EOF
                         )
             backup_job_snapshot_args+="${backup_job_snapshot_path} "
