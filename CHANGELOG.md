@@ -1,3 +1,9 @@
+## 0.16.1 2023-03-01 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fetch, store and replace last modified timestamp when doing logrotation
+
+
 ## 0.16.0 2023-03-01 <dave at tiredofit dot ca>
 
    ### Added
