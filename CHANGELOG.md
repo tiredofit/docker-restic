@@ -1,3 +1,9 @@
+## 0.16.2 2023-03-04 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Reset dir modified time on log directories (again)
+
+
 ## 0.16.1 2023-03-01 <dave at tiredofit dot ca>
 
    ### Changed
