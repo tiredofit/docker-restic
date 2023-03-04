@@ -18,6 +18,7 @@ Features:
 - Cleanup/Snapshot retention support
 - Repository check support (multiple)
 - Repository prune support (multiple)
+- Pre and Post Hooks for all operations
 - Restic REST Server included
 - RClone included for REST Server functionality/connecting to different backends
 - Multiple repository support
@@ -46,17 +47,22 @@ Features:
     - [Backup Options](#backup-options)
       - [Default Backup Options](#default-backup-options)
       - [Job Backup Options](#job-backup-options)
+      - [Hooks](#hooks)
     - [Check Options](#check-options)
       - [Default Check Options](#default-check-options)
       - [Job Check Options](#job-check-options)
+      - [Hooks](#hooks-1)
     - [Cleanup Options](#cleanup-options)
       - [Default Cleanup Options](#default-cleanup-options)
       - [Job Cleanup Options](#job-cleanup-options)
+      - [Hooks](#hooks-2)
     - [Prune Options](#prune-options)
       - [Default Prune Options](#default-prune-options)
+      - [Hooks](#hooks-3)
     - [Server Options](#server-options)
     - [RClone Options](#rclone-options)
     - [Unlock Options](#unlock-options)
+      - [Hooks](#hooks-4)
     - [Notifications](#notifications)
       - [Custom Notifications](#custom-notifications)
       - [Email Notifications](#email-notifications)
@@ -181,6 +187,8 @@ If set, these variables will be passed to each backup job, unless each job expli
 | `DEFAULT_BACKUP_SNAPSHOT_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                |         |
 | `DEFAULT_BACKUP_SNAPSHOT_EXCLUDE`         | Comma seperated list of files or paths to exclude from backup eg `.snapshots,.cache` |         |
 | `DEFAULT_BACKUP_SNAPSHOT_EXCLUDE_FILE`    | Line seperated list of files or directories to exclude                               |         |
+| `DEFAULT_BACKUP_SNAPSHOT_HOOK_POST`       | Path and Filename to execute post snapshot operation                                 |         |
+| `DEFAULT_BACKUP_SNAPSHOT_HOOK_PRE`        | Path and Filename to execute pre snapshot operation                                  |         |
 | `DEFAULT_BACKUP_SNAPSHOT_PATH`            | Folder or file to backup eg `/etc`                                                   |         |
 | `DEFAULT_BACKUP_SNAPSHOT_PATH_FILE`       | Line seperated list of files or directories to backup                                |         |
 | `DEFAULT_BACKUP_SNAPSHOT_TAGS`            | Comma seperated list of tags to attach to snapshot                                   |         |
@@ -205,6 +213,8 @@ Additional backup jobs can be scheduled by using `BACKUP02_`,`BACKUP03_`,`BACKUP
 | `BACKUP01_SNAPSHOT_BLACKOUT_BEGIN`  | Use `HHMM` notation to start a blackout period where no backups occur eg `0420`                                                                |         |
 | `BACKUP01_SNAPSHOT_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no backups occur eg `0430`                                                                     |         |
 | `BACKUP01_SNAPSHOT_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |
+| `BACKUP01_SNAPSHOT_HOOK_POST`       | Path and Filename to execute post snapshot operation                                                                                           |         |
+| `BACKUP01_SNAPSHOT_HOOK_PRE`        | Path and Filename to execute pre snapshot operation                                                                                            |         |
 | `BACKUP01_SNAPSHOT_INTERVAL`        | Frequency after first execution of firing backup routines again in                                                                             |         |
 | `BACKUP01_SNAPSHOT_NAME`            | A friendly name to reference your snapshot job eg home, or var_local                                                                           |         |
 | `BACKUP01_SNAPSHOT_PATH`            | The path to backup from your filesystem eg `/rootfs/home`                                                                                      |         |
@@ -215,6 +225,24 @@ Additional backup jobs can be scheduled by using `BACKUP02_`,`BACKUP03_`,`BACKUP
 | `BACKUP01_SNAPSHOT_TAGS`            | Comma seperated list of tags to attach to snapshot                                                                                             |         |
 | `BACKUP01_SNAPSHOT_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`     |
 
+##### Hooks
+
+The following will be sent to the snapshot job hook script:
+
+
+Pre: `HOSTNAME CONTAINER_NAME BACKUP INSTANCE_NUMBER[XX] BACKUP[XX]_NAME BACKUP[XX]_REPOSITORY_PATH ROUTINE_START_EPOCH BACKUP[XX]_SNAPSHOT_PATH BACKUP[XX]_SNAPSHOT_PATH_FILE`
+
+Example:
+```bash
+server container_name BACKUP 01 backupjobname rest:username:password@http://repo.url 1677953980 /etc /backup-location-file.if_set
+```
+
+Post: `HOSTNAME CONTAINER_NAME BACKUP INSTANCE_NUMBER[XX] BACKUP[XX]NAME BACKUP[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE FILES_NEW FILES_CHANGED FILES_UNMODIFIED DIRS_NEW DIRS_CHANGED DIRS_UNMODIFIED SIZE_BYTES_ADDED SIZE_BYTES_STORED SIZE_BYTES_PROCESSED ERROR_COUNT`
+
+Example:
+```bash
+server container_name BACKUP 01 backupjobname rest:username:password@http://repo.url 1677953980 1677953981 1677953991 10 0 /logs/20230304/20230304_100501-backup-backupjobname.log 123 100 1024 2 3 2048 1204 1536 65535 0`
+```
 
 #### Check Options
 
@@ -232,6 +260,8 @@ If set, these variables will be passed to each prune job, unless each job explic
 | `DEFAULT_CHECK_BLACKOUT_BEGIN`  | Use `HHMM` notation to set the start of a blackout period where no checks occur eg `0420` |         |
 | `DEFAULT_CHECK_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no checks occur eg `0430`                 |         |
 | `DEFAULT_CHECK_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                     |         |
+| `DEFAULT_CHECK_HOOK_POST`       | Path and Filename to execute post repository check operation                              |         |
+| `DEFAULT_CHECK_HOOK_PRE`        | Path and Filename to execute pre repository check operation                               |         |
 | `DEFAULT_CHECK_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`            |         |
 | `DEFAULT_CHECK_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                         |         |
 | `DEFAULT_CHECK_USE_CACHE`       | Use cache                                                                                 |         |
@@ -254,12 +284,33 @@ Additional check jobs can be scheduled by using `CHECK02_`,`CHECK03_`,`CHECK04_`
 | `CHECK01_BEGIN`           | What time to do the first check. Defaults to immediate. Must be in one of two formats                                                          |         |
 |                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
 |                           | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
+| `CHECK01_HOOK_POST`       | Path and Filename to execute post repository check operation                                                                                   |         |
+| `CHECK01_HOOK_PRE`        | Path and Filename to execute pre repository check operation                                                                                    |         |
 | `CHECK01_INTERVAL`        | Frequency after first execution of firing check routines again in minutes                                                                      |         |
 | `CHECK01_NAME`            | A friendly name to reference your check snapshot job eg `consistency_check`                                                                    |         |
 | `CHECK01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         |
 | `CHECK01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         |
 | `CHECK01_USE_CACHE`       | Use cache                                                                                                                                      |         |
 | `CHECK01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`     |
+##### Hooks
+
+The following will be sent to the hook script:
+
+Pre: `HOSTNAME CONTAINER_NAME CHECK INSTANCE_NUMBER[XX] CHECK[XX]_NAME CHECK[XX]_REPOSITORY_PATH ROUTINE_START_EPOCH`
+
+Example:
+```bash
+server container_name CHECK 01 checkjobname rest:username:password@http://repo.url 1677953980
+```
+
+Post: `HOSTNAME CONTAINER_NAME CHECK INSTANCE_NUMBER[XX] CHECK[XX]NAME CHECK[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE`
+
+Example:
+
+```bash
+server container_name CHECK 01 checkjobname rest:username:password@http://repo.url 1677953980 1677953981 1677953991 10 0 /logs/20230304/20230304_100501-check-checkjobname.log
+```
+
 
 #### Cleanup Options
 
@@ -278,6 +329,8 @@ If set, these variables will be passed to each cleanup job, unless each job expl
 | `DEFAULT_CLEANUP_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                         |         |
 | `DEFAULT_CLEANUP_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                     |         |
 | `DEFAULT_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                     |         |
+| `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post snapshot operation                                                                      |         |
+| `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre snapshot operation                                                                       |         |
 | `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data |         |
 | `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                  |         |
 | `DEFAULT_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                          |         |
@@ -305,6 +358,8 @@ Additional backup jobs can be scheduled by using `CLEANUP02_`,`CLEANUP03_`,`CLEA
 |                             | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
 | `CLEANUP01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |         |
 | `CLEANUP01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |         |
+| `CLEANUP01_HOOK_POST`       | Path and Filename to execute post snapshot operation                                                                                           |         |
+| `CLEANUP01_HOOK_PRE`        | Path and Filename to execute pre snapshot operation                                                                                            |         |
 | `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
 | `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |         |
 | `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data                      |         |
@@ -318,6 +373,22 @@ Additional backup jobs can be scheduled by using `CLEANUP02_`,`CLEANUP03_`,`CLEA
 | `CLEANUP01_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                                     |         |
 | `CLEANUP01_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                                |         |
 | `CLEANUP01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`     |
+
+##### Hooks
+The following will be sent to the hooks script :
+
+Pre: `HOSTNAME CONTAINER_NAME CLEANUP INSTANCE_NUMBER[XX] CLEANUP[XX]_NAME CLEANUP[XX]_REPOSITORY_PATH ROUTINE_START_EPOCH`
+
+Example:
+```bash
+server container_name CLEANUP 01 cleanupname rest:username:password@http://repo.url 1677953980
+```
+
+Post: `HOSTNAME CONTAINER_NAME CLEANUP INSTANCE_NUMBER[XX] CLEANUP[XX]NAME CLEANUP[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE`
+
+```bash
+server container_name CLEANUP 01 cleaupname rest:username:password@http://repo.url 1677953980 1677953981 1677953991 10 0 /logs/20230304/20230304_100501-cleanup-cleanupname.log
+```
 
 
 #### Prune Options
@@ -335,6 +406,8 @@ If set, these variables will be passed to each prune job, unless each job explic
 | `DEFAULT_PRUNE_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no prune operations occur eg `0420` |         |
 | `DEFAULT_PRUNE_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no prune operations occur eg `0430`             |         |
 | `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                           |         |
+| `DEFAULT_PRUNE_HOOK_POST`       | Path and Filename to execute post prune operation                                               |         |
+| `DEFAULT_PRUNE_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                |         |
 | `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                  |         |
 | `DEFAULT_PRUNE_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                               |         |
 | `DEFAULT_PRUNE_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                        | `2`     |
@@ -352,11 +425,31 @@ Additional prune jobs can be scheduled by using `PRUNE02_`,`PRUNE03_`,`PRUNE04_`
 | `PRUNE01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |         |
 | `PRUNE01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |         |
 | `PRUNE01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |
+| `PRUNE01_HOOK_POST`       | Path and Filename to execute post prune operation                                                                                              |         |
+| `PRUNE01_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                                                               |         |
 | `PRUNE01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
 | `PRUNE01_NAME`            | A friendly name to reference your prune snapshot job eg `repository_name`                                                                      |         |
 | `PRUNE01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         |
 | `PRUNE01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         |
 | `PRUNE01_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                                                                       | `2`     |
+
+##### Hooks
+
+The following information will be sent to the hook script:
+Pre: `HOSTNAME CONTAINER_NAME PRUNE INSTANCE_NUMBER[XX] PRUNE[XX]_NAME PRUNE[XX]_REPOSITORY_PATH ROUTINE_START_EPOCH`
+
+Example:
+```bash
+server container_name PRUNE 01 prunereponame rest:username:password@http://repo.url 1677953980
+```
+
+Post: `HOSTNAME CONTAINER_NAME PRUNE INSTANCE_NUMBER[XX] PRUNE[XX]NAME PRUNE[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE`
+
+Example:
+
+```bash
+server container_name PRUNE 01 prunereponame rest:username:password@http://repo.url 1677953980 1677953981 1677953991 10 0 /logs/20230304/20230304_100501-prune-prunereponame.log
+```
 
 #### Server Options
 
@@ -392,9 +485,28 @@ Sometimes repositories will get stuck and in a `locked` state. The image attempt
 | Variable                 | Description                                                | Default |
 | ------------------------ | ---------------------------------------------------------- | ------- |
 | `UNLOCK_ARGS`            | Pass arguments to the restic unlock command                |         |
+| `UNLOCK_HOOK_POST`       | Path and Filename to execute post repository unlock        |         |
+| `UNLOCK_HOOK_PRE`        | Path and Filename to execute pre repository unlock         |         |
 | `UNLOCK_REMOVE_ALL`      | Remove all locks even active ones `TRUE` `FALSE`           |         |
 | `UNLOCK_VERBOSITY_LEVEL` | Verbosity level of unlock command. Best not to change this | `2`     |
 
+##### Hooks
+
+The following information will be sent to the hook script:
+
+Pre: `HOSTNAME CONTAINER_NAME UNLOCK REPOSITORY_PATH ROUTINE_START_EPOCH`
+
+Example:
+```bash
+server container_name UNLOCK rest:username:password@http://repo.url 1677953980
+```
+
+Post: `HOSTNAME CONTAINER_NAME TYPE REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
+
+Example:
+```bash
+server container_name UNLOCK rest:username:password@http://repo.url 1677953980 1677953981 1677953991 10 0 20230304/20230304_090351-unlock.log
+```
 #### Notifications
 
 This image has capabilities on sending notifications via a handful of services when a restic process fails.

@@ -99,6 +99,8 @@ bootstrap_variables() {
         transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_DRY_RUN backup_job_snapshot_dryrun
         transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_EXCLUDE backup_job_snapshot_exclude
         transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_EXCLUDE_FILE backup_job_snapshot_exclude_file
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_HOOK_POST backup_job_hook_post
+        transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_HOOK_PRE backup_job_hook_pre
         transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_NAME backup_job_snapshot_name
         transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_PATH backup_job_snapshot_path
         transform_backup_instance_variable "${backup_instance_number}" SNAPSHOT_PATH_FILE backup_job_snapshot_path_file
@@ -139,6 +141,8 @@ bootstrap_variables() {
         transform_check_instance_variable "${check_instance_number}" BLACKOUT_END check_job_blackout_finish
         transform_check_instance_variable "${check_instance_number}" CHECK_AMOUNT check_job_check_amount
         transform_check_instance_variable "${check_instance_number}" DRY_RUN check_job_check_dryrun
+        transform_check_instance_variable "${check_instance_number}" HOOK_POST check_job_check_hook_post
+        transform_check_instance_variable "${check_instance_number}" HOOK_PRE check_job_check_hook_pre
         transform_check_instance_variable "${check_instance_number}" NAME check_job_check_name
         transform_check_instance_variable "${check_instance_number}" REPOSITORY_PASS check_job_repository_pass
         transform_check_instance_variable "${check_instance_number}" REPOSITORY_PATH check_job_repository_path
@@ -179,6 +183,8 @@ bootstrap_variables() {
         transform_cleanup_instance_variable "${cleanup_instance_number}" BLACKOUT_BEGIN cleanup_job_blackout_start
         transform_cleanup_instance_variable "${cleanup_instance_number}" BLACKOUT_END cleanup_job_blackout_finish
         transform_cleanup_instance_variable "${cleanup_instance_number}" DRY_RUN cleanup_job_cleanup_dryrun
+        transform_cleanup_instance_variable "${cleanup_instance_number}" HOOK_POST cleanup_job_cleanup_hook_post
+        transform_cleanup_instance_variable "${cleanup_instance_number}" HOOK_PRE cleanup_job_cleanup_hook_pre
         transform_cleanup_instance_variable "${cleanup_instance_number}" NAME cleanup_job_cleanup_name
         transform_cleanup_instance_variable "${cleanup_instance_number}" REPACK cleanup_job_cleanup_repack
         transform_cleanup_instance_variable "${cleanup_instance_number}" REPOSITORY_PASS cleanup_job_repository_pass
@@ -225,6 +231,8 @@ bootstrap_variables() {
         transform_prune_instance_variable "${prune_instance_number}" BLACKOUT_BEGIN prune_job_blackout_start
         transform_prune_instance_variable "${prune_instance_number}" BLACKOUT_END prune_job_blackout_finish
         transform_prune_instance_variable "${prune_instance_number}" DRY_RUN prune_job_prune_dryrun
+        transform_prune_instance_variable "${prune_instance_number}" HOOK_POST prune_job_prune_hook_post
+        transform_prune_instance_variable "${prune_instance_number}" HOOK_PRE prune_job_prune_hook_pre
         transform_prune_instance_variable "${prune_instance_number}" NAME prune_job_prune_name
         transform_prune_instance_variable "${prune_instance_number}" REPOSITORY_PASS prune_job_repository_pass
         transform_prune_instance_variable "${prune_instance_number}" REPOSITORY_PATH prune_job_repository_path
@@ -269,6 +277,8 @@ bootstrap_variables() {
         }
 
         transform_unlock_variable ARGS unlock_job_unlock_args
+        transform_unlock_variable HOOK_POST unlock_job_hook_post
+        transform_unlock_variable HOOK_PRE unlock_job_hook_pre
         transform_unlock_variable REMOVE_ALL unlock_job_remove_all
         transform_unlock_variable VERBOSITY_LEVEL unlock_job_verbosity_level
 
@@ -476,6 +486,113 @@ EOF
     esac
 }
 
+hooks() {
+    post() {
+        case "${1}" in
+            backup )
+                if [ -x "${backup_job_hook_post}" ] ; then
+                    print_notice "Executing post snapshot custom script : '${backup_job_hook_post}'"
+                    ## script HOSTNAME CONTAINER_NAME BACKUP INSTANCE_NUMBER[XX] BACKUP[XX]NAME BACKUP[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE FILES_NEW FILES_CHANGED FILES_UNMODIFIED DIRS_NEW DIRS_CHANGED DIRS_UNMODIFIED SIZE_BYTES_ADDED SIZE_BYTES_STORED SIZE_BYTES_PROCESSED ERROR_COUNT
+                    "${backup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" BACKUP "${backup_instance_number}" "${backup_job_log_suffix}" "${backup_job_repository_path}" "${backup_routines_start_time}" "${backup_process_start_time}" "${backup_process_finish_time}" "${backup_process_total_time}" "${exitcode_backup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log "${backup_job_backup_summary_files_new}" "${backup_job_backup_summary_files_changed}" "${backup_job_backup_summary_files_unmodified}" "${backup_job_backup_summary_directory_new}" "${backup_job_backup_summary_directory_changed}" "${backup_job_backup_summary_directory_unmodified}" "${backup_job_backup_summary_added_size_bytes}" "${backup_job_backup_summary_added_size_stored_bytes}" "${backup_job_backup_summary_processed_size_bytes}" "${backup_job_backup_summary_error_count}"
+                else
+                    print_error "Can't run post snapshot custom script: '${backup_job_hook_post}' as its filesystem bit is not executible!"
+                fi
+            ;;
+            check )
+                if [ -x "${check_job_hook_post}" ] ; then
+                    print_notice "Executing post check custom script : '${check_job_hook_post}'"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
+                    "${check_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CHECK "${check_instance_number}" "${check_job_log_suffix}" "${check_job_repository_path}" "${check_routines_start_time}" "${check_process_start_time}" "${check_process_finish_time}" "${check_process_total_time}" "${exitcode_check}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log
+                else
+                    print_error "Can't run post check custom script: '${check_job_hook_post}' as its filesystem bit is not executible!"
+                fi
+            ;;
+            cleanup )
+                if [ -x "${cleanup_job_hook_post}" ] ; then
+                    print_notice "Executing post cleanup custom script : '${cleanup_job_hook_post}'"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
+                    "${cleanup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}" "${cleanup_process_start_time}" "${cleanup_process_finish_time}" "${cleanup_process_total_time}" "${exitcode_cleanup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log
+                else
+                    print_error "Can't run post cleanup custom script: '${cleanup_job_hook_post}' as its filesystem bit is not executible!"
+                fi
+            ;;
+            prune )
+                if [ -x "${prune_job_hook_post}" ] ; then
+                    print_notice "Executing post prune custom script : '${prune_job_hook_post}'"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
+                    "${prune_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" PRUNE "${prune_instance_number}" "${prune_job_log_suffix}" "${prune_job_repository_path}" "${prune_routines_start_time}" "${prune_process_start_time}" "${prune_process_finish_time}" "${prune_process_total_time}" "${exitcode_prune}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-"${prune_job_log_suffix}".log
+                else
+                    print_error "Can't run post prune custom script: '${prune_job_hook_post}' as its filesystem bit is not executible!"
+                fi
+            ;;
+            unlock )
+                if [ -x "${unlock_job_hook_post}" ] ; then
+                    print_notice "Executing post unlock custom script : '${unlock_job_hook_post}'"
+                    ## script HOSTNAME CONTAINER_NAME TYPE REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
+                    "${unlock_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" UNLOCK "${unlock_job_repository_path}" "${unlock_routines_start_time}" "${unlock_process_start_time}" "${unlock_process_finish_time}" "${unlock_process_total_time}" "${exitcode_unlock}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log
+                else
+                    print_error "Can't run post unlock custom script: '${unlock_job_hook_post}' as its filesystem bit is not executible!"
+                fi
+            ;;
+        esac
+    }
+
+    pre() {
+        case "${1}" in
+            backup )
+                if [ -x "${backup_job_hook_pre}" ] ; then
+                    print_notice "Executing pre snapshot custom script : '${backup_job_hook_pre}'"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH BACKUP_PATH BACKUP_PATH_FILE
+                    "${backup_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" BACKUP "${backup_instance_number}" "${backup_job_log_suffix}" "${backup_job_repository_path}" "${backup_routines_start_time}" "${backup_job_snapshot_path}" "${backup_job_snapshot_path_file}"
+                else
+                    print_error "Can't run pre snapshot custom script: '${backup_job_hook_pre}' as its filesystem bit is not executible!"
+                fi
+            ;;
+            check )
+                if [ -x "${check_job_hook_pre}" ] ; then
+                    print_notice "Executing pre check custom script : '${check_job_hook_pre}'"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${check_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" CHECK "${check_instance_number}" "${check_job_log_suffix}" "${check_job_repository_path}" "${check_routines_start_time}"
+                else
+                    print_error "Can't run pre check custom script: '${check_job_hook_pre}' as its filesystem bit is not executible!"
+                fi
+            ;;
+            cleanup )
+                if [ -x "${cleanup_job_hook_pre}" ] ; then
+                    print_notice "Executing pre cleanup custom script : '${cleanup_job_hook_pre}'"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${cleanup_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}"
+                else
+                    print_error "Can't run pre cleanup custom script: '${cleanup_job_hook_pre}' as its filesystem bit is not executible!"
+                fi
+            ;;
+            prune )
+                if [ -x "${prune_job_hook_pre}" ] ; then
+                    print_notice "Executing pre prune custom script : '${prune_job_hook_pre}'"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${prune_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" PRUNE "${prune_instance_number}" "${prune_job_log_suffix}" "${prune_job_repository_path}" "${prune_routines_start_time}"
+                else
+                    print_error "Can't run pre prune custom script: '${prune_job_hook_pre}' as its filesystem bit is not executible!"
+                fi
+            ;;
+            unlock )
+                if [ -x "${unlock_job_hook_pre}" ] ; then
+                    print_notice "Executing pre unlock custom script : '${unlock_job_hook_pre}'"
+                    ## script HOSTNAME CONTAINER_NAME REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${unlock_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" "${unlock_job_repository_path}" "${unlock_routines_start_time}"
+                else
+                    print_error "Can't run pre unlock custom script: '${unlock_job_hook_pre}' as its filesystem bit is not executible!"
+                fi
+            ;;
+        esac
+    }
+
+    case "${1}" in
+        post ) post $2 ;;
+        pre ) pre $2 ;;
+    esac
+
+}
 notify() {
     notification_custom() {
         if [ -n "${NOTIFICATION_SCRIPT}" ] ; then
@@ -746,6 +863,10 @@ EOF
                             )
         fi
 
+        if [ -n "${backup_job_hook_pre}" ]; then
+            hook backup pre
+        fi
+
         print_info "Starting Backup Snapshot ${backup_job_log_suffix}"
         restic_repository=$(mktemp)
         echo "${backup_job_repository_path}" > "${restic_repository}"
@@ -762,35 +883,6 @@ EOF
         rm -rf "${restic_repository}"
         backup_process_finish_time="$(date +%s)"
         backup_process_total_time="$(echo $((backup_process_finish_time-backup_routines_start_time)))"
-
-        backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
-## Backup procedure total time:         $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
-## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
-
-### Backup Details
-$(cat /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | sed "/^unchanged/d" )
-
-EOF
-                        )
-
-        if var_true "${backup_job_error_log}" ; then
-            backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-
-#### Error Log
-${backup_error_description}
-
-$(cat "${backup_instance_number}"-backup-"${backup_routines_start_time}".error)
-
-EOF
-                            )
-        fi
-
-        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log
-${backup_job_file_log}
-
-EOF
 
         case "${exitcode_backup}" in
             0 )
@@ -844,6 +936,35 @@ EOF
                         "Restic is throwing an unknown error code while trying to backup the '${backup_job_log_suffix}' job."
             ;;
         esac
+
+        backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
+## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
+## Backup procedure total time:         $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
+## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
+
+### Backup Details
+$(cat /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | sed "/^unchanged/d" )
+
+EOF
+                        )
+
+        if var_true "${backup_job_error_log}" ; then
+            backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
+
+#### Error Log
+${backup_error_description}
+
+$(cat "${backup_instance_number}"-backup-"${backup_routines_start_time}".error)
+
+EOF
+                            )
+        fi
+
+        sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log
+${backup_job_file_log}
+
+EOF
 
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log ../latest-backup-"${backup_job_log_suffix}".log
@@ -912,12 +1033,16 @@ EOF
 - restic.backup.files.unmodified.[${backup_job_log_suffix}] "${backup_job_backup_summary_files_unmodified}"
 - restic.backup.dirs.new.[${backup_job_log_suffix}] "${backup_job_backup_summary_directory_new}"
 - restic.backup.dirs.changed.[${backup_job_log_suffix}] "${backup_job_backup_summary_directory_changed}"
-- restic.backup.dirs.unmodified.[${backup_job_log_suffix}] "${backup_job_backup_summary_directory_unmodified}"
-- restic.backup.size.bytes.added.[${backup_job_log_suffix}] "${backup_job_backup_summary_added_size_bytes}"
+- restic.backup.dirs.unmodified.[${backup_job_log_suffix}] "$"${backup_job_backup_summary_added_size_bytes}"{backup_job_backup_summary_directory_unmodified}"
+- restic.backup.size.bytes.added.[${backup_job_log_suffix}]
 - restic.backup.size.bytes.stored.[${backup_job_log_suffix}] "${backup_job_backup_summary_added_size_stored_bytes}"
 - restic.backup.size.bytes.processed.[${backup_job_log_suffix}] "${backup_job_backup_summary_processed_size_bytes}"
 - restic.backup.error.count.[${backup_job_log_suffix}] "${backup_job_backup_summary_error_count}"
 EOF
+        fi
+
+        if [ -n "${backup_job_hook_post}" ]; then
+            hook backup post
         fi
 
         backup_instance_vars=$(mktemp)
@@ -1023,6 +1148,10 @@ EOF
                             )
         fi
 
+        if [ -n "${check_job_hook_pre}" ]; then
+            hook check pre
+        fi
+
         process_limiter restic 1 check
         restic_repository=$(mktemp)
         echo "${check_job_repository_path}" > "${restic_repository}"
@@ -1037,6 +1166,43 @@ EOF
 
         check_process_finish_time=$(date +%s)
         check_process_total_time=$(echo $((check_process_finish_time-check_process_start_time)))
+
+        case "${exitcode_check}" in
+            0 )
+                print_info "[check] Check Successful"
+                exitcode_check_description="OK"
+            ;;
+            1 )
+                print_error "[check] Check Failed completely"
+                exitcode_check_description="FAIL"
+                notify \
+                        "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
+                        "{exitcode_check}" \
+                        "[FATAL] [${check_job_log_suffix}] Check failed completely" \
+                        "Restic is failing to check the '${check_job_log_suffix}' job."
+            ;;
+            3 )
+                print_error "[check] Check completed with errors"
+                exitcode_check_description="ERROR"
+                notify \
+                        "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
+                        "{exitcode_check}" \
+                        "[WARN] [${check_job_log_suffix}] Check completed with errors" \
+                        "Restic is failing to perform a full check of the '${check_job_log_suffix}' job."
+            ;;
+            * )
+                print_error "[check] Check Failed with exit_code ${exitcode_check}"
+                exitcode_check_description="UNKNOWN"
+                notify \
+                        "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
+                        "{exitcode_check}" \
+                        "[WARN] [${check_job_log_suffix}] Check failed due to unknown errors" \
+                        "Restic is throwing an unknown error code while trying to check the '${check_job_log_suffix}' job."
+            ;;
+        esac
 
         check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 
@@ -1076,43 +1242,6 @@ EOF
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log ../latest-check-"${check_job_log_suffix}".log
 
-        case "${exitcode_check}" in
-            0 )
-                print_info "[check] Check Successful"
-                exitcode_check_description="OK"
-            ;;
-            1 )
-                print_error "[check] Check Failed completely"
-                exitcode_check_description="FAIL"
-                notify \
-                        "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
-                        "{exitcode_check}" \
-                        "[FATAL] [${check_job_log_suffix}] Check failed completely" \
-                        "Restic is failing to check the '${check_job_log_suffix}' job."
-            ;;
-            3 )
-                print_error "[check] Check completed with errors"
-                exitcode_check_description="ERROR"
-                notify \
-                        "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
-                        "{exitcode_check}" \
-                        "[WARN] [${check_job_log_suffix}] Check completed with errors" \
-                        "Restic is failing to perform a full check of the '${check_job_log_suffix}' job."
-            ;;
-            * )
-                print_error "[check] Check Failed with exit_code ${exitcode_check}"
-                exitcode_check_description="UNKNOWN"
-                notify \
-                        "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
-                        "{exitcode_check}" \
-                        "[WARN] [${check_job_log_suffix}] Check failed due to unknown errors" \
-                        "Restic is throwing an unknown error code while trying to check the '${check_job_log_suffix}' job."
-            ;;
-        esac
-
         PROCESS_NAME=post_check${check_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
@@ -1123,6 +1252,10 @@ EOF
 - restic.check.status.[${check_job_log_suffix}] "${exitcode_check}"
 - restic.check.duration.[${check_job_log_suffix}] "${check_process_total_time}"
 EOF
+        fi
+
+        if [ -n "${check_job_hook_post}" ]; then
+            hook check post
         fi
 
         check_instance_vars=$(mktemp)
@@ -1299,6 +1432,10 @@ EOF
                                 )
             fi
 
+            if [ -n "${cleanup_job_hook_pre}" ]; then
+                hook cleanup pre
+            fi
+
             print_info "Starting cleanup of old backups"
             restic_repository=$(mktemp)
             echo "${cleanup_job_repository_path}" > "${restic_repository}"
@@ -1315,6 +1452,47 @@ EOF
             rm  -rf "${restic_repository}"
             cleanup_process_finish_time="$(date +%s)"
             cleanup_process_total_time="$(echo $((cleanup_process_finish_time-cleanup_routines_start_time)))"
+
+            case "${exitcode_cleanup}" in
+                0 )
+                    print_info "[cleanup] Cleanup successful"
+                    exitcode_cleanup_description="OK"
+                ;;
+                1 )
+                    print_error "[cleanup] Cleanup failed completely"
+                    exitcode_cleanup_description="FAIL"
+                    notify \
+                        "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                        "{exitcode_cleanup}" \
+                        "[FATAL] [${cleanup_job_log_suffix}] Cleanup failed completely" \
+                        "Restic is failing to cleanup the '${cleanup_job_log_suffix}' job."
+                ;;
+                3 )
+                    print_error "[cleanup] Cleanup completed with errors"
+                    exitcode_cleanup_description="ERROR"
+                    notify \
+                        "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                        "{exitcode_cleanup}" \
+                        "[WARN] [${cleanup_job_log_suffix}] Cleanup completed with errors" \
+                        "Restic is failing to perform a full cleanup of the '${cleanup_job_log_suffix}' job."
+                ;;
+                130 )
+                    print_error "[cleanup] Cleanup failed due to user cancellation"
+                    exitcode_cleanup_description="CANCELLED"
+                ;;
+                * )
+                    print_error "[cleanup] Cleanup Failed with exit_code ${exitcode_cleanup}"
+                    exitcode_cleanup_description="UNKNOWN"
+                    notify \
+                        "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                        "{exitcode_cleanup}" \
+                        "[WARN] [${cleanup_job_log_suffix}] Cleanup failed due to unknown errors" \
+                        "Restic is throwing an unknown error code while trying to cleanup the '${cleanup_job_log_suffix}' job."
+                ;;
+            esac
 
             cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Cleanup procedure finished:         $(date -d @${cleanup_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${cleanup_process_finish_time})
@@ -1352,47 +1530,6 @@ EOF
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log ../latest-cleanup-"${cleanup_job_log_suffix}".log
 
-        case "${exitcode_cleanup}" in
-            0 )
-                print_info "[cleanup] Cleanup successful"
-                exitcode_cleanup_description="OK"
-            ;;
-            1 )
-                print_error "[cleanup] Cleanup failed completely"
-                exitcode_cleanup_description="FAIL"
-                notify \
-                    "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
-                    "{exitcode_cleanup}" \
-                    "[FATAL] [${cleanup_job_log_suffix}] Cleanup failed completely" \
-                    "Restic is failing to cleanup the '${cleanup_job_log_suffix}' job."
-            ;;
-            3 )
-                print_error "[cleanup] Cleanup completed with errors"
-                exitcode_cleanup_description="ERROR"
-                notify \
-                    "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
-                    "{exitcode_cleanup}" \
-                    "[WARN] [${cleanup_job_log_suffix}] Cleanup completed with errors" \
-                    "Restic is failing to perform a full cleanup of the '${cleanup_job_log_suffix}' job."
-            ;;
-            130 )
-                print_error "[cleanup] Cleanup failed due to user cancellation"
-                exitcode_cleanup_description="CANCELLED"
-            ;;
-            * )
-                print_error "[cleanup] Cleanup Failed with exit_code ${exitcode_cleanup}"
-                exitcode_cleanup_description="UNKNOWN"
-                notify \
-                    "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
-                    "{exitcode_cleanup}" \
-                    "[WARN] [${cleanup_job_log_suffix}] Cleanup failed due to unknown errors" \
-                    "Restic is throwing an unknown error code while trying to cleanup the '${cleanup_job_log_suffix}' job."
-            ;;
-        esac
-
         PROCESS_NAME=post_cleanup${cleanup_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
@@ -1403,6 +1540,10 @@ EOF
 - restic.cleanup.status.[${cleanup_job_log_suffix}] "${exitcode_cleanup}"
 - restic.cleanup.duration.[${cleanup_job_log_suffix}] "${cleanup_process_total_time}"
 EOF
+        fi
+
+        if [ -n "${cleanup_job_hook_post}" ]; then
+            hook cleanup post
         fi
 
         cleanup_instance_vars=$(mktemp)
@@ -1621,6 +1762,10 @@ EOF
                             )
         fi
 
+        if [ -n "${prune_job_hook_pre}" ]; then
+            hook prune pre
+        fi
+
         process_limiter restic 1 prune
         restic_repository=$(mktemp)
         echo "${prune_job_repository_path}" > "${restic_repository}"
@@ -1635,6 +1780,43 @@ EOF
         rm -rf "${restic_repository}"
         prune_process_finish_time=$(date +%s)
         prune_process_total_time=$(echo $((prune_process_finish_time-prune_process_start_time)))
+
+        case "${exitcode_prune}" in
+            0 )
+                print_info "[prune] Prune Successful"
+                exitcode_prune_description="OK"
+            ;;
+            1 )
+                print_error "[prune] Prune Failed completely"
+                exitcode_prune_description="FAIL"
+                notify \
+                        "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
+                        "{exitcode_prune}" \
+                        "[FATAL] [${prune_job_log_suffix}] Prune failed completely" \
+                        "Restic is failing to prune the '${prune_job_log_suffix}' job."
+            ;;
+            3 )
+                print_error "[prune] Prune completed with errors"
+                exitcode_prune_description="ERROR"
+                notify \
+                        "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
+                        "{exitcode_prune}" \
+                        "[WARN] [${prune_job_log_suffix}] Prune completed with errors" \
+                        "Restic is failing to perform a full prune of the '${prune_job_log_suffix}' job."
+            ;;
+            * )
+                print_error "[prune] Prune Failed with exit_code ${exitcode_prune}"
+                exitcode_prune_description="UNKNOWN"
+                notify \
+                        "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
+                        "{exitcode_prune}" \
+                        "[WARN] [${prune_job_log_suffix}] Prune failed due to unknown errors" \
+                        "Restic is throwing an unknown error code while trying to prune the '${backup_job_log_suffix}' job."
+            ;;
+        esac
 
         prune_job_file_log="$(echo "${prune_job_file_log}" ; cat <<EOF
 
@@ -1691,8 +1873,6 @@ EOF
 ##lock was created at 2023-02-06 18:46:23 (114h14m37.154670174s ago)
 ##storage ID 3214de91
 
-
-
             prune_job_error_count=$(grep "^error: .*" /tmp/prune-"${prune_routines_start_time}".error | wc -l)
             print_error "${prune_job_error_count} errors detected"
             prune_job_file_log="$(echo "${prune_job_file_log}" ; cat <<EOF
@@ -1713,43 +1893,6 @@ EOF
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-"${prune_job_log_suffix}".log ../latest-prune-"${prune_job_log_suffix}".log
 
-        case "${exitcode_prune}" in
-            0 )
-                print_info "[prune] Prune Successful"
-                exitcode_prune_description="OK"
-            ;;
-            1 )
-                print_error "[prune] Prune Failed completely"
-                exitcode_prune_description="FAIL"
-                notify \
-                        "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
-                        "{exitcode_prune}" \
-                        "[FATAL] [${prune_job_log_suffix}] Prune failed completely" \
-                        "Restic is failing to prune the '${prune_job_log_suffix}' job."
-            ;;
-            3 )
-                print_error "[prune] Prune completed with errors"
-                exitcode_prune_description="ERROR"
-                notify \
-                        "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
-                        "{exitcode_prune}" \
-                        "[WARN] [${prune_job_log_suffix}] Prune completed with errors" \
-                        "Restic is failing to perform a full prune of the '${prune_job_log_suffix}' job."
-            ;;
-            * )
-                print_error "[prune] Prune Failed with exit_code ${exitcode_prune}"
-                exitcode_prune_description="UNKNOWN"
-                notify \
-                        "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
-                        "{exitcode_prune}" \
-                        "[WARN] [${prune_job_log_suffix}] Prune failed due to unknown errors" \
-                        "Restic is throwing an unknown error code while trying to prune the '${backup_job_log_suffix}' job."
-            ;;
-        esac
-
         PROCESS_NAME=post_prune${prune_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
@@ -1760,6 +1903,10 @@ EOF
 - restic.prune.status.[${prune_job_log_suffix}] "${exitcode_prune}"
 - restic.prune.duration.[${prune_job_log_suffix}] "${prune_process_total_time}"
 EOF
+        fi
+
+        if [ -n "${prune_job_hook_post}" ]; then
+            hook prune post
         fi
 
         prune_instance_vars=$(mktemp)
@@ -1848,6 +1995,10 @@ EOF
                             )
         fi
 
+        if [ -n "${unlock_job_hook_pre}" ]; then
+            hook unlock pre
+        fi
+
         restic_repository=$(mktemp)
         echo "${unlock_job_repository_path}" > "${restic_repository}"
         process_limiter restic 1 unlock
@@ -1862,45 +2013,6 @@ EOF
         rm -rf "${restic_repository}"
         unlock_process_finish_time=$(date +%s)
         unlock_process_total_time=$(echo $((unlock_process_finish_time-unlock_process_start_time)))
-
-        unlock_job_file_log=$(echo "${unlock_job_file_log}" ; cat <<EOF
-
-## Unlock procedure finished:           $(date -d @${unlock_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${unlock_process_finish_time})
-## Unlock procedure total time:         $(echo ${unlock_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${unlock_process_total_time})
-## Unlock procedure completion:         ${exitcode_unlock_description} (${exitcode_unlock})
-
-### Unlock Details
-$(cat /tmp/unlock-${unlock_routines_start_time}.log)
-
-EOF
-                        )
-        ## TOI Lock detection required and restart after first fail based on env
-        if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] ; then
-            if grep -q "^error: .*" /tmp/unlock-"${unlock_routines_start_time}".error ; then
-                unlock_error_count=$(grep "^error: .*" /tmp/unlock-"${unlock_routines_start_time}".error | wc -l)
-                print_error "[unlock] ${unlock_error_count} errors detected"
-            fi
-            unlock_job_file_log=$(echo "${unlock_job_file_log}" ; cat <<EOF
-
-### Error Log
-## Errors: ${unlock_error_count}
-
-$(cat /tmp/unlock-${unlock_routines_start_time}.error)
-
-
-EOF
-                            )
-        fi
-
-        if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] || [ -s /tmp/unlock-"${unlock_routines_start_time}".log ] ; then
-            sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
-            cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log
-${unlock_job_file_log}
-
-EOF
-            cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
-            ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log ../latest-unlock.log
-        fi
 
         case "${exitcode_unlock}" in
             0 )
@@ -1944,6 +2056,49 @@ EOF
                         "Restic is throwing an unknown error code while trying to backup the '${unlock_job_log_suffix}' job."
             ;;
         esac
+
+        unlock_job_file_log=$(echo "${unlock_job_file_log}" ; cat <<EOF
+
+## Unlock procedure finished:           $(date -d @${unlock_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${unlock_process_finish_time})
+## Unlock procedure total time:         $(echo ${unlock_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${unlock_process_total_time})
+## Unlock procedure completion:         ${exitcode_unlock_description} (${exitcode_unlock})
+
+### Unlock Details
+$(cat /tmp/unlock-${unlock_routines_start_time}.log)
+
+EOF
+                        )
+        ## TOI Lock detection required and restart after first fail based on env
+        if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] ; then
+            if grep -q "^error: .*" /tmp/unlock-"${unlock_routines_start_time}".error ; then
+                unlock_error_count=$(grep "^error: .*" /tmp/unlock-"${unlock_routines_start_time}".error | wc -l)
+                print_error "[unlock] ${unlock_error_count} errors detected"
+            fi
+            unlock_job_file_log=$(echo "${unlock_job_file_log}" ; cat <<EOF
+
+### Error Log
+## Errors: ${unlock_error_count}
+
+$(cat /tmp/unlock-${unlock_routines_start_time}.error)
+
+
+EOF
+                            )
+        fi
+
+        if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] || [ -s /tmp/unlock-"${unlock_routines_start_time}".log ] ; then
+            sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
+            cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log
+${unlock_job_file_log}
+
+EOF
+            cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
+            ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log ../latest-unlock.log
+        fi
+
+        if [ -n "${unlock_job_hook_post}" ]; then
+            hook unlock post
+        fi
 
         unset unlock_job_args
         rm -rf /tmp/unlock-"${unlock_routines_start_time}".*

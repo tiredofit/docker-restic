@@ -1,3 +1,9 @@
+## 0.17.0 2023-03-04 <dave at tiredofit dot ca>
+
+   ### Added
+      - Pre and Post hooks for BACKUP, CHECK, CLEANUP, PRUNE, UNLOCK support
+
+
 ## 0.16.2 2023-03-04 <dave at tiredofit dot ca>
 
    ### Changed
