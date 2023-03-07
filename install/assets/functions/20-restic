@@ -493,7 +493,7 @@ hooks() {
                 if [ -x "${backup_job_hook_post}" ] ; then
                     print_notice "Executing post snapshot custom script : '${backup_job_hook_post}'"
                     ## script HOSTNAME CONTAINER_NAME BACKUP INSTANCE_NUMBER[XX] BACKUP[XX]NAME BACKUP[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE FILES_NEW FILES_CHANGED FILES_UNMODIFIED DIRS_NEW DIRS_CHANGED DIRS_UNMODIFIED SIZE_BYTES_ADDED SIZE_BYTES_STORED SIZE_BYTES_PROCESSED ERROR_COUNT
-                    "${backup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" BACKUP "${backup_instance_number}" "${backup_job_log_suffix}" "${backup_job_repository_path}" "${backup_routines_start_time}" "${backup_process_start_time}" "${backup_process_finish_time}" "${backup_process_total_time}" "${exitcode_backup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log "${backup_job_backup_summary_files_new}" "${backup_job_backup_summary_files_changed}" "${backup_job_backup_summary_files_unmodified}" "${backup_job_backup_summary_directory_new}" "${backup_job_backup_summary_directory_changed}" "${backup_job_backup_summary_directory_unmodified}" "${backup_job_backup_summary_added_size_bytes}" "${backup_job_backup_summary_added_size_stored_bytes}" "${backup_job_backup_summary_processed_size_bytes}" "${backup_job_backup_summary_error_count}"
+                    "${backup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" BACKUP "${backup_instance_number}" "${backup_job_log_suffix}" "${backup_job_repository_path}" "${backup_routines_start_time}" "${backup_process_start_time}" "${backup_process_finish_time}" "${backup_process_total_time}" "${exitcode_backup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +'%Y%m%d_%H%M%S')"-backup-"${backup_job_log_suffix}".log "${backup_job_backup_summary_files_new}" "${backup_job_backup_summary_files_changed}" "${backup_job_backup_summary_files_unmodified}" "${backup_job_backup_summary_directory_new}" "${backup_job_backup_summary_directory_changed}" "${backup_job_backup_summary_directory_unmodified}" "${backup_job_backup_summary_added_size_bytes}" "${backup_job_backup_summary_added_size_stored_bytes}" "${backup_job_backup_summary_processed_size_bytes}" "${backup_job_backup_summary_error_count}"
                 else
                     print_error "Can't run post snapshot custom script: '${backup_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -502,7 +502,7 @@ hooks() {
                 if [ -x "${check_job_hook_post}" ] ; then
                     print_notice "Executing post check custom script : '${check_job_hook_post}'"
                     ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
-                    "${check_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CHECK "${check_instance_number}" "${check_job_log_suffix}" "${check_job_repository_path}" "${check_routines_start_time}" "${check_process_start_time}" "${check_process_finish_time}" "${check_process_total_time}" "${exitcode_check}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log
+                    "${check_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CHECK "${check_instance_number}" "${check_job_log_suffix}" "${check_job_repository_path}" "${check_routines_start_time}" "${check_process_start_time}" "${check_process_finish_time}" "${check_process_total_time}" "${exitcode_check}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log
                 else
                     print_error "Can't run post check custom script: '${check_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -511,7 +511,7 @@ hooks() {
                 if [ -x "${cleanup_job_hook_post}" ] ; then
                     print_notice "Executing post cleanup custom script : '${cleanup_job_hook_post}'"
                     ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
-                    "${cleanup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}" "${cleanup_process_start_time}" "${cleanup_process_finish_time}" "${cleanup_process_total_time}" "${exitcode_cleanup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log
+                    "${cleanup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}" "${cleanup_process_start_time}" "${cleanup_process_finish_time}" "${cleanup_process_total_time}" "${exitcode_cleanup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log
                 else
                     print_error "Can't run post cleanup custom script: '${cleanup_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -520,7 +520,7 @@ hooks() {
                 if [ -x "${prune_job_hook_post}" ] ; then
                     print_notice "Executing post prune custom script : '${prune_job_hook_post}'"
                     ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
-                    "${prune_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" PRUNE "${prune_instance_number}" "${prune_job_log_suffix}" "${prune_job_repository_path}" "${prune_routines_start_time}" "${prune_process_start_time}" "${prune_process_finish_time}" "${prune_process_total_time}" "${exitcode_prune}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-"${prune_job_log_suffix}".log
+                    "${prune_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" PRUNE "${prune_instance_number}" "${prune_job_log_suffix}" "${prune_job_repository_path}" "${prune_routines_start_time}" "${prune_process_start_time}" "${prune_process_finish_time}" "${prune_process_total_time}" "${exitcode_prune}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +'%Y%m%d_%H%M%S')"-prune-"${prune_job_log_suffix}".log
                 else
                     print_error "Can't run post prune custom script: '${prune_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -529,7 +529,7 @@ hooks() {
                 if [ -x "${unlock_job_hook_post}" ] ; then
                     print_notice "Executing post unlock custom script : '${unlock_job_hook_post}'"
                     ## script HOSTNAME CONTAINER_NAME TYPE REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
-                    "${unlock_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" UNLOCK "${unlock_job_repository_path}" "${unlock_routines_start_time}" "${unlock_process_start_time}" "${unlock_process_finish_time}" "${unlock_process_total_time}" "${exitcode_unlock}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log
+                    "${unlock_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" UNLOCK "${unlock_job_repository_path}" "${unlock_routines_start_time}" "${unlock_process_start_time}" "${unlock_process_finish_time}" "${unlock_process_total_time}" "${exitcode_unlock}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +'%Y%m%d_%H%M%S')"-unlock.log
                 else
                     print_error "Can't run post unlock custom script: '${unlock_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -729,7 +729,7 @@ repository() {
         process_limiter restic "${BACKUP_JOB_CONCURRENCY}" backup
         backup_process_start_time=$(date +%s)
         backup_job_file_log=$(cat <<EOF
-# Job Started:                          $(date -d @"${backup_routines_start_time}" +"%Y%m%d_%H%M%S") (${backup_routines_start_time})
+# Job Started:                          $(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S') (${backup_routines_start_time})
 # Repository:                           $(echo "${backup_job_repository_path}" | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 # Hostname:                             $(hostname)
 # Container Name:                       $(echo "${CONTAINER_NAME}")
@@ -961,13 +961,13 @@ EOF
         fi
 
         sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +'%Y%m%d_%H%M%S')"-backup-"${backup_job_log_suffix}".log
 ${backup_job_file_log}
 
 EOF
 
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
-        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +"%Y%m%d_%H%M%S")"-backup-"${backup_job_log_suffix}".log ../latest-backup-"${backup_job_log_suffix}".log
+        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +'%Y%m%d_%H%M%S')"-backup-"${backup_job_log_suffix}".log ../latest-backup-"${backup_job_log_suffix}".log
 
         backup_job_backup_summary_files=$(grep "^Files:" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | xargs | sed "s|Files:||g")
         print_debug "[summary] Backup Summary Files: ${backup_job_backup_summary_files}"
@@ -1056,7 +1056,7 @@ EOF
     check() {
         if [ -z "${check_routines_start_time}" ] ; then check_routines_start_time=$(date +%s) ; fi
         check_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${check_routines_start_time} +"%Y%m%d_%H%M%S") (${check_routines_start_time})
+## Job Started:                         $(date -d @${check_routines_start_time} +'%Y%m%d_%H%M%S') (${check_routines_start_time})
 ## Repository:                          $(echo ${check_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo "${CONTAINER_NAME}")
@@ -1234,13 +1234,24 @@ EOF
         fi
 
         sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log
 ${check_job_file_log}
 
 EOF
 
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
-        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +"%Y%m%d_%H%M%S")"-check-"${check_job_log_suffix}".log ../latest-check-"${check_job_log_suffix}".log
+        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log ../latest-check-"${check_job_log_suffix}".log
+
+        if grep -q "^pack .* not referenced in any index" /tmp/check-"${check_routines_start_time}".log ; then
+            check_job_pack_unreferenced_count=$(grep "^pack .* not referenced in any index" /tmp/check-"${check_routines_start_time}".log | wc -l)
+            print_debug "[check] ${check_job_pack_unreferenced_count} unreferenced packs detected"
+        fi
+
+        if grep -q "^\[.*\] .*% .* snapshots" /tmp/check-"${check_routines_start_time}".log ; then
+            check_job_snapshots_processed=$(grep "^\[.*\] .*% .* snapshots" /tmp/check-"${check_routines_start_time}".log | awk '{print $3}')
+            check_job_snapshots_total=$(grep "^\[.*\] .*% .* snapshots" /tmp/check-"${check_routines_start_time}".log | awk '{print $5}')
+            print_debug "[check] Processed ${check_job_snapshots_processed} of ${check_job_snapshots_total}"
+        fi
 
         PROCESS_NAME=post_check${check_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1251,8 +1262,12 @@ EOF
 - restic.check.start_date.[${check_job_log_suffix}] "${check_routines_start_time}"
 - restic.check.status.[${check_job_log_suffix}] "${exitcode_check}"
 - restic.check.duration.[${check_job_log_suffix}] "${check_process_total_time}"
+- restic.check.packs_unreferenced.[${check_job_log_suffix}] "${check_job_pack_unreferenced_count}"
+- restic.check.snapshots.processed.[${check_job_log_suffix}] "${check_job_snapshots_processed}"
+- restic.check.snapshots.total.[${check_job_log_suffix}]"${check_job_snapshots_total}"
 EOF
         fi
+
 
         if [ -n "${check_job_hook_post}" ]; then
             hook check post
@@ -1269,7 +1284,7 @@ EOF
     cleanup() {
         if [ -z "${cleanup_routines_start_time}" ] ; then cleanup_routines_start_time=$(date +%s) ; fi
             cleanup_job_file_log=$(cat <<EOF
-## Job Started:                        $(date -d @${cleanup_routines_start_time} +"%Y%m%d_%H%M%S") (${cleanup_routines_start_time})
+## Job Started:                        $(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S') (${cleanup_routines_start_time})
 ## Repository:                         $(echo ${cleanup_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                           $(hostname)
 ## Container Name:                     $(echo "${CONTAINER_NAME}")
@@ -1523,12 +1538,12 @@ EOF
 
         rm -rf /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".*
         sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
-        cat << EOF | silent sudo -u restic tee -a "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-${cleanup_job_log_suffix}.log
+        cat << EOF | silent sudo -u restic tee -a "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-${cleanup_job_log_suffix}.log
 ${cleanup_job_file_log}
 EOF
 
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
-        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +"%Y%m%d_%H%M%S")"-cleanup-"${cleanup_job_log_suffix}".log ../latest-cleanup-"${cleanup_job_log_suffix}".log
+        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log ../latest-cleanup-"${cleanup_job_log_suffix}".log
 
         PROCESS_NAME=post_cleanup${cleanup_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1696,7 +1711,7 @@ EOF
     prune() {
         if [ -z "${prune_routines_start_time}" ] ; then prune_routines_start_time=$(date +%s) ; fi
         prune_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${prune_routines_start_time} +"%Y%m%d_%H%M%S") (${prune_routines_start_time})
+## Job Started:                         $(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S') (${prune_routines_start_time})
 ## Repository:                          $(echo ${prune_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo ${CONTAINER_NAME})
@@ -1885,13 +1900,13 @@ EOF
                             )"
         fi
         sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
-        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-${prune_job_log_suffix}.log
+        cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +'%Y%m%d_%H%M%S')"-prune-${prune_job_log_suffix}.log
 ${prune_job_file_log}
 
 EOF
 
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
-        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +"%Y%m%d_%H%M%S")"-prune-"${prune_job_log_suffix}".log ../latest-prune-"${prune_job_log_suffix}".log
+        ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +'%Y%m%d_%H%M%S')"-prune-"${prune_job_log_suffix}".log ../latest-prune-"${prune_job_log_suffix}".log
 
         PROCESS_NAME=post_prune${prune_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1936,7 +1951,7 @@ EOF
         bootstrap_variables unlock_init $1 $2
         if [ -z "${unlock_routines_start_time}" ] ; then unlock_routines_start_time=$(date +%s) ; fi
             unlock_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${unlock_routines_start_time} +"%Y%m%d_%H%M%S") (${unlock_routines_start_time})
+## Job Started:                         $(date -d @${unlock_routines_start_time} +'%Y%m%d_%H%M%S') (${unlock_routines_start_time})
 ## Repository:                          $(echo ${unlock_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo "${CONTAINER_NAME}")
@@ -2088,12 +2103,12 @@ EOF
 
         if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] || [ -s /tmp/unlock-"${unlock_routines_start_time}".log ] ; then
             sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
-            cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log
+            cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +'%Y%m%d_%H%M%S')"-unlock.log
 ${unlock_job_file_log}
 
 EOF
             cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
-            ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +"%Y%m%d_%H%M%S")"-unlock.log ../latest-unlock.log
+            ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +'%Y%m%d_%H%M%S')"-unlock.log ../latest-unlock.log
         fi
 
         if [ -n "${unlock_job_hook_post}" ]; then
