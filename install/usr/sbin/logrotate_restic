@@ -5,17 +5,17 @@ source /assets/defaults/05-logging
 source /assets/defaults/20-restic
 
 ## Compress each log 2 days old
-timestamp_2dayold_unixtime="$(stat -c %Y "${LOG_PATH}/"$(date --date='2 days ago' +'%Y%m%d')")"
+timestamp_2dayold_unixtime="$(stat -c %Y "${LOG_PATH}"/"$(date --date='2 days ago' +'%Y%m%d')")"
 for logfile in "${LOG_PATH}"/"$(date --date='2 days ago' +'%Y%m%d')"/"$(date --date='2 days ago' +'%Y%m%d')"_*.log ; do
     sudo -u restic zstd --rm --rsyncable "${logfile}"
 done
-touch -t $(date -d'@${timestamp_2dayold_unixtime}' +'%Y%m%d%H%m.%S') "${LOG_PATH}"/"$(date --date='2 days ago' +'%Y%m%d')"
-
+touch -t $(date -d"@${timestamp_2dayold_unixtime}" +'%Y%m%d%H%m.%S') "${LOG_PATH}"/"$(date --date='2 days ago' +'%Y%m%d')"
+set -x
 # Look fook files older than certain day and delete
 if [ -n "${LOG_PATH}" ] && [ -d "${LOG_PATH}" ] ; then
     find "${LOG_PATH}" -mtime +"${LOGROTATE_RETAIN_DAYS}" -type d -exec rm -rf {} +
 fi
-
+set +x
 # Look for stale symbolic links and delete accordingly
 for symbolic_link in "${LOG_PATH}"/latest*.log ; do
     if [ ! -e "${symbolic_link}" ] ; then

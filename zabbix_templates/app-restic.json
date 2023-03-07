@@ -1,7 +1,7 @@
 {
     "zabbix_export": {
         "version": "6.2",
-        "date": "2023-03-07T16:13:24Z",
+        "date": "2023-03-07T22:53:18Z",
         "template_groups": [
             {
                 "uuid": "3500ba09d0534297840ca620c9dd46bf",
@@ -13,7 +13,7 @@
                 "uuid": "81c9fb80d9a646ab8b3968db8f7a5394",
                 "template": "Restic",
                 "name": "Restic",
-                "description": "Restic Monitoring Template for version >0.15.1\n\nThis template is meant for use specifically with https://github.com/tiredofit/docker-restic\nversion 0.18.0 and higher.\n\nSteps for usage:\n- Create Hosts and add appropriate templates\n- Setup Image and ensure Zabbix configuration correct\n- Set MODE to BACKUP, CHECK, PRUNE\n- After execution of one of the above jobs, statistics will appear",
+                "description": "Restic Monitoring Template for version >0.15.1\n\nThis template is meant for use specifically with https://github.com/tiredofit/docker-restic\nversion 1.0.0 and higher.\n\nSteps for usage:\n- Create Hosts and add appropriate templates\n- Setup Image and ensure Zabbix configuration correct\n- Set MODE to BACKUP, CHECK, CLEANUP, INVENTORY\n- After execution of one of the above jobs, statistics will appear",
                 "groups": [
                     {
                         "name": "Backup"
@@ -865,6 +865,52 @@
                                         }
                                     }
                                 ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "1fbd57e289024bccb2e38368d066fdf8",
+                        "name": "Inventory",
+                        "type": "TRAP",
+                        "key": "restic.inventory",
+                        "delay": "0",
+                        "description": "Generates a list of snapshots to hold for later review",
+                        "item_prototypes": [
+                            {
+                                "uuid": "dec32baf5c6a40dda89c17ccafbd16b8",
+                                "name": "[{#NAME}] Inventory Duration",
+                                "type": "TRAP",
+                                "key": "restic.inventory.duration.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "9395ce713c6e46da8a8e9b2e65861e4c",
+                                "name": "[{#NAME}] Inventory - Snapshots",
+                                "type": "TRAP",
+                                "key": "restic.inventory.snapshots.total.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "ef24f384477340afa23918b4a2fae4dd",
+                                "name": "[{#NAME}] Inventory - Last Date",
+                                "type": "TRAP",
+                                "key": "restic.inventory.start_date.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d",
+                                "units": "unixtime"
+                            },
+                            {
+                                "uuid": "1f038298eeec46198e864b2237145a36",
+                                "name": "[{#NAME}] Inventory - Last Status",
+                                "type": "TRAP",
+                                "key": "restic.inventory.status.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d",
+                                "valuemap": {
+                                    "name": "Restic Exit Code"
+                                }
                             }
                         ]
                     },

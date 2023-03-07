@@ -35,6 +35,11 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
         fi
     fi
 
+    if var_true "${ENABLE_INVENTORY}" ; then
+        print_debug "Configuring Inventory"
+        create_schedulers inventory
+    fi
+
     if var_true "${ENABLE_PRUNE}" ; then
         print_debug "Configuring Prune"
         create_schedulers prune

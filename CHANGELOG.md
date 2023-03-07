@@ -1,3 +1,15 @@
+## 0.19.0 2023-03-07 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add INVENTORY mode for storing a copy of snapshots locally on disk for reference
+
+   ### Changed
+      - Cleanup some errors in variables for check and prune
+      - Add logfile suffix for some operations
+      - Allow REPOSITORY_PATH and REPOSITORY_PASS to work for all operations
+      - A more efficient and safer/compatible way of searching for creating scheduling jobs
+
+
 ## 0.18.1 2023-03-07 <dave at tiredofit dot ca>
 
    ### Changed

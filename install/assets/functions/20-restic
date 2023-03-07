@@ -128,6 +128,14 @@ bootstrap_variables() {
             export RESTIC_PASSWORD=${REPOSITORY_PASS}
         fi
 
+        if [ -v "$(echo CHECK${check_instance_number}_REPOSITORY_PATH)" ] && [ "$(set -o posix; set | grep -E "^CHECK${check_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
+            export check_job_repository_path="$(set -o posix; set | grep -E "^CHECK${check_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)"
+        elif [ -n "${DEFAULT_CHECK_REPOSITORY_PATH}" ] && [ "${DEFAULT_CHECK_REPOSITORY_PASS}" != "unset" ]; then
+            export check_job_repository_path="${DEFAULT_CHECK_REPOSITORY_PATH}"
+        elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "unset" ]; then
+            export check_job_repository_path="${REPOSITORY_PATH}"
+        fi
+
         transform_check_instance_variable() {
             if grep -q "^CHECK${1}_${2}=" "${check_instance_vars}" && [ "$(grep "^CHECK${1}_${2}=" "${check_instance_vars}" | cut -d = -f2)" != "unset" ]; then
                 export "$3"="$(grep "^CHECK${1}_${2}=" "${check_instance_vars}" | cut -d = -f2)"
@@ -170,6 +178,14 @@ bootstrap_variables() {
             export RESTIC_PASSWORD=${REPOSITORY_PASS}
         fi
 
+        if [ -v "$(echo CLEANUP${cleanup_instance_number}_REPOSITORY_PATH)" ] && [ "$(set -o posix; set | grep -E "^CLEANUP${cleanup_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
+            export cleanup_job_repository_path="$(set -o posix; set | grep -E "^CLEANUP${cleanup_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)"
+        elif [ -n "${DEFAULT_CLEANUP_REPOSITORY_PATH}" ] && [ "${DEFAULT_CLEANUP_REPOSITORY_PASS}" != "unset" ]; then
+            export cleanup_job_repository_path="${DEFAULT_CLEANUP_REPOSITORY_PATH}"
+        elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "unset" ]; then
+            export cleanup_job_repository_path="${REPOSITORY_PATH}"
+        fi
+
         transform_cleanup_instance_variable() {
             if grep -q "^CLEANUP${1}_${2}=" "${cleanup_instance_vars}" && [ "$(grep "^CLEANUP${1}_${2}=" "${cleanup_instance_vars}" | cut -d = -f2)" != "unset" ]; then
                 export "$3"="$(grep "^CLEANUP${1}_${2}=" "${cleanup_instance_vars}" | cut -d = -f2)"
@@ -196,8 +212,51 @@ bootstrap_variables() {
         transform_cleanup_instance_variable "${cleanup_instance_number}" RETAIN_MONTHLY cleanup_job_retain_monthly
         transform_cleanup_instance_variable "${cleanup_instance_number}" RETAIN_YEARLY cleanup_job_retain_yearly
         transform_cleanup_instance_variable "${cleanup_instance_number}" RETAIN_TAGS cleanup_job_retain_tag
+        transform_cleanup_instance_variable "${cleanup_instance_number}" SHOW_INVENTORY cleanup_job_show_inventory
         transform_cleanup_instance_variable "${cleanup_instance_number}" VERBOSITY_LEVEL cleanup_job_cleanup_verbosity_level
         rm -rf "${cleanup_instance_vars}"
+    }
+
+    inventory_init() {
+        inventory_instance_number=${1}
+        PROCESS_NAME=inventory${inventory_instance_number}
+        inventory_instance_vars=$(mktemp)
+        set -o posix ; set | grep -oE "^inventory_job_.*=" | tr " " "\n" | grep -oE ".*=" | sed "/--/d" > "${inventory_instance_vars}"
+        while read -r inventory_instance_var ; do
+            unset "$(echo "${inventory_instance_var}" | cut -d = -f 1)"
+        done < "${inventory_instance_vars}"
+
+        if [ -v $(echo INVENTORY"${inventory_instance_number}"_REPOSITORY_PASS) ] && [ "$(set -o posix; set | grep -E "^INVENTORY${inventory_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
+            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^INVENTORY"${inventory_instance_number}"_REPOSITORY_PASS" | cut -d = -f 2)
+        elif [ -n "${DEFAULT_INVENTORY_REPOSITORY_PASS}" ] && [ "${DEFAULT_INVENTORY_REPOSITORY_PASS}" != "unset" ]; then
+            export RESTIC_PASSWORD=${DEFAULT_INVENTORY_REPOSITORY_PASS}
+        elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "unset" ]; then
+            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+        fi
+
+        if [ -v "$(echo INVENTORY${inventory_instance_number}_REPOSITORY_PATH)" ] && [ "$(set -o posix; set | grep -E "^INVENTORY${inventory_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
+            export inventory_job_repository_path="$(set -o posix; set | grep -E "^INVENTORY${inventory_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)"
+        elif [ -n "${DEFAULT_INVENTORY_REPOSITORY_PATH}" ] && [ "${DEFAULT_INVENTORY_REPOSITORY_PASS}" != "unset" ]; then
+            export inventory_job_repository_path="${DEFAULT_INVENTORY_REPOSITORY_PATH}"
+        elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "unset" ]; then
+            export inventory_job_repository_path="${REPOSITORY_PATH}"
+        fi
+
+        set -o posix ; set | grep -E "^INVENTORY${inventory_instance_number}_|^DEFAULT_INVENTORY_" | tr " " "\n" > "${inventory_instance_vars}"
+
+        transform_inventory_instance_variable() {
+            if grep -q "^INVENTORY${1}_${2}=" "${inventory_instance_vars}" && [ "$(grep "^INVENTORY${1}_${2}=" "${inventory_instance_vars}" | cut -d = -f2)" != "unset" ]; then
+                export "$3"="$(grep "^INVENTORY${1}_${2}=" "${inventory_instance_vars}" | cut -d = -f2)"
+            elif grep -q "^DEFAULT_INVENTORY_${2}=" "${inventory_instance_vars}" && [ "$(grep "^DEFAULT_INVENTORY_${2}=" "${inventory_instance_vars}" | cut -d = -f2)" != "unset" ]; then
+                export "$3"="$(grep "^DEFAULT_INVENTORY_${2}=" "${inventory_instance_vars}" | cut -d = -f2)"
+            fi
+        }
+        transform_inventory_instance_variable "${inventory_instance_number}" NAME inventory_job_inventory_name
+        transform_inventory_instance_variable "${inventory_instance_number}" HOOK_POST inventory_job_hook_post
+        transform_inventory_instance_variable "${inventory_instance_number}" HOOK_PRE inventory_job_hook_pre
+        transform_inventory_instance_variable "${inventory_instance_number}" REPOSITORY_PASS inventory_job_repository_pass
+        transform_inventory_instance_variable "${inventory_instance_number}" REPOSITORY_PATH inventory_job_repository_path
+        rm -rf "${inventory_instance_vars}"
     }
 
     prune_init() {
@@ -215,6 +274,14 @@ bootstrap_variables() {
             export RESTIC_PASSWORD=${DEFAULT_PRUNE_REPOSITORY_PASS}
         elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "unset" ]; then
             export RESTIC_PASSWORD=${REPOSITORY_PASS}
+        fi
+
+        if [ -v "$(echo PRUNE${prune_instance_number}_REPOSITORY_PATH)" ] && [ "$(set -o posix; set | grep -E "^PRUNE${prune_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
+            export prune_job_repository_path="$(set -o posix; set | grep -E "^PRUNE${prune_instance_number}_REPOSITORY_PATH" | cut -d = -f 2)"
+        elif [ -n "${DEFAULT_PRUNE_REPOSITORY_PATH}" ] && [ "${DEFAULT_PRUNE_REPOSITORY_PASS}" != "unset" ]; then
+            export prune_job_repository_path="${DEFAULT_PRUNE_REPOSITORY_PATH}"
+        elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "unset" ]; then
+            export prune_job_repository_path="${REPOSITORY_PATH}"
         fi
 
         set -o posix ; set | grep -E "^PRUNE${prune_instance_number}_|^DEFAULT_PRUNE_" | tr " " "\n" > "${prune_instance_vars}"
@@ -303,6 +370,7 @@ bootstrap_variables() {
         backup_init ) backup_init "$2" ;;
         check_init ) check_init "$2" ;;
         cleanup_init ) cleanup_init "$2" ;;
+        inventory_init ) inventory_init "$2" ;;
         prune_init ) prune_init "$2" ;;
         unlock_init ) unlock_init "$2" "$3" ;;
         upgrade ) upgrade_lonely_variables "$2" ;;
@@ -352,7 +420,7 @@ EOF
 
     check() {
         bootstrap_variables upgrade CHECK
-        check_instances=$(set -o posix ; set | sort | grep -Ec "^CHECK[0-9]._REPOSITORY_PATH")
+        check_instances=$(set -o posix ; set | sort | grep -E "^CHECK[0-9]._" | cut -d _ -f1 | uniq | wc -l)
         for (( instance = 01; instance <= check_instances; instance++ )) ; do
             instance=$(printf "%02d" $instance)
 
@@ -360,8 +428,9 @@ EOF
                 echo "CHECK${instance} $(set -o posix; set | grep -E "^CHECK${instance}_REPOSITORY_PATH" | cut -d = -f 2)" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
             elif [ -n "${DEFAULT_CHECK_REPOSITORY_PATH}" ] && [ "${DEFAULT_CHECK_REPOSITORY_PATH}" != "unset" ]; then
                 echo "CHECK${instance} ${DEFAULT_CHECK_REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "unset" ]; then
+                echo "CHECK${instance} ${REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
             fi
-
             cp -R /assets/restic/template-restic-check /etc/services.available/restic-check"${instance}"
             sed -i "s|{{CHECK_NUMBER}}|${instance}|g" /etc/services.available/restic-check"${instance}"/run
 
@@ -391,7 +460,7 @@ EOF
 
     cleanup() {
         bootstrap_variables upgrade CLEANUP
-        cleanup_instances=$(set -o posix ; set | sort | grep -Ec "^CLEANUP[0-9]._REPOSITORY_PATH")
+        cleanup_instances=$(set -o posix ; set | sort | grep -E "^CLEANUP[0-9]._" | cut -d _ -f1 | uniq | wc -l)
         for (( instance = 01; instance <= cleanup_instances; instance++ )) ; do
             instance=$(printf "%02d" $instance)
 
@@ -399,6 +468,8 @@ EOF
                 echo "CLEANUP${instance} $(set -o posix; set | grep -E "^CLEANUP${instance}_REPOSITORY_PATH" | cut -d = -f 2)" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
             elif [ -n "${DEFAULT_CLEANUP_REPOSITORY_PATH}" ] && [ "${DEFAULT_CLEANUP_REPOSITORY_PATH}" != "unset" ]; then
                 echo "CLEANUP${instance} ${DEFAULT_CLEANUP_REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "unset" ]; then
+                echo "CLEANUP${instance} ${REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
             fi
 
             cp -R /assets/restic/template-restic-cleanup /etc/services.available/restic-cleanup"${instance}"
@@ -438,9 +509,50 @@ EOF
         cp -R /assets/restic/template-restic-initialize_repository /etc/services.available/restic-initialize_repository
     }
 
+    inventory() {
+        bootstrap_variables upgrade INVENTORY
+        inventory_instances=$(set -o posix ; set | sort | grep -E "^INVENTORY[0-9]._" | cut -d _ -f1 | uniq | wc -l)
+        for (( instance = 01; instance <= inventory_instances; instance++ )) ; do
+            instance=$(printf "%02d" $instance)
+
+            if [ -v INVENTORY${instance}_REPOSITORY_PATH ] && [ "$(set -o posix; set | grep -E "^INVENTORY${instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
+                echo "INVENTORY${instance} $(set -o posix; set | grep -E "^INVENTORY${instance}_REPOSITORY_PATH" | cut -d = -f 2)" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            elif [ -n "${DEFAULT_INVENTORY_REPOSITORY_PATH}" ] && [ "${DEFAULT_INVENTORY_REPOSITORY_PATH}" != "unset" ]; then
+                echo "INVENTORY${instance} ${DEFAULT_INVENTORY_REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "unset" ]; then
+                echo "INVENTORY${instance} ${REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            fi
+
+            cp -R /assets/restic/template-restic-inventory /etc/services.available/restic-inventory"${instance}"
+            sed -i "s|{{INVENTORY_NUMBER}}|${instance}|g" /etc/services.available/restic-inventory"${instance}"/run
+
+        cat <<EOF >> /usr/bin/inventory"${instance}"-now
+#!/bin/bash
+source /assets/functions/00-container
+PROCESS_NAME=inventory${instance}
+print_info "Starting Manual Inventory for for INVENTORY${instance}"
+/var/run/s6/legacy-services/restic-inventory${instance}/run now
+
+EOF
+            chmod +x /usr/bin/inventory"${instance}"-now
+            if [ "${instance}" = "01" ] ; then
+                touch /usr/bin/inventory-now
+                chmod +x /usr/bin/inventory-now
+                cat <<EOF > /usr/bin/inventory-now
+#!/bin/bash
+
+/usr/bin/inventory${instance}-now
+
+EOF
+            else
+                echo "/usr/bin/inventory${instance}-now" >> /usr/bin/inventory-now
+            fi
+        done
+    }
+
     prune() {
         bootstrap_variables upgrade PRUNE
-        local prune_instances=$(set -o posix; set | sort | grep -Ec "^PRUNE[0-9.]+_REPOSITORY_PATH")
+        local prune_instances=$(set -o posix ; set | sort | grep -E "^PRUNE[0-9]._" | cut -d _ -f1 | uniq | wc -l)
         for (( instance = 01; instance <= prune_instances; instance++ )) ; do
             instance=$(printf "%02d" $instance)
 
@@ -448,6 +560,8 @@ EOF
                 echo "PRUNE${instance} $(set -o posix; set | grep -E "^PRUNE${instance}_REPOSITORY_PATH" | cut -d = -f 2)" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
             elif [ -n "${DEFAULT_PRUNE_REPOSITORY_PATH}" ] && [ "${DEFAULT_PRUNE_REPOSITORY_PATH}" != "unset" ]; then
                 echo "PRUNE${instance} ${DEFAULT_PRUNE_REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
+            elif [ -n "${REPOSITORY_PATH}" ] && [ "${REPOSITORY_PATH}" != "unset" ]; then
+                echo "PRUNE${instance} ${REPOSITORY_PATH}" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
             fi
 
             cp -R /assets/restic/template-restic-prune /etc/services.available/restic-prune"${instance}"
@@ -482,6 +596,7 @@ EOF
         check ) check ;;
         cleanup) cleanup ;;
         init ) init ;;
+        inventory ) inventory ;;
         prune ) prune ;;
     esac
 }
@@ -514,6 +629,15 @@ hooks() {
                     "${cleanup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}" "${cleanup_process_start_time}" "${cleanup_process_finish_time}" "${cleanup_process_total_time}" "${exitcode_cleanup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log
                 else
                     print_error "Can't run post cleanup custom script: '${cleanup_job_hook_post}' as its filesystem bit is not executible!"
+                fi
+            ;;
+            inventory )
+                if [ -x "${inventory_job_hook_post}" ] ; then
+                    print_notice "Executing post inventory custom script : '${inventory_job_hook_post}'"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE SNAPSHOTS_TOTAL
+                    "${inventory_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" INVENTORY "${inventory_instance_number}" "${inventory_job_log_suffix}" "${inventory_job_repository_path}" "${inventory_routines_start_time}" "${inventory_process_start_time}" "${inventory_process_finish_time}" "${inventory_process_total_time}" "${exitcode_inventory}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${inventory_process_start_time}" +'%Y%m%d_%H%M%S')"-inventory-"${inventory_job_log_suffix}".log ${inventory_job_snapshots_total}
+                else
+                    print_error "Can't run post inventory custom script: '${cleanup_job_hook_post}' as its filesystem bit is not executible!"
                 fi
             ;;
             prune )
@@ -564,6 +688,15 @@ hooks() {
                     "${cleanup_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}"
                 else
                     print_error "Can't run pre cleanup custom script: '${cleanup_job_hook_pre}' as its filesystem bit is not executible!"
+                fi
+            ;;
+            inventory )
+                if [ -x "${inventory_job_hook_pre}" ] ; then
+                    print_notice "Executing pre inventory custom script : '${inventory_job_hook_pre}'"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${inventory_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${inventory_instance_number}" "${inventory_job_log_suffix}" "${inventory_job_repository_path}" "${inventory_routines_start_time}"
+                else
+                    print_error "Can't run pre inventory custom script: '${inventory_job_hook_pre}' as its filesystem bit is not executible!"
                 fi
             ;;
             prune )
@@ -1022,7 +1155,6 @@ EOF
         fi
         rm -rf /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".*
 
-        PROCESS_NAME=post_backup${backup_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
             print_notice "Sending Backup Statistics to Zabbix"
@@ -1255,7 +1387,6 @@ EOF
             print_debug "[check] Processed ${check_job_snapshots_processed} of ${check_job_snapshots_total}"
         fi
 
-        PROCESS_NAME=post_check${check_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
             print_notice "Sending Check Statistics to Zabbix"
@@ -1545,13 +1676,12 @@ EOF
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log ../latest-cleanup-"${cleanup_job_log_suffix}".log
 
-        PROCESS_NAME=post_cleanup${cleanup_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
             print_notice "Sending Cleanup Statistics to Zabbix"
             silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k restic.cleanup -o '[{"{#NAME}":"'${cleanup_job_log_suffix}'"}]'
             cat <<EOF | silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}" -i -
-- restic.cleanup.start_date.[${cleanup_job_log_suffix}] "${prune_routines_start_time}"
+- restic.cleanup.start_date.[${cleanup_job_log_suffix}] "${cleanup_routines_start_time}"
 - restic.cleanup.status.[${cleanup_job_log_suffix}] "${exitcode_cleanup}"
 - restic.cleanup.duration.[${cleanup_job_log_suffix}] "${cleanup_process_total_time}"
 EOF
@@ -1626,6 +1756,16 @@ EOF
                             export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^${repository_to_init}_REPOSITORY_PASS" | cut -d = -f 2)
                         elif [ -n "${DEFAULT_CLEANUP_REPOSITORY_PASS}" ] && [ "${DEFAULT_CLEANUP_REPOSITORY_PASS}" != "unset" ]; then
                             export RESTIC_PASSWORD=${DEFAULT_CLEANUP_REPOSITORY_PASS}
+                        elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "unset" ]; then
+                            export RESTIC_PASSWORD=${REPOSITORY_PASS}
+                        fi
+                    ;;
+                    INVENTORY* )
+                        if [ "$(echo ${repository_to_init} | awk '{print $1}')" = "INVENTORY01" ] ; then bootstrap_variables upgrade INVENTORY ; fi
+                        if [ -v "$(echo "${repository_to_init}" | awk '{print $1}')"_REPOSITORY_PASS ] && [ "$(set -o posix; set | grep -E "^${repository_to_init}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
+                            export RESTIC_PASSWORD=$(set -o posix; set | grep -E "^${repository_to_init}_REPOSITORY_PASS" | cut -d = -f 2)
+                        elif [ -n "${DEFAULT_INVENTORY_REPOSITORY_PASS}" ] && [ "${DEFAULT_INVENTORY_REPOSITORY_PASS}" != "unset" ]; then
+                            export RESTIC_PASSWORD=${DEFAULT_INVENTORY_REPOSITORY_PASS}
                         elif [ -n "${REPOSITORY_PASS}" ] && [ "${REPOSITORY_PASS}" != "unset" ]; then
                             export RESTIC_PASSWORD=${REPOSITORY_PASS}
                         fi
@@ -1708,6 +1848,138 @@ EOF
         done < "/tmp/.container/toi_restic/INIT_REPOSITORIES"
     }
 
+    inventory() {
+        bootstrap_variables inventory_init
+        if [ -z "${inventory_routines_start_time}" ] ; then inventory_routines_start_time=$(date +%s) ; fi
+            inventory_job_file_log=$(cat <<EOF
+## Job Started:                         $(date -d @${inventory_routines_start_time} +'%Y%m%d_%H%M%S') (${inventory_routines_start_time})
+## Repository:                          $(echo ${inventory_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
+## Hostname:                            $(hostname)
+## Container Name:                      $(echo "${CONTAINER_NAME}")
+
+## Task:                                Inventory
+EOF
+                       )
+
+        process_limiter restic 1 inventory
+        inventory_process_start_time=$(date +%s)
+        inventory_job_file_log=$(echo "${inventory_job_file_log}" ; cat <<EOF
+## Inventory procedure started:      $(date -d @${inventory_process_start_time} +'%Y-%m-%d %H:%M:%S') (${inventory_process_start_time})
+EOF
+                        )
+
+        inventory_process_delay_time=$(echo $((inventory_process_start_time-inventory_routines_start_time)))
+        if [ "${inventory_process_delay_time}" -ge 5 ] ; then
+            inventory_job_file_log=$(echo "${inventory_job_file_log}" ; cat <<EOF
+## Delay in starting:                   $(echo ${inventory_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${inventory_process_delay_time})
+EOF
+                            )
+        fi
+
+        if [ -n "${inventory_job_inventory_name}" ] ; then
+            inventory_job_log_suffix=${inventory_job_inventory_name,,}
+        else
+            inventory_job_log_suffix=${inventory_instance_number}
+        fi
+
+        restic_repository=$(mktemp)
+        echo "${inventory_job_repository_path}" > "${restic_repository}"
+        process_limiter restic 1 inventory
+        restic \
+                --cache-dir "${CACHE_PATH}" \
+                --repository-file "${restic_repository}" \
+                snapshots ${inventory_job_args} \
+                2> /tmp/inventory-${inventory_routines_start_time}.error \
+                > /tmp/inventory-${inventory_routines_start_time}.log
+
+        exitcode_inventory=$?
+        rm -rf "${restic_repository}"
+        inventory_process_finish_time=$(date +%s)
+        inventory_process_total_time=$(echo $((inventory_process_finish_time-inventory_process_start_time)))
+
+        case "${exitcode_inventory}" in
+            0 )
+                if [ -s /tmp/inventory-"${inventory_routines_start_time}".error ] || [ -s /tmp/inventory-"${inventory_routines_start_time}".log ] ; then
+                    print_info "[inventory] Inventory Successful"
+                    exitcode_inventory_description="OK"
+                else
+                    print_debug "[inventory] Inventory unnecessary"
+                    exitcode_inventory_description="NOT_NECESSARY"
+                    exitcode_inventory=23
+                fi
+            ;;
+            1 )
+                print_error "[inventory] Inventory Failed completely"
+                exitcode_inventory_description="FAIL"
+                notify \
+                        "$(date -d @"${inventory_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${inventory_routines_start_time} +'%Y%m%d_%H%M%S')-inventory-${inventory_job_log_suffix}.log" \
+                        "{exitcode_inventory}" \
+                        "[FATAL] [${inventory_job_log_suffix}] Inventory failed completely" \
+                        "Restic is failing to inventory the '${inventory_job_log_suffix}' job."
+            ;;
+            3 )
+                print_error "[inventory] Inventory completed with errors"
+                exitcode_inventory_description="ERROR"
+                notify \
+                        "$(date -d @"${inventory_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${inventory_routines_start_time} +'%Y%m%d_%H%M%S')-inventory-${inventory_job_log_suffix}.log" \
+                        "{exitcode_inventory}" \
+                        "[WARN] [${inventory_job_log_suffix}] Inventory completed with errors" \
+                        "Restic is failing to perform a full inventory of the '${inventory_job_log_suffix}' job."
+            ;;
+            * )
+                print_error "[inventory] Inventory Failed with exit_code ${exitcode_inventory}"
+                exitcode_inventory_description="UNKNOWN"
+                notify \
+                        "$(date -d @"${inventory_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${inventory_routines_start_time} +'%Y%m%d_%H%M%S')-inventory-${inventory_job_log_suffix}.log" \
+                        "{exitcode_inventory}" \
+                        "[WARN] [${inventory_job_log_suffix}] Inventory failed due to unknown errors" \
+                        "Restic is throwing an unknown error code while trying to perform the '${inventory_job_log_suffix}' job."
+            ;;
+        esac
+
+        inventory_job_file_log=$(echo "${inventory_job_file_log}" ; cat <<EOF
+
+## Inventory procedure finished:        $(date -d @${inventory_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${inventory_process_finish_time})
+## Inventory procedure total time:      $(echo ${inventory_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${inventory_process_total_time})
+## Inventory procedure completion:      ${exitcode_inventory_description} (${exitcode_inventory})
+
+### Inventory Details
+$(cat /tmp/inventory-${inventory_routines_start_time}.log | awk '/ID/,/snapshots/')
+
+EOF
+                        )
+
+
+        if [ -s /tmp/inventory-"${inventory_routines_start_time}".log ] ; then
+            sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
+            cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${inventory_process_start_time}" +'%Y%m%d_%H%M%S')"-inventory-${inventory_job_log_suffix}.log
+${inventory_job_file_log}
+
+EOF
+            cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
+            ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${inventory_process_start_time}" +'%Y%m%d_%H%M%S')"-inventory-${inventory_job_log_suffix}.log ../latest-inventory-${inventory_job_log_suffix}.log
+        fi
+
+        inventory_job_snapshots_total=$(cat /tmp/inventory-"${inventory_routines_start_time}".log  | grep -E "[0-9]. snapshots$" | awk '{print $1}')
+        if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
+            source /assets/defaults/03-monitoring
+            print_notice "Sending Inventory Statistics to Zabbix"
+            silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k restic.inventory -o '[{"{#NAME}":"'${inventory_job_log_suffix}'"}]'
+            cat <<EOF | silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}" -i -
+- restic.inventory.start_date.[${inventory_job_log_suffix}] "${inventory_routines_start_time}"
+- restic.inventory.status.[${inventory_job_log_suffix}] "${exitcode_inventory}"
+- restic.inventory.duration.[${inventory_job_log_suffix}] "${inventory_process_total_time}"
+- restic.inventory.snapshots.total.[${inventory_job_log_suffix}] "${inventory_job_snapshots_total}"
+EOF
+        fi
+
+        unset inventory_job_args
+        rm -rf /tmp/inventory-"${inventory_routines_start_time}".*
+    }
+
     prune() {
         if [ -z "${prune_routines_start_time}" ] ; then prune_routines_start_time=$(date +%s) ; fi
         prune_job_file_log=$(cat <<EOF
@@ -1735,13 +2007,13 @@ EOF
                                 )
         fi
 
-        if [ -n "${prune_job_check_name}" ] ; then
+        if [ -n "${prune_job_prune_name}" ] ; then
             prune_job_log_suffix=${prune_job_prune_name,,}
         else
             prune_job_log_suffix=${prune_instance_number}
         fi
 
-        if [ -n "${prune_job_check_args}" ] ; then
+        if [ -n "${prune_job_prune_args}" ] ; then
             prune_job_args+="${prune_job_prune_args}"
             prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
 ## Additional Arguments:                ${prune_job_prune_args}
@@ -1846,12 +2118,6 @@ EOF
                         )"
 
         if [ -s /tmp/prune-"${prune_routines_start_time}".error ] ; then
-            ## TOI Lock Checking TODO
-##
-##Fatal: unable to create lock in backend: repository is already locked by PID 1548 on ecc8da8681d1 by root (UID 0, GID 0)
-##lock was created at 2023-02-06 18:46:23 (114h14m37.154670174s ago)
-##storage ID 3214de91
-
             prune_job_error_count=$(grep "^error: .*" /tmp/prune-"${prune_routines_start_time}".error | wc -l)
             print_error "${prune_job_error_count} errors detected"
             prune_job_file_log="$(echo "${prune_job_file_log}" ; cat <<EOF
@@ -1872,14 +2138,13 @@ EOF
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +'%Y%m%d_%H%M%S')"-prune-"${prune_job_log_suffix}".log ../latest-prune-"${prune_job_log_suffix}".log
 
-prune_job_packs_reviewed=$(awk '/collecting packs for deletion and repacking/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $11}')
-prune_job_packs_deleted_unreferenced=$(awk '/deleting unreferenced packs/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $8}')
-prune_job_packs_repacked=$(awk '/repacking packs/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $7}')
-prune_job_packs_reindexed=$(awk '/rebuilding index/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $7}')
-prune_job_index_deleted_obsolete=$(awk '/deleting obsolete index files/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $9}')
-prune_job_packs_deleted_old=$(awk '/removing .* old packs/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $9}')
+        prune_job_packs_reviewed=$(awk '/collecting packs for deletion and repacking/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $11}')
+        prune_job_packs_deleted_unreferenced=$(awk '/deleting unreferenced packs/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $8}')
+        prune_job_packs_repacked=$(awk '/repacking packs/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $7}')
+        prune_job_packs_reindexed=$(awk '/rebuilding index/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $7}')
+        prune_job_index_deleted_obsolete=$(awk '/deleting obsolete index files/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $9}')
+        prune_job_packs_deleted_old=$(awk '/removing .* old packs/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $9}')
 
-        PROCESS_NAME=post_prune${prune_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
             print_notice "Sending Prune Statistics to Zabbix"
@@ -2060,7 +2325,6 @@ $(cat /tmp/unlock-${unlock_routines_start_time}.log)
 
 EOF
                         )
-        ## TOI Lock detection required and restart after first fail based on env
         if [ -s /tmp/unlock-"${unlock_routines_start_time}".error ] ; then
             if grep -q "^error: .*" /tmp/unlock-"${unlock_routines_start_time}".error ; then
                 unlock_error_count=$(grep "^error: .*" /tmp/unlock-"${unlock_routines_start_time}".error | wc -l)
@@ -2101,6 +2365,7 @@ EOF
         check ) check ;;
         cleanup) cleanup ;;
         init ) init ;;
+        inventory ) inventory ;;
         prune ) prune ;;
         server ) server ;;
         unlock ) unlock $2 ;;
@@ -2140,10 +2405,6 @@ process_limiter() {
     done
 }
 
-post_backup() {
-    :
-}
-
 setup_container_mode() {
     if [ -f "/tmp/.container/toi_restic/CONTAINER_MODE" ]; then
         print_debug "Importing MODE environment generated variables"
@@ -2164,6 +2425,10 @@ setup_container_mode() {
                 "cleanup" )
                     print_debug "Enabling Container Mode for: CLEANUP"
                     echo "ENABLE_CLEANUP=TRUE" >> /tmp/.container/toi_restic/CONTAINER_MODE
+                ;;
+                "inventory" )
+                    print_debug "Enabling Container Mode for: INVENTORY"
+                    echo "ENABLE_INVENTORY=TRUE" >> /tmp/.container/toi_restic/CONTAINER_MODE
                 ;;
                 "prune" )
                     print_debug "Enabling Container Mode for: PRUNE"

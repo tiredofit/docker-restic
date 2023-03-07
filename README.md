@@ -56,13 +56,16 @@ Features:
       - [Default Cleanup Options](#default-cleanup-options)
       - [Job Cleanup Options](#job-cleanup-options)
       - [Hooks](#hooks-2)
+    - [Inventory Options](#inventory-options)
+      - [Default Inventory Options](#default-inventory-options)
+      - [Hooks](#hooks-3)
     - [Prune Options](#prune-options)
       - [Default Prune Options](#default-prune-options)
-      - [Hooks](#hooks-3)
+      - [Hooks](#hooks-4)
     - [Server Options](#server-options)
     - [RClone Options](#rclone-options)
     - [Unlock Options](#unlock-options)
-      - [Hooks](#hooks-4)
+      - [Hooks](#hooks-5)
     - [Notifications](#notifications)
       - [Custom Notifications](#custom-notifications)
       - [Email Notifications](#email-notifications)
@@ -145,6 +148,7 @@ Be sure to view the following repositories to understand all the customizable op
 |               | `BACKUP` filesystem                                       |            |
 |               | `CHECK` repository - See options below                    |            |
 |               | `CLEANUP` repository - See options below                  |            |
+|               | `INVENTORY` repository - See options below                |            |
 |               | `PRUNE` repository - See options below                    |            |
 |               | `RCLONE` Run a copy of RClone                             |            |
 |               | `SERVER` REST repository access - see options below       |            |
@@ -160,11 +164,10 @@ Be sure to view the following repositories to understand all the customizable op
 #### Job Defaults
 If these are set and no other defaults or variables are set explicitly, they will be added to any of the `BACKUP`, `CHECK`, `CLEANUP` or `PRUNE` jobs.
 
-| Variable                         | Description                                                                    | Default |
-| -------------------------------- | ------------------------------------------------------------------------------ | ------- |
-| `DEFAULT_REPOSITORY_PATH`        | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         |
-| `DEFAULT_REPOSITORY_PASS`        | Encryption Key for repository eg `secretpassword`                              |         |
-| `DEFAULT_UNLOCK_VERBOSITY_LEVEL` | Verbosity level of logs should an unlock exist - Best not to change this.      | `2`     |
+| Variable                  | Description                                                                    | Default |
+| ------------------------- | ------------------------------------------------------------------------------ | ------- |
+| `DEFAULT_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         |
+| `DEFAULT_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |         |
 
 #### Backup Options
 
@@ -292,6 +295,8 @@ Additional check jobs can be scheduled by using `CHECK02_`,`CHECK03_`,`CHECK04_`
 | `CHECK01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         |
 | `CHECK01_USE_CACHE`       | Use cache                                                                                                                                      |         |
 | `CHECK01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`     |
+
+
 ##### Hooks
 
 The following will be sent to the hook script:
@@ -329,8 +334,8 @@ If set, these variables will be passed to each cleanup job, unless each job expl
 | `DEFAULT_CLEANUP_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                         |         |
 | `DEFAULT_CLEANUP_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                     |         |
 | `DEFAULT_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                     |         |
-| `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post snapshot operation                                                                      |         |
-| `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre snapshot operation                                                                       |         |
+| `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                       |         |
+| `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                        |         |
 | `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data |         |
 | `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                  |         |
 | `DEFAULT_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                          |         |
@@ -358,8 +363,8 @@ Additional backup jobs can be scheduled by using `CLEANUP02_`,`CLEANUP03_`,`CLEA
 |                             | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
 | `CLEANUP01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |         |
 | `CLEANUP01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |         |
-| `CLEANUP01_HOOK_POST`       | Path and Filename to execute post snapshot operation                                                                                           |         |
-| `CLEANUP01_HOOK_PRE`        | Path and Filename to execute pre snapshot operation                                                                                            |         |
+| `CLEANUP01_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                                            |         |
+| `CLEANUP01_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                             |         |
 | `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
 | `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |         |
 | `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data                      |         |
@@ -390,6 +395,55 @@ Post: `HOSTNAME CONTAINER_NAME CLEANUP INSTANCE_NUMBER[XX] CLEANUP[XX]NAME CLEAN
 server container_name CLEANUP 01 cleaupname rest:username:password@http://repo.url 1677953980 1677953981 1677953991 10 0 /logs/20230304/20230304_100501-cleanup-cleanupname.log
 ```
 
+#### Inventory Options
+
+This allows restic to take inventory of what backups have been taken on the repository. It creates a log file detailing the snapshot id, date / time, hostname, tags, and backup paths.
+An Inventory job takes lots of time if working with remote repositories.
+
+##### Default Inventory Options
+
+If set, these variables will be passed to each inventory job, unless each job explicitly sets otherwise.
+
+| Variable                            | Description                                                                    | Default |
+| ----------------------------------- | ------------------------------------------------------------------------------ | ------- |
+| `DEFAULT_INVENTORY_ARGS`            | Arguments to pass to Restic `snapshots` command line                           |         |
+| `DEFAULT_INVENTORY_HOOK_POST`       | Path and Filename to execute post inventory operation                          |         |
+| `DEFAULT_INVENTORY_HOOK_PRE`        | Path and Filename to execute pre inventory operation                           |         |
+| `DEFAULT_INVENTORY_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         |
+| `DEFAULT_INVENTORY_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |         |
+
+
+If `DEFAULT_INVENTORY_` variables are set and you do not wish for the settings to carry over into your jobs, you can set the appropriate environment variable with the value of `unset`.
+Additional inventory jobs can be scheduled by using `INVENTORY02_`,`INVENTORY03_`,`INVENTORY04_` ... prefixes.
+
+| Variable                      | Description                                                                                                                                    | Default |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `INVENTORY01_ARGS`            | Arguments to pass to Restic inventory command line                                                                                             |         |
+| `INVENTORY01_BEGIN`           | What time to do the first inventory. Defaults to immediate. Must be in one of two formats                                                      |         |
+|                               | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
+|                               | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
+| `INVENTORY01_HOOK_POST`       | Path and Filename to execute post inventory operation                                                                                          |         |
+| `INVENTORY01_HOOK_PRE`        | Path and Filename to execute pre inventory operation                                                                                           |         |
+| `INVENTORY01_INTERVAL`        | Frequency after first execution of firing inventory routines again in minutes                                                                  |         |
+| `INVENTORY01_NAME`            | A friendly name to reference your inventory job eg `repository_name`                                                                           |         |
+| `INVENTORY01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         |
+| `INVENTORY01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         |
+
+##### Hooks
+The following will be sent to the hooks script :
+
+Pre: `HOSTNAME CONTAINER_NAME INVENTORY INSTANCE_NUMBER[XX] INVENTORY[XX]_NAME INVENTORY[XX]_REPOSITORY_PATH ROUTINE_START_EPOCH`
+
+Example:
+```bash
+server container_name INVENTORY 01 cleanupname rest:username:password@http://repo.url 1677953980
+```
+
+Post: `HOSTNAME CONTAINER_NAME INVENTORY INSTANCE_NUMBER[XX] INVENTORY[XX]NAME INVENTORY[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE SNAPSHOTS_TOTAL`
+
+```bash
+server container_name INVENTORY 01 cleaupname rest:username:password@http://repo.url 1677953980 1677953981 1677953991 10 0 /logs/20230304/20230304_100501-cleanup-cleanupname.log 23
+```
 
 #### Prune Options
 
