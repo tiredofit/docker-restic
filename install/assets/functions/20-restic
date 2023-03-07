@@ -1844,42 +1844,6 @@ $(cat /tmp/prune-${prune_routines_start_time}.log)
 EOF
                         )"
 
-## TOI TODO Prune Sample Log
-# loading indexes...
-# loading all snapshots...
-# finding data that is still in use for 203 snapshots
-# [0:59] 100.00%  203 / 203 snapshots
-#
-# searching used packs...
-# collecting packs for deletion and repacking
-# [0:01] 100.00%  680 / 680 packs processed
-#
-#
-# to repack:         77467 blobs / 2.046 GiB
-# this removes:      19044 blobs / 651.923 MiB
-# to delete:         57205 blobs / 2.126 GiB
-# total prune:       76249 blobs / 2.762 GiB
-# remaining:        493297 blobs / 3.527 GiB
-# unused size after prune: 0 B (0.00% of remaining size)
-#
-# deleting unreferenced packs
-# [0:05] 100.00%  38 / 38 files deleted
-#
-# repacking packs
-# [2:37] 100.00%  336 / 336 packs repacked
-#
-# rebuilding index
-# [0:02] 100.00%  330 / 330 packs processed
-#
-# deleting obsolete index files
-# [0:22] 100.00%  199 / 199 files deleted
-#
-# removing 438 old packs
-# [0:48] 100.00%  438 / 438 files deleted
-#
-# done
-
-
         if [ -s /tmp/prune-"${prune_routines_start_time}".error ] ; then
             ## TOI Lock Checking TODO
 ##
@@ -1907,6 +1871,13 @@ EOF
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +'%Y%m%d_%H%M%S')"-prune-"${prune_job_log_suffix}".log ../latest-prune-"${prune_job_log_suffix}".log
 
+prune_job_packs_reviewed=$(awk '/collecting packs for deletion and repacking/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $11}')
+prune_job_packs_deleted_unreferenced=$(awk '/deleting unreferenced packs/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $8}')
+prune_job_packs_repacked=$(awk '/repacking packs/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $7}')
+prune_job_packs_reindexed=$(awk '/rebuilding index/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $7}')
+prune_job_index_deleted_obsolete=$(awk '/deleting obsolete index files/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $9}')
+prune_job_packs_deleted_old=$(awk '/removing .* old packs/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $9}')
+
         PROCESS_NAME=post_prune${prune_instance_number}
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
@@ -1916,6 +1887,12 @@ EOF
 - restic.prune.start_date.[${prune_job_log_suffix}] "${prune_routines_start_time}"
 - restic.prune.status.[${prune_job_log_suffix}] "${exitcode_prune}"
 - restic.prune.duration.[${prune_job_log_suffix}] "${prune_process_total_time}"
+- restic.prune.packs.reviewed.[${prune_job_log_suffix}] "${prune_job_packs_reviewed}"
+- restic.prune.packs.deleted.unreferenced.[${prune_job_log_suffix}] "${prune_job_packs_deleted_unreferenced}"
+- restic.prune.packs.repacked.[${prune_job_log_suffix}] "${prune_job_packs_repacked}"
+- restic.prune.packs.reindexed.[${prune_job_log_suffix}] "${prune_job_packs_reindexed}"
+- restic.prune.index.delete.obsolete.[${prune_job_log_suffix}] "${prune_job_index_deleted_obsolete}"
+- restic.prune.packs.deleted.old.[${prune_job_log_suffix}] "${prune_job_packs_deleted_old}"
 EOF
         fi
 
