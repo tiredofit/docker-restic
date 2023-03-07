@@ -519,8 +519,8 @@ hooks() {
             prune )
                 if [ -x "${prune_job_hook_post}" ] ; then
                     print_notice "Executing post prune custom script : '${prune_job_hook_post}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
-                    "${prune_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" PRUNE "${prune_instance_number}" "${prune_job_log_suffix}" "${prune_job_repository_path}" "${prune_routines_start_time}" "${prune_process_start_time}" "${prune_process_finish_time}" "${prune_process_total_time}" "${exitcode_prune}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +'%Y%m%d_%H%M%S')"-prune-"${prune_job_log_suffix}".log
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE PACKS_REVIEWED PACKS_DELETED_UNREFERENCED PACKS_REPACKED PACKS_REINDEXED PACKS_DELETED_OLD PACKS_INDEX_DELETED_OBSOLETE
+                    "${prune_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" PRUNE "${prune_instance_number}" "${prune_job_log_suffix}" "${prune_job_repository_path}" "${prune_routines_start_time}" "${prune_process_start_time}" "${prune_process_finish_time}" "${prune_process_total_time}" "${exitcode_prune}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +'%Y%m%d_%H%M%S')"-prune-"${prune_job_log_suffix}".log "${prune_job_packs_reviewed}" "{prune_job_packs_deleted_unreferenced}" "{prune_job_packs_repacked}" "{prune_job_packs_reindexed}" "{prune_job_index_deleted_obsolete}" "{prune_job_packs_deleted_old}"
                 else
                     print_error "Can't run post prune custom script: '${prune_job_hook_post}' as its filesystem bit is not executible!"
                 fi
