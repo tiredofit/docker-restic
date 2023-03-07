@@ -162,7 +162,7 @@ Be sure to view the following repositories to understand all the customizable op
 | `SKIP_INIT`   | Skip Repository Initialization Checks                     | `FALSE`    |
 
 #### Job Defaults
-If these are set and no other defaults or variables are set explicitly, they will be added to any of the `BACKUP`, `CHECK`, `CLEANUP` or `PRUNE` jobs.
+If these are set and no other defaults or variables are set explicitly, they will be added to any of the `BACKUP`, `CHECK`, `CLEANUP`, `INVENTORY` or `PRUNE` jobs.
 
 | Variable                  | Description                                                                    | Default |
 | ------------------------- | ------------------------------------------------------------------------------ | ------- |
