@@ -1,7 +1,7 @@
 # github.com/tiredofit/restic
 
-[![GitHub release](https://img.shields.io/github/v/tag/tiredofit/restic?style=flat-square)](https://github.com/tiredofit/restic/releases/latest)
-[![Build Status](https://img.shields.io/github/workflow/status/tiredofit/restic/build?style=flat-square)](https://github.com/tiredofit/restic/actions?query=workflow%3Abuild)
+[![GitHub release](https://img.shields.io/github/v/tag/tiredofit/docker-restic?style=flat-square)](https://github.com/tiredofit/docker-restic/releases/latest)
+[![Build Status](https://img.shields.io/github/workflow/status/tiredofit/docker-restic/build?style=flat-square)](https://github.com/tiredofit/docker-restic/actions?query=workflow%3Abuild)
 [![Docker Stars](https://img.shields.io/docker/stars/tiredofit/restic.svg?style=flat-square&logo=docker)](https://hub.docker.com/r/tiredofit/restic/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tiredofit/restic.svg?style=flat-square&logo=docker)](https://hub.docker.com/r/tiredofit/restic/)
 [![Become a sponsor](https://img.shields.io/badge/sponsor-tiredofit-181717.svg?logo=github&style=flat-square)](https://github.com/sponsors/tiredofit)
