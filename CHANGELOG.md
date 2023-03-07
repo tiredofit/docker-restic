@@ -1,3 +1,9 @@
+## 0.18.0 2023-03-07 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add more detailed Zabbix Metrics and Post Hooks for CHECK and PRUNE oeprations
+
+
 ## 0.17.0 2023-03-04 <dave at tiredofit dot ca>
 
    ### Added
