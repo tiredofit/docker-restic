@@ -1075,7 +1075,7 @@ EOF
         check_process_delay_time=$(echo $((check_process_start_time-check_routines_start_time)))
         if [ "${check_process_delay_time}" -ge 5 ] ; then
             check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
-## Delay in starting:                   $(echo ${check_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})"
+## Delay in starting:                   $(echo ${check_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})
 EOF
                             )
         fi
