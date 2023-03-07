@@ -1,3 +1,9 @@
+## 0.18.1 2023-03-07 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix edge case with labels being recreated multiple times when no exclusions exist
+
+
 ## 0.18.0 2023-03-07 <dave at tiredofit dot ca>
 
    ### Added

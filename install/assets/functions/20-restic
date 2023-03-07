@@ -744,6 +744,9 @@ EOF
                             )
         fi
 
+        unset backup_job_args
+        unset backup_job_snapshot_args
+
         if [ -n "${backup_job_snapshot_path_file}" ] ; then
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
 ## Backup Path File:                    ${backup_job_backup_file}
