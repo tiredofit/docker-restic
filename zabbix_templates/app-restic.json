@@ -1,7 +1,7 @@
 {
     "zabbix_export": {
         "version": "6.2",
-        "date": "2023-02-15T22:22:26Z",
+        "date": "2023-03-07T16:13:24Z",
         "template_groups": [
             {
                 "uuid": "3500ba09d0534297840ca620c9dd46bf",
@@ -13,7 +13,7 @@
                 "uuid": "81c9fb80d9a646ab8b3968db8f7a5394",
                 "template": "Restic",
                 "name": "Restic",
-                "description": "Restic Monitoring Template for version >0.15.1\n\nThis template is meant for use specifically with https://github.com/tiredofit/docker-restic\n\nSteps for usage:\n- Create Hosts and add appropriate templates\n- Setup Image and ensure Zabbix configuration correct\n- Set MODE to BACKUP, CHECK, PRUNE\n- After execution of one of the above jobs, statistics will appear",
+                "description": "Restic Monitoring Template for version >0.15.1\n\nThis template is meant for use specifically with https://github.com/tiredofit/docker-restic\nversion 0.18.0 and higher.\n\nSteps for usage:\n- Create Hosts and add appropriate templates\n- Setup Image and ensure Zabbix configuration correct\n- Set MODE to BACKUP, CHECK, PRUNE\n- After execution of one of the above jobs, statistics will appear",
                 "groups": [
                     {
                         "name": "Backup"
@@ -81,6 +81,21 @@
                                 "delay": "0",
                                 "history": "7d",
                                 "description": "Existing directories that have not changed in backup",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Backup"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "903767c25d5f4931b9061c8745544a8f",
+                                "name": "[{#NAME}] Backup - Errors: Count",
+                                "type": "TRAP",
+                                "key": "restic.backup.error.count.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d",
+                                "description": "Amount of errors found in log file",
                                 "tags": [
                                     {
                                         "tag": "Application",
@@ -458,7 +473,46 @@
                                 "delay": "0",
                                 "history": "7d",
                                 "units": "uptime",
-                                "description": "How long the check procedure took."
+                                "description": "How long the check procedure took.",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Check"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "1af6090da9304159a8fc10cfb29d1965",
+                                "name": "[{#NAME}] Check - Unreferenced Packs",
+                                "type": "TRAP",
+                                "key": "restic.check.packs_unreferenced.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d",
+                                "description": "Amount of unreferenced packs in the repository after a check that need to be pruned",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "22d22ca409614d57b96c28a9c869c03f",
+                                        "expression": "last(/Restic/restic.check.packs_unreferenced.[{#NAME}])>=1",
+                                        "name": "[{#NAME}] Check - Unreferenced Packs",
+                                        "priority": "INFO",
+                                        "manual_close": "YES"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "56341c7a221147c580d447db2f144f4a",
+                                "name": "[{#NAME}] Check - Snapshots Processed",
+                                "type": "TRAP",
+                                "key": "restic.check.snapshots.processed.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d",
+                                "description": "Amount of Snapshots processed with Check Operation"
                             },
                             {
                                 "uuid": "5c1785391f394afda66877e283725b7c",
@@ -468,6 +522,12 @@
                                 "delay": "0",
                                 "history": "7d",
                                 "units": "unixtime",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Check"
+                                    }
+                                ],
                                 "trigger_prototypes": [
                                     {
                                         "uuid": "fb560a7a00a34c328e333773e1206638",
@@ -530,6 +590,12 @@
                                 "valuemap": {
                                     "name": "Restic Exit Code"
                                 },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Check"
+                                    }
+                                ],
                                 "trigger_prototypes": [
                                     {
                                         "uuid": "a65007ba00ba41e4b433843bfaa2ceb7",
@@ -627,7 +693,13 @@
                                 "delay": "0",
                                 "history": "7d",
                                 "units": "uptime",
-                                "description": "How long the cleanup procedure took."
+                                "description": "How long the cleanup procedure took.",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Cleanup"
+                                    }
+                                ]
                             },
                             {
                                 "uuid": "a14166c74e424892bf572e07c2e70714",
@@ -637,6 +709,12 @@
                                 "delay": "0",
                                 "history": "7d",
                                 "units": "unixtime",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Cleanup"
+                                    }
+                                ],
                                 "trigger_prototypes": [
                                     {
                                         "uuid": "0010711e610d498ba97b248bf3659aae",
@@ -699,6 +777,12 @@
                                 "valuemap": {
                                     "name": "Restic Exit Code"
                                 },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Cleanup"
+                                    }
+                                ],
                                 "trigger_prototypes": [
                                     {
                                         "uuid": "460577490a474c47ac9007d2055f0deb",
@@ -799,7 +883,61 @@
                                 "delay": "0",
                                 "history": "7d",
                                 "units": "unixtime",
-                                "description": "How long the prune operation took"
+                                "description": "How long the prune operation took",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Prune"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "a3ff0d854d644e8395a7962e11a50cc9",
+                                "name": "[{#NAME}] Prune - Obselete Indexes Deleted",
+                                "type": "TRAP",
+                                "key": "restic.prune.index.deleted.obsolete.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "e1cb2b445e544646b6d5a4791f659c07",
+                                "name": "[{#NAME}] Prune - Old Packs Deleted",
+                                "type": "TRAP",
+                                "key": "restic.prune.packs.deleted.old.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "64b15dba25604507af62a04b56b58eb5",
+                                "name": "[{#NAME}] Prune - Unreferenced Packs Deleted",
+                                "type": "TRAP",
+                                "key": "restic.prune.packs.deleted.unreferenced.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "176d37912f2c46bea445461345af9a33",
+                                "name": "[{#NAME}] Prune - Packs Reindexed",
+                                "type": "TRAP",
+                                "key": "restic.prune.packs.reindexed.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "bd4ecf29bfec4daebba1aed07d4210f9",
+                                "name": "[{#NAME}] Prune - Packs Repacked",
+                                "type": "TRAP",
+                                "key": "restic.prune.packs.repacked.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "4d416f85d93143d7a9f0f85969887035",
+                                "name": "[{#NAME}] Prune - Packs Reviewed",
+                                "type": "TRAP",
+                                "key": "restic.prune.packs.reviewed.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
                             },
                             {
                                 "uuid": "12289e26393445329d9a35b7ca002deb",
@@ -809,6 +947,12 @@
                                 "delay": "0",
                                 "history": "7d",
                                 "units": "unixtime",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Prune"
+                                    }
+                                ],
                                 "trigger_prototypes": [
                                     {
                                         "uuid": "49a49d1088b442d7a936443413218cd4",
@@ -871,6 +1015,12 @@
                                 "valuemap": {
                                     "name": "Restic Exit Code"
                                 },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Prune"
+                                    }
+                                ],
                                 "trigger_prototypes": [
                                     {
                                         "uuid": "1f0f4fe517d547ffa779dec193b9eaf3",

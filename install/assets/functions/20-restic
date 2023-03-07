@@ -501,8 +501,8 @@ hooks() {
             check )
                 if [ -x "${check_job_hook_post}" ] ; then
                     print_notice "Executing post check custom script : '${check_job_hook_post}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE PACKS_UNREFERENCED_COUNT SNAPSHOTS_PROCESSED SNAPSHOTS_TOTAL
-                    "${check_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CHECK "${check_instance_number}" "${check_job_log_suffix}" "${check_job_repository_path}" "${check_routines_start_time}" "${check_process_start_time}" "${check_process_finish_time}" "${check_process_total_time}" "${exitcode_check}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log "${check_job_pack_unreferenced_count}" "${check_job_snapshots_processed}" "${check_job_snapshots_total}"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE PACKS_UNREFERENCED_COUNT SNAPSHOTS_PROCESSED
+                    "${check_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CHECK "${check_instance_number}" "${check_job_log_suffix}" "${check_job_repository_path}" "${check_routines_start_time}" "${check_process_start_time}" "${check_process_finish_time}" "${check_process_total_time}" "${exitcode_check}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log "${check_job_pack_unreferenced_count}" "${check_job_snapshots_processed}"
                 else
                     print_error "Can't run post check custom script: '${check_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -1249,7 +1249,6 @@ EOF
 
         if grep -q "^\[.*\] .*% .* snapshots" /tmp/check-"${check_routines_start_time}".log ; then
             check_job_snapshots_processed=$(grep "^\[.*\] .*% .* snapshots" /tmp/check-"${check_routines_start_time}".log | awk '{print $3}')
-            check_job_snapshots_total=$(grep "^\[.*\] .*% .* snapshots" /tmp/check-"${check_routines_start_time}".log | awk '{print $5}')
             print_debug "[check] Processed ${check_job_snapshots_processed} of ${check_job_snapshots_total}"
         fi
 
@@ -1264,7 +1263,6 @@ EOF
 - restic.check.duration.[${check_job_log_suffix}] "${check_process_total_time}"
 - restic.check.packs_unreferenced.[${check_job_log_suffix}] "${check_job_pack_unreferenced_count}"
 - restic.check.snapshots.processed.[${check_job_log_suffix}] "${check_job_snapshots_processed}"
-- restic.check.snapshots.total.[${check_job_log_suffix}] "${check_job_snapshots_total}"
 EOF
         fi
 
