@@ -1882,6 +1882,10 @@ EOF
             inventory_job_log_suffix=${inventory_instance_number}
         fi
 
+        if [ -n "${inventory_job_hook_pre}" ]; then
+            hook inventory pre
+        fi
+
         restic_repository=$(mktemp)
         echo "${inventory_job_repository_path}" > "${restic_repository}"
         process_limiter restic 1 inventory
@@ -1974,6 +1978,10 @@ EOF
 - restic.inventory.duration.[${inventory_job_log_suffix}] "${inventory_process_total_time}"
 - restic.inventory.snapshots.total.[${inventory_job_log_suffix}] "${inventory_job_snapshots_total}"
 EOF
+        fi
+
+        if [ -n "${inventory_job_hook_pre}" ]; then
+            hook inventory post
         fi
 
         unset inventory_job_args
