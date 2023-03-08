@@ -861,7 +861,7 @@ repository() {
         process_limiter restic "${BACKUP_JOB_CONCURRENCY}" backup
         backup_process_start_time=$(date +%s)
         backup_job_file_log=$(cat <<EOF
-# Job Started:                          $(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S') (${backup_routines_start_time})
+# Job Started:                          $(date -d @"${backup_routines_start_time}" +'%Y-%-%d %H:%M:%S') (${backup_routines_start_time})
 # Repository:                           $(echo "${backup_job_repository_path}" | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 # Hostname:                             $(hostname)
 # Container Name:                       $(echo "${CONTAINER_NAME}")
@@ -1190,7 +1190,7 @@ EOF
     check() {
         if [ -z "${check_routines_start_time}" ] ; then check_routines_start_time=$(date +%s) ; fi
         check_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${check_routines_start_time} +'%Y%m%d_%H%M%S') (${check_routines_start_time})
+## Job Started:                         $(date -d @${check_routines_start_time} +'%Y-%-%d %H:%M:%S') (${check_routines_start_time})
 ## Repository:                          $(echo ${check_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo "${CONTAINER_NAME}")
@@ -1204,14 +1204,14 @@ EOF
         check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 ## Check procedure started:             $(date -d @${check_process_start_time} +'%Y-%m-%d %H:%M:%S') (${check_process_start_time})
 EOF
-                        )
+                            )
 
         check_process_delay_time=$(echo $((check_process_start_time-check_routines_start_time)))
         if [ "${check_process_delay_time}" -ge 5 ] ; then
             check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 ## Delay in starting:                   $(echo ${check_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})
 EOF
-                            )
+                                )
         fi
 
         if [ -n "${check_job_check_name}" ] ; then
@@ -1227,7 +1227,7 @@ EOF
             check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 ## Cache Enabled:                       ${check_job_check_use_cache}
 EOF
-                            )
+                                )
         fi
 
         if [ -n "${check_job_check_amount}" ] ; then
@@ -1236,13 +1236,13 @@ EOF
                 check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 ## Checking data:                       ALL
 EOF
-                                )
+                                    )
             else
                 check_job_args+="--read-data-subset ${check_job_check_amount} "
                 check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 ## Checking data:                       SUBSET ${check_job_check_amount}
 EOF
-                                )
+                                    )
             fi
         fi
 
@@ -1260,7 +1260,7 @@ EOF
             check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 ## Dry Run enabled - No checks were actually performed"
 EOF
-                            )
+                                )
         fi
 
         if [ -n "${check_job_verbosity_level}" ] ; then
@@ -1297,7 +1297,7 @@ EOF
                 > /tmp/check-${check_routines_start_time}.log
 
         exitcode_check=$?
-
+        rm -rf "${restic_repository}"
         check_process_finish_time=$(date +%s)
         check_process_total_time=$(echo $((check_process_finish_time-check_process_start_time)))
 
@@ -1342,7 +1342,7 @@ EOF
 
 ## Check procedure finished:            $(date -d @"${check_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${check_process_finish_time})
 ## Check procedure total time:          $(echo "${check_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_total_time})
-## Check procedure completion:          "${exitcode_check_description}" (${exitcode_check})
+## Check procedure completion:          ${exitcode_check_description} (${exitcode_check})
 
 ### Check Details
 $(cat /tmp/check-"${check_routines_start_time}".log)
@@ -1414,7 +1414,7 @@ EOF
     cleanup() {
         if [ -z "${cleanup_routines_start_time}" ] ; then cleanup_routines_start_time=$(date +%s) ; fi
             cleanup_job_file_log=$(cat <<EOF
-## Job Started:                        $(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S') (${cleanup_routines_start_time})
+## Job Started:                        $(date -d @${cleanup_routines_start_time} +'%Y-%-%d %H:%M:%S') (${cleanup_routines_start_time})
 ## Repository:                         $(echo ${cleanup_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                           $(hostname)
 ## Container Name:                     $(echo "${CONTAINER_NAME}")
@@ -1848,31 +1848,30 @@ EOF
     }
 
     inventory() {
-        bootstrap_variables inventory_init
         if [ -z "${inventory_routines_start_time}" ] ; then inventory_routines_start_time=$(date +%s) ; fi
-            inventory_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${inventory_routines_start_time} +'%Y%m%d_%H%M%S') (${inventory_routines_start_time})
+        inventory_job_file_log=$(cat <<EOF
+## Job Started:                         $(date -d @${inventory_routines_start_time} +'%Y-%-%d %H:%M:%S') (${inventory_routines_start_time})
 ## Repository:                          $(echo ${inventory_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo "${CONTAINER_NAME}")
 
 ## Task:                                Inventory
 EOF
-                       )
-
+                               )
+        unset inventory_job_args
         process_limiter restic 1 inventory
         inventory_process_start_time=$(date +%s)
         inventory_job_file_log=$(echo "${inventory_job_file_log}" ; cat <<EOF
-## Inventory procedure started:      $(date -d @${inventory_process_start_time} +'%Y-%m-%d %H:%M:%S') (${inventory_process_start_time})
+## Inventory procedure started:         $(date -d @${inventory_process_start_time} +'%Y-%m-%d %H:%M:%S') (${inventory_process_start_time})
 EOF
-                        )
+                                    )
 
         inventory_process_delay_time=$(echo $((inventory_process_start_time-inventory_routines_start_time)))
         if [ "${inventory_process_delay_time}" -ge 5 ] ; then
             inventory_job_file_log=$(echo "${inventory_job_file_log}" ; cat <<EOF
 ## Delay in starting:                   $(echo ${inventory_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${inventory_process_delay_time})
 EOF
-                            )
+                                    )
         fi
 
         if [ -n "${inventory_job_inventory_name}" ] ; then
@@ -1902,14 +1901,8 @@ EOF
 
         case "${exitcode_inventory}" in
             0 )
-                if [ -s /tmp/inventory-"${inventory_routines_start_time}".error ] || [ -s /tmp/inventory-"${inventory_routines_start_time}".log ] ; then
-                    print_info "[inventory] Inventory Successful"
-                    exitcode_inventory_description="OK"
-                else
-                    print_debug "[inventory] Inventory unnecessary"
-                    exitcode_inventory_description="NOT_NECESSARY"
-                    exitcode_inventory=23
-                fi
+                print_info "[inventory] Inventory Successful"
+                exitcode_inventory_description="OK"
             ;;
             1 )
                 print_error "[inventory] Inventory Failed completely"
@@ -1944,7 +1937,6 @@ EOF
         esac
 
         inventory_job_file_log=$(echo "${inventory_job_file_log}" ; cat <<EOF
-
 ## Inventory procedure finished:        $(date -d @${inventory_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${inventory_process_finish_time})
 ## Inventory procedure total time:      $(echo ${inventory_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${inventory_process_total_time})
 ## Inventory procedure completion:      ${exitcode_inventory_description} (${exitcode_inventory})
@@ -1990,7 +1982,7 @@ EOF
     prune() {
         if [ -z "${prune_routines_start_time}" ] ; then prune_routines_start_time=$(date +%s) ; fi
         prune_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S') (${prune_routines_start_time})
+## Job Started:                         $(date -d @${prune_routines_start_time} +'%Y-%-%d %H:%M:%S') (${prune_routines_start_time})
 ## Repository:                          $(echo ${prune_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo ${CONTAINER_NAME})
@@ -2031,7 +2023,7 @@ EOF
         if var_true "${prune_job_prune_dryrun}" ; then
             print_notice "DRY_RUN enabled - No pruning will actually be performed!"
             prune_job_args+="--dry-run "
-            prune_job_file_log=$(echo "${prunes_file_log}" ; cat <<EOF
+            prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
 ## Dry Run enabled - No prunes were actually performed"
 EOF
                             )
@@ -2200,7 +2192,7 @@ EOF
         bootstrap_variables unlock_init $1 $2
         if [ -z "${unlock_routines_start_time}" ] ; then unlock_routines_start_time=$(date +%s) ; fi
             unlock_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${unlock_routines_start_time} +'%Y%m%d_%H%M%S') (${unlock_routines_start_time})
+## Job Started:                         $(date -d @${unlock_routines_start_time} +'%Y-%-%d %H:%M:%S') (${unlock_routines_start_time})
 ## Repository:                          $(echo ${unlock_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                            $(hostname)
 ## Container Name:                      $(echo "${CONTAINER_NAME}")
@@ -2398,6 +2390,9 @@ process_limiter() {
                     ;;
                     cleanup )
                         print_notice "Restic is running, waiting for tasks to complete before running a 'forget' task ${counter_verbose}"
+                    ;;
+                    inventory )
+                        print_notice "Restic is running, waiting for tasks to complete before running an 'inventory' task ${counter_verbose}"
                     ;;
                     prune )
                         print_notice "Restic is running, waiting for tasks to complete before running a 'prune' task ${counter_verbose}"
