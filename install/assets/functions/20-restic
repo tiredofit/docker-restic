@@ -22,22 +22,6 @@ bootstrap_filesystem() {
         if [ "$(stat -c %U "${REPOSITORY_PATH}")" != "restic" ] ; then chown restic:restic "${REPOSITORY_PATH}" ; fi
     fi
 
-    if var_true "${ENABLE_HOOKS}" ; then
-        if [ ! -d "${HOOKS_PATH}" ]; then
-            mkdir -p "${HOOKS_PATH}"
-        fi
-        if [ "$(stat -c %U "${HOOKS_PATH}")" != "restic" ] ; then chown restic:restic "${HOOKS_PATH}" ; fi
-
-        if [ ! -d "${HOOKS_PRE_PATH}" ]; then
-            mkdir -p "${HOOKS_PRE_PATH}"
-        fi
-        if [ "$(stat -c %U "${HOOKS_PRE_PATH}")" != "restic" ] ; then chown restic:restic "${HOOKS_PRE_PATH}" ; fi
-        if [ ! -d "${HOOKS_POST_PATH}" ]; then
-            mkdir -p "${HOOKS_POST_PATH}"
-        fi
-        if [ "$(stat -c %U "${HOOKS_POST_PATH}")" != "restic" ] ; then chown restic:restic "${HOOKS_POST_PATH}" ; fi
-    fi
-
     if [ ! -d "${LOG_PATH}" ]; then
         mkdir -p "${LOG_PATH}"
     fi
@@ -626,11 +610,12 @@ hooks() {
             cleanup )
                 if [ -x "${cleanup_job_hook_post}" ] ; then
                     print_notice "Executing post cleanup custom script : '${cleanup_job_hook_post}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME CLEANUP_HOST REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
-                    "${cleanup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_desc_hook_host}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}" "${cleanup_process_start_time}" "${cleanup_process_finish_time}" "${cleanup_process_total_time}" "${exitcode_cleanup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME CLEANUP_HOST REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE SNAPSHOTS_REMOVED PRUNE_PACKS_PROCESSED PRUNE_PACKS_KEEP PRUNE_PACKS_REPACK PRUNE_PACKS_DELETE PRUNE_PACKS_DELETE_UNREFERENCED PRUNE_PACKS_DELETE_OLD
+                    "${cleanup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_desc_hook_host}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}" "${cleanup_process_start_time}" "${cleanup_process_finish_time}" "${cleanup_process_total_time}" "${exitcode_cleanup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log ${cleanup_job_stats_snapshots_removed} ${cleanup_job_stats_prune_packs_processed} ${cleanup_job_stats_prune_packs_keep} ${cleanup_job_stats_prune_packs_repack} ${cleanup_job_stats_prune_packs_delete} ${cleanup_job_stats_prune_packs_delete_unreferenced} ${cleanup_job_stats_prune_packs_delete_old}
                 else
                     print_error "Can't run post cleanup custom script: '${cleanup_job_hook_post}' as its filesystem bit is not executible!"
                 fi
+
             ;;
             inventory )
                 if [ -x "${inventory_job_hook_post}" ] ; then
@@ -1704,6 +1689,29 @@ EOF
 ${cleanup_job_file_log}
 EOF
 
+        cleanup_job_stats_snapshots_removed=$(cat ${cleanup_job_file_log} | grep '^[0-9]. snapshots have been removed' | awk '{print $1}')
+        if [ "${cleanup_job_stats_snapshots_removed}" = "" ] ; then cleanup_job_stats_snapshots_removed=0 ; fi
+
+        if var_true "${cleanup_job_auto_prune}" ; then
+            cleanup_job_stats_prune_packs_processsed=$(cat ${cleanup_job_file_log} | awk '/searching used packs.../,/.* \/ .* packs processed/' | tail -n 1 | awk '{print $5}')
+            if [ "${cleanup_job_stats_prune_packs_processed}" = "" ] ; then cleanup_job_stats_prune_packs_processed=0 ; fi
+
+            cleanup_job_stats_prune_packs_keep=$(cat ${cleanup_job_file_log} | grep "^to keep: .*[0-9]. packs" | awk '{print $3}')
+            if [ "${cleanup_job_stats_prune_packs_keep}" = "" ] ; then cleanup_job_stats_prune_packs_keep=0 ; fi
+
+            cleanup_job_stats_prune_packs_repack=$(cat ${cleanup_job_file_log} | grep "^to repack: .*[0-9]. packs" | awk '{print $3}')
+            if [ "${cleanup_job_stats_prune_packs_repack}" = "" ] ; then cleanup_job_stats_prune_packs_repack=0 ; fi
+
+            cleanup_job_stats_prune_packs_delete=$(cat ${cleanup_job_file_log} | grep "^to delete: .*[0-9]. packs" | awk '{print $3}')
+            if [ "${cleanup_job_stats_prune_packs_delete}" = "" ] ; then cleanup_job_stats_prune_packs_delete=0 ; fi
+
+            cleanup_job_stats_prune_packs_delete_unreferenced=$(cat ${cleanup_job_file_log} | grep "^to delete: .*[0-9]. unreferenced packs" | awk '{print $3}')
+            if [ "${cleanup_job_stats_prune_packs_delete_unreferenced}" = "" ] ; then cleanup_job_stats_prune_packs_delete_unreferenced=0 ; fi
+
+            cleanup_job_stats_prune_packs_delete_old=$(cat ${cleanup_job_file_log} | awk '/removing .* old packs$/,/.*\/ .* files deleted/' | tail -n 1 | awk '{print $5}')
+            if [ "${cleanup_job_stats_prune_packs_delete_old}" = "" ] ; then cleanup_job_stats_prune_packs_delete_old=0 ; fi
+        fi
+
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log ../latest-cleanup-"${cleanup_job_log_suffix}".log
 
@@ -1716,7 +1724,18 @@ EOF
 - restic.cleanup.status.[${cleanup_job_log_suffix}] "${exitcode_cleanup}"
 - restic.cleanup.duration.[${cleanup_job_log_suffix}] "${cleanup_process_total_time}"
 - restic.cleanup.target.[${cleanup_job_log_suffix}] "${cleanup_job_desc_hook_host}"
+- restic.cleanup.snapshots.removed.[${cleanup_job_log_suffix}] "${cleanup_job_stats_snapshots_removed}"
 EOF
+            if var_true "${cleanup_job_auto_prune}" ; then
+                cat <<EOF | silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}" -i -
+- restic.cleanup.prune.packs.processed.[${cleanup_job_log_suffix}] "${cleanup_job_stats_prune_packs_processed}"
+- restic.cleanup.prune.packs.keep.[${cleanup_job_log_suffix}] "${cleanup_job_stats_prune_packs_keep}"
+- restic.cleanup.prune.packs.repack.[${cleanup_job_log_suffix}] "${cleanup_job_stats_prune_packs_repack}"
+- restic.cleanup.prune.packs.delete.[${cleanup_job_log_suffix}] "${cleanup_job_stats_prune_packs_delete}"
+- restic.cleanup.prune.packs.delete.unreferenced.[${cleanup_job_log_suffix}] "${cleanup_job_stats_prune_packs_delete_unreferenced}"
+- restic.cleanup.prune.packs.delete.old.[${cleanup_job_log_suffix}] "${cleanup_job_stats_prune_packs_delete_old}"
+EOF
+            fi
         fi
 
         if [ -n "${cleanup_job_hook_post}" ]; then

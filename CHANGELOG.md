@@ -1,3 +1,9 @@
+## 0.20.1 2023-03-08 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add Zabbix metrics and POST_HOOK statistics for CLEANUP function
+
+
 ## 0.20.0 2023-03-08 <dave at tiredofit dot ca>
 
    ### Added

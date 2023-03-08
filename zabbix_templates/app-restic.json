@@ -1,7 +1,7 @@
 {
     "zabbix_export": {
         "version": "6.2",
-        "date": "2023-03-08T16:52:13Z",
+        "date": "2023-03-08T20:41:11Z",
         "template_groups": [
             {
                 "uuid": "3500ba09d0534297840ca620c9dd46bf",
@@ -700,6 +700,63 @@
                                         "value": "Restic Cleanup"
                                     }
                                 ]
+                            },
+                            {
+                                "uuid": "6e98ad016cea448e9267fd6197b3b5be",
+                                "name": "[{#NAME}] Cleanup - Prune Packs Delete Old",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.prune.packs.delete.old[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "1f25d50bdc7647dfb05693ed2ac62446",
+                                "name": "[{#NAME}] Cleanup - Prune Packs Delete Unreferenced",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.prune.packs.delete.unreferenced[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "768bb050c8ae4ccda70577b5b1ffb573",
+                                "name": "[{#NAME}] Cleanup - Prune Packs Delete",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.prune.packs.delete.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "e9d6e84a8ccc41caba0c23359eb2aaad",
+                                "name": "[{#NAME}] Cleanup - Prune Packs Keep",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.prune.packs.keep.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "62af38420e214c2397d0b14d6b534d41",
+                                "name": "[{#NAME}] Cleanup - Prune Packs Processed",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.prune.packs.processed.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "42d9a71cb3d74e35830820b6169486e5",
+                                "name": "[{#NAME}] Cleanup - Prune Packs Repack",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.prune.packs.repack.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d"
+                            },
+                            {
+                                "uuid": "817b933c7ce6423e9ca73a5d64d44d38",
+                                "name": "[{#NAME}] Cleanup - Snapshots Removed",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.snapshots.removed.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d",
+                                "description": "How many snapshots removed during cleanup"
                             },
                             {
                                 "uuid": "a14166c74e424892bf572e07c2e70714",
