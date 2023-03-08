@@ -1,3 +1,10 @@
+## 0.19.1 2023-03-07 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Bugfixes to some parameters
+      - Properly make hooks work for INVENTORY
+
+
 ## 0.19.0 2023-03-07 <dave at tiredofit dot ca>
 
    ### Added

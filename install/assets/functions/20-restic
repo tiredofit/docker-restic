@@ -1199,7 +1199,7 @@ EOF
 ## Task:                                Check
 EOF
                         )
-
+        unset check_job_args
         process_limiter restic 1 check
         check_process_start_time=$(date +%s)
         check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
@@ -1423,7 +1423,7 @@ EOF
 ## Task:                               Cleanup
 EOF
                             )
-
+            unset cleanup_job_args
             process_limiter restic 1 cleanup
             cleanup_process_start_time=$(date +%s)
             cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
@@ -1505,7 +1505,7 @@ EOF
                 small )
                     cleanup_job_args+="--repack-small "
                     cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
-## Repack                              Cacheable Only
+## Repack                              Small
 EOF
                                         )
                 ;;
@@ -1999,7 +1999,7 @@ EOF
 ## Task:                                Prune
 EOF
                             )
-
+        unset prune_job_args
         process_limiter restic 1 prune
         prune_process_start_time=$(date +%s)
         prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
