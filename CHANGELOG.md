@@ -1,3 +1,11 @@
+## 0.19.3 2023-03-08 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Make date formatting in top line of logs better human legible
+      - Stop initting variables twice for Inventory
+      - Minor formatting
+
+
 ## 0.19.2 2023-03-07 <dave at tiredofit dot ca>
 
    ### Added
