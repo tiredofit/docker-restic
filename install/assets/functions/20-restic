@@ -199,8 +199,10 @@ bootstrap_variables() {
         transform_cleanup_instance_variable "${cleanup_instance_number}" BLACKOUT_BEGIN cleanup_job_blackout_start
         transform_cleanup_instance_variable "${cleanup_instance_number}" BLACKOUT_END cleanup_job_blackout_finish
         transform_cleanup_instance_variable "${cleanup_instance_number}" DRY_RUN cleanup_job_cleanup_dryrun
+        transform_cleanup_instance_variable "${cleanup_instance_number}" GROUP_BY cleanup_job_cleanup_group_by
         transform_cleanup_instance_variable "${cleanup_instance_number}" HOOK_POST cleanup_job_cleanup_hook_post
         transform_cleanup_instance_variable "${cleanup_instance_number}" HOOK_PRE cleanup_job_cleanup_hook_pre
+        transform_cleanup_instance_variable "${cleanup_instance_number}" HOST cleanup_job_cleanup_host
         transform_cleanup_instance_variable "${cleanup_instance_number}" NAME cleanup_job_cleanup_name
         transform_cleanup_instance_variable "${cleanup_instance_number}" REPACK cleanup_job_cleanup_repack
         transform_cleanup_instance_variable "${cleanup_instance_number}" REPOSITORY_PASS cleanup_job_repository_pass
@@ -624,8 +626,8 @@ hooks() {
             cleanup )
                 if [ -x "${cleanup_job_hook_post}" ] ; then
                     print_notice "Executing post cleanup custom script : '${cleanup_job_hook_post}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
-                    "${cleanup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}" "${cleanup_process_start_time}" "${cleanup_process_finish_time}" "${cleanup_process_total_time}" "${exitcode_cleanup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME CLEANUP_HOST REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
+                    "${cleanup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_desc_hook_host}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}" "${cleanup_process_start_time}" "${cleanup_process_finish_time}" "${cleanup_process_total_time}" "${exitcode_cleanup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log
                 else
                     print_error "Can't run post cleanup custom script: '${cleanup_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -683,8 +685,8 @@ hooks() {
             cleanup )
                 if [ -x "${cleanup_job_hook_pre}" ] ; then
                     print_notice "Executing pre cleanup custom script : '${cleanup_job_hook_pre}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
-                    "${cleanup_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}"
+                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME CLEANUP_HOST REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${cleanup_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_desc_hook_host}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}"
                 else
                     print_error "Can't run pre cleanup custom script: '${cleanup_job_hook_pre}' as its filesystem bit is not executible!"
                 fi
@@ -939,7 +941,7 @@ EOF
             print_notice "DRY_RUN enabled - No backups will actually be written!"
             backup_job_args+="--dry-run "
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Dry Run enabled - No backups were actually performed"
+## Dry Run                             Enabled - No backups were actually performed"
 EOF
                             )
         fi
@@ -947,7 +949,7 @@ EOF
         if [ -n "${backup_job_backup_args}" ] ; then
             backup_job_args+="${backup_job_backup_args} "
             backup_job_file_log=$(cat <<EOF
-## Additional Arguments:                ${backup_job_backup_args}
+## Additional Arguments:               ${backup_job_backup_args}
 EOF
                             )
         fi
@@ -966,7 +968,7 @@ EOF
             esac
             backup_job_args+="--verbose=${backup_job_snapshot_verbosity_level} "
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Verbosity Level:                     ${backup_job_snapshot_verbosity_level}
+## Verbosity Level:                    ${backup_job_snapshot_verbosity_level}
 EOF
                             )
         fi
@@ -993,7 +995,7 @@ EOF
             command_string="restic --cache-dir ${CACHE_PATH} --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args} ${backup_job_snapshot_args}"
             print_info "Command execution string: '${command_string}'"
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Debug Command String:                ${command_string}
+## Debug Command String:               ${command_string}
 EOF
                             )
         fi
@@ -1073,9 +1075,9 @@ EOF
         esac
 
         backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
-## Backup procedure total time:         $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
-## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
+## Backup procedure finished:          $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
+## Backup procedure total time:        $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
+## Backup procedure completion:        ${exitcode_backup_description} (${exitcode_backup})
 
 ### Backup Details
 $(cat /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | sed "/^unchanged/d" )
@@ -1190,26 +1192,26 @@ EOF
     check() {
         if [ -z "${check_routines_start_time}" ] ; then check_routines_start_time=$(date +%s) ; fi
         check_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${check_routines_start_time} +'%Y-%-%d %H:%M:%S') (${check_routines_start_time})
-## Repository:                          $(echo ${check_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-## Hostname:                            $(hostname)
-## Container Name:                      $(echo "${CONTAINER_NAME}")
+## Job Started:                        $(date -d @${check_routines_start_time} +'%Y-%-%d %H:%M:%S') (${check_routines_start_time})
+## Repository:                         $(echo ${check_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
+## Hostname:                           $(hostname)
+## Container Name:                     $(echo "${CONTAINER_NAME}")
 
-## Task:                                Check
+## Task:                               Check
 EOF
                         )
         unset check_job_args
         process_limiter restic 1 check
         check_process_start_time=$(date +%s)
         check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
-## Check procedure started:             $(date -d @${check_process_start_time} +'%Y-%m-%d %H:%M:%S') (${check_process_start_time})
+## Check procedure started:            $(date -d @${check_process_start_time} +'%Y-%m-%d %H:%M:%S') (${check_process_start_time})
 EOF
                             )
 
         check_process_delay_time=$(echo $((check_process_start_time-check_routines_start_time)))
         if [ "${check_process_delay_time}" -ge 5 ] ; then
             check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
-## Delay in starting:                   $(echo ${check_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})
+## Delay in starting:                  $(echo ${check_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})
 EOF
                                 )
         fi
@@ -1225,7 +1227,7 @@ EOF
                 check_job_args+="--with-cache "
             fi
             check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
-## Cache Enabled:                       ${check_job_check_use_cache}
+## Cache Enabled:                      ${check_job_check_use_cache}
 EOF
                                 )
         fi
@@ -1234,13 +1236,13 @@ EOF
             if [ "${check_job_check_amount}" = "all" ] ; then
                 check_job_args+="--read-data "
                 check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
-## Checking data:                       ALL
+## Checking data:                      ALL
 EOF
                                     )
             else
                 check_job_args+="--read-data-subset ${check_job_check_amount} "
                 check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
-## Checking data:                       SUBSET ${check_job_check_amount}
+## Checking data:                      SUBSET ${check_job_check_amount}
 EOF
                                     )
             fi
@@ -1249,7 +1251,7 @@ EOF
         if [ -n "${check_job_check_args}" ] ; then
             check_job_args+="${check_job_check_args}"
             check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
-## Additional Arguments:                ${check_job_check_args}
+## Additional Arguments:               ${check_job_check_args}
 EOF
                             )
         fi
@@ -1258,7 +1260,7 @@ EOF
             print_notice "DRY_RUN enabled - No checks will actually be performed!"
             check_job_args+="--dry-run "
             check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
-## Dry Run enabled - No checks were actually performed"
+## Dry Run                             Enabled - No checks were actually performed"
 EOF
                                 )
         fi
@@ -1277,7 +1279,7 @@ EOF
             esac
             check_job_args+="--verbose=${check_job_verbosity_level} "
             check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
-## Verbosity Level:                     ${check_job_verbosity_level}
+## Verbosity Level:                    ${check_job_verbosity_level}
 EOF
                             )
         fi
@@ -1340,9 +1342,9 @@ EOF
 
         check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
 
-## Check procedure finished:            $(date -d @"${check_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${check_process_finish_time})
-## Check procedure total time:          $(echo "${check_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_total_time})
-## Check procedure completion:          ${exitcode_check_description} (${exitcode_check})
+## Check procedure finished:           $(date -d @"${check_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${check_process_finish_time})
+## Check procedure total time:         $(echo "${check_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_total_time})
+## Check procedure completion:         ${exitcode_check_description} (${exitcode_check})
 
 ### Check Details
 $(cat /tmp/check-"${check_routines_start_time}".log)
@@ -1432,7 +1434,7 @@ EOF
             cleanup_process_delay_time=$(echo $((cleanup_process_finish_time-cleanup_process_start_time)))
             if [ "${cleanup_process_delay_time}" -ge "5" ] ; then
                 cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
-## Delay in starting:                   $(echo ${cleanup_process_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})
+## Delay in starting:                  $(echo ${cleanup_process_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})
 EOF
                                 )
             fi
@@ -1441,6 +1443,37 @@ EOF
                 cleanup_job_log_suffix=${cleanup_job_cleanup_name,,}
             else
                 cleanup_job_log_suffix=${cleanup_instance_number}
+            fi
+
+            if [ -n "${cleanup_job_cleanup_host}" ] ; then
+                case "${cleanup_job_cleanup_host,,}" in
+                    repository )
+                        cleanup_job_desc_hook_host="repository"
+                    ;;
+                    * )
+                        cleanup_job_desc_hook_host="${cleanup_job_cleanup_host}"
+                        cleanup_job_args+="--host ${cleanup_job_cleanup_host} "
+                    ;;
+                esac
+            else
+                cleanup_job_args+="--host ${CONTAINER_NAME} "
+                cleanup_job_desc_hook_host="${CONTAINER_NAME}"
+            fi
+
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+## Cleanup Target:                     ${cleanup_job_desc_hook_host}
+EOF
+                                )
+
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+## Cleanup Group by:                   ${cleanup_job_cleanup_group_by}
+
+EOF
+                                )
+            if [ "${cleanup_job_cleanup_group_by}" = "" ] ; then
+                cleanup_job_args+="--group-by '' "
+            else
+                cleanup_job_args+="--group-by ${cleanup_job_cleanup_group_by} "
             fi
 
             if [ -n "${cleanup_job_retain_last}" ] ; then
@@ -1486,7 +1519,7 @@ EOF
                 cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 cleanup_job_log_retain_tag="## Skipping tags:                      ${cleanup_job_retain_tag}
 EOF
-                                )
+                                      )
             fi
 
             if [ -n "${cleanup_job_keep_arg}" ] ; then
@@ -1536,7 +1569,7 @@ EOF
                 print_notice "DRY_RUN enabled - No cleanup will actually be performed!"
                 cleanup_job_args+="--dry-run "
                 cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
-## Dry Run enabled - No cleanup was actually performed
+## Dry Run                             Enabled - No cleanup was actually performed
 EOF
                                 )
             fi
@@ -1544,7 +1577,7 @@ EOF
             if [ -n "${cleanup_job_cleanup_args}" ] ; then
                 cleanup_job_args+="${cleanup_job_cleanup_args} "
                 cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
-## Additional Arguments:                ${cleanup_job_cleanup_args}
+## Additional Arguments:               ${cleanup_job_cleanup_args}
 EOF
                                 )
             fi
@@ -1569,7 +1602,7 @@ EOF
             fi
 
             if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
-                cleanup_command_string="restic --repo ${cleanup_job_repository_path} forget --host ${CONTAINER_NAME} --group-by '' ${cleanup_job_args}"
+                cleanup_command_string="restic --repo ${cleanup_job_repository_path} forget --group-by ${cleanup_job_cleanup_group_by} ${cleanup_job_args}"
                 print_debug "Command execution string: '${cleanup_command_string}'"
                 cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Debug Command String:               ${cleanup_command_string}
@@ -1588,8 +1621,7 @@ EOF
                     --cache-dir "${CACHE_PATH}" \
                     --repository-file "${restic_repository}" \
                     forget \
-                    --host "${CONTAINER_NAME}" \
-                    --group-by '' ${cleanup_job_args} \
+                    ${cleanup_job_args} \
                     2> /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".error \
                     > /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".log
 
@@ -1683,6 +1715,7 @@ EOF
 - restic.cleanup.start_date.[${cleanup_job_log_suffix}] "${cleanup_routines_start_time}"
 - restic.cleanup.status.[${cleanup_job_log_suffix}] "${exitcode_cleanup}"
 - restic.cleanup.duration.[${cleanup_job_log_suffix}] "${cleanup_process_total_time}"
+- restic.cleanup.target.[${cleanup_job_log_suffix}] "${cleanup_job_desc_hook_host}"
 EOF
         fi
 
@@ -1850,26 +1883,26 @@ EOF
     inventory() {
         if [ -z "${inventory_routines_start_time}" ] ; then inventory_routines_start_time=$(date +%s) ; fi
         inventory_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${inventory_routines_start_time} +'%Y-%-%d %H:%M:%S') (${inventory_routines_start_time})
-## Repository:                          $(echo ${inventory_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-## Hostname:                            $(hostname)
-## Container Name:                      $(echo "${CONTAINER_NAME}")
+## Job Started:                        $(date -d @${inventory_routines_start_time} +'%Y-%-%d %H:%M:%S') (${inventory_routines_start_time})
+## Repository:                         $(echo ${inventory_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
+## Hostname:                           $(hostname)
+## Container Name:                     $(echo "${CONTAINER_NAME}")
 
-## Task:                                Inventory
+## Task:                               Inventory
 EOF
                                )
         unset inventory_job_args
         process_limiter restic 1 inventory
         inventory_process_start_time=$(date +%s)
         inventory_job_file_log=$(echo "${inventory_job_file_log}" ; cat <<EOF
-## Inventory procedure started:         $(date -d @${inventory_process_start_time} +'%Y-%m-%d %H:%M:%S') (${inventory_process_start_time})
+## Inventory procedure started:        $(date -d @${inventory_process_start_time} +'%Y-%m-%d %H:%M:%S') (${inventory_process_start_time})
 EOF
                                     )
 
         inventory_process_delay_time=$(echo $((inventory_process_start_time-inventory_routines_start_time)))
         if [ "${inventory_process_delay_time}" -ge 5 ] ; then
             inventory_job_file_log=$(echo "${inventory_job_file_log}" ; cat <<EOF
-## Delay in starting:                   $(echo ${inventory_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${inventory_process_delay_time})
+## Delay in starting:                  $(echo ${inventory_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${inventory_process_delay_time})
 EOF
                                     )
         fi
@@ -1937,9 +1970,9 @@ EOF
         esac
 
         inventory_job_file_log=$(echo "${inventory_job_file_log}" ; cat <<EOF
-## Inventory procedure finished:        $(date -d @${inventory_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${inventory_process_finish_time})
-## Inventory procedure total time:      $(echo ${inventory_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${inventory_process_total_time})
-## Inventory procedure completion:      ${exitcode_inventory_description} (${exitcode_inventory})
+## Inventory procedure finished:       $(date -d @${inventory_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${inventory_process_finish_time})
+## Inventory procedure total time:     $(echo ${inventory_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${inventory_process_total_time})
+## Inventory procedure completion:     ${exitcode_inventory_description} (${exitcode_inventory})
 
 ### Inventory Details
 $(cat /tmp/inventory-${inventory_routines_start_time}.log | awk '/ID/,/snapshots/')
@@ -1982,26 +2015,26 @@ EOF
     prune() {
         if [ -z "${prune_routines_start_time}" ] ; then prune_routines_start_time=$(date +%s) ; fi
         prune_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${prune_routines_start_time} +'%Y-%-%d %H:%M:%S') (${prune_routines_start_time})
-## Repository:                          $(echo ${prune_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-## Hostname:                            $(hostname)
-## Container Name:                      $(echo ${CONTAINER_NAME})
+## Job Started:                        $(date -d @${prune_routines_start_time} +'%Y-%-%d %H:%M:%S') (${prune_routines_start_time})
+## Repository:                         $(echo ${prune_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
+## Hostname:                           $(hostname)
+## Container Name:                     $(echo ${CONTAINER_NAME})
 
-## Task:                                Prune
+## Task:                               Prune
 EOF
                             )
         unset prune_job_args
         process_limiter restic 1 prune
         prune_process_start_time=$(date +%s)
         prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
-## Prune procedure started:             $(date -d @${prune_process_start_time} +'%Y-%m-%d %H:%M:%S') (${prune_process_start_time})
+## Prune procedure started:            $(date -d @${prune_process_start_time} +'%Y-%m-%d %H:%M:%S') (${prune_process_start_time})
 EOF
                             )
 
         prune_process_delay_time=$(echo $((prune_process_start_time-prune_routines_start_time)))
         if [ "${prune_process_delay_time}" -ge 5 ] ; then
             prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
-## Delay in starting:                   $(echo ${prune_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${prune_process_delay_time})
+## Delay in starting:                  $(echo ${prune_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${prune_process_delay_time})
 EOF
                                 )
         fi
@@ -2015,7 +2048,7 @@ EOF
         if [ -n "${prune_job_prune_args}" ] ; then
             prune_job_args+="${prune_job_prune_args}"
             prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
-## Additional Arguments:                ${prune_job_prune_args}
+## Additional Arguments:               ${prune_job_prune_args}
 EOF
                             )
         fi
@@ -2024,7 +2057,7 @@ EOF
             print_notice "DRY_RUN enabled - No pruning will actually be performed!"
             prune_job_args+="--dry-run "
             prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
-## Dry Run enabled - No prunes were actually performed"
+## Dry Run:                            Enabled - No prunes were actually performed"
 EOF
                             )
         fi
@@ -2043,7 +2076,7 @@ EOF
             esac
             prune_job_args+="--verbose=${prune_job_verbosity_level} "
             prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
-## Verbosity Level:                     ${prune_job_verbosity_level}
+## Verbosity Level:                    ${prune_job_verbosity_level}
 EOF
                             )
         fi
@@ -2106,9 +2139,9 @@ EOF
 
         prune_job_file_log="$(echo "${prune_job_file_log}" ; cat <<EOF
 
-## Prune procedure finished:            $(date -d @${prune_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${prune_process_finish_time})
-## Prune procedure total time:          $(echo ${prune_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${prune_process_total_time})
-## Prune procedure completion:          ${exitcode_prune_description} (${exitcode_prune})
+## Prune procedure finished:           $(date -d @${prune_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${prune_process_finish_time})
+## Prune procedure total time:         $(echo ${prune_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${prune_process_total_time})
+## Prune procedure completion:         ${exitcode_prune_description} (${exitcode_prune})
 
 ### Prune Details
 $(cat /tmp/prune-${prune_routines_start_time}.log)
@@ -2192,26 +2225,26 @@ EOF
         bootstrap_variables unlock_init $1 $2
         if [ -z "${unlock_routines_start_time}" ] ; then unlock_routines_start_time=$(date +%s) ; fi
             unlock_job_file_log=$(cat <<EOF
-## Job Started:                         $(date -d @${unlock_routines_start_time} +'%Y-%-%d %H:%M:%S') (${unlock_routines_start_time})
-## Repository:                          $(echo ${unlock_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-## Hostname:                            $(hostname)
-## Container Name:                      $(echo "${CONTAINER_NAME}")
+## Job Started:                        $(date -d @${unlock_routines_start_time} +'%Y-%-%d %H:%M:%S') (${unlock_routines_start_time})
+## Repository:                         $(echo ${unlock_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
+## Hostname:                           $(hostname)
+## Container Name:                     $(echo "${CONTAINER_NAME}")
 
-## Task:                                Unlock
+## Task:                               Unlock
 EOF
                        )
 
         process_limiter restic 1 unlock
         unlock_process_start_time=$(date +%s)
         unlock_job_file_log=$(echo "${unlock_job_file_log}" ; cat <<EOF
-## Unlock procedure started:            $(date -d @${unlock_process_start_time} +'%Y-%m-%d %H:%M:%S') (${unlock_process_start_time})
+## Unlock procedure started:           $(date -d @${unlock_process_start_time} +'%Y-%m-%d %H:%M:%S') (${unlock_process_start_time})
 EOF
                         )
 
         unlock_process_delay_time=$(echo $((unlock_process_start_time-unlock_routines_start_time)))
         if [ "${unlock_process_delay_time}" -ge 5 ] ; then
             unlock_job_file_log=$(echo "${unlock_job_file_log}" ; cat <<EOF
-## Delay in starting:                   $(echo ${unlock_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${unlock_process_delay_time})
+## Delay in starting:                  $(echo ${unlock_routines_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${unlock_process_delay_time})
 EOF
                             )
         fi
@@ -2219,7 +2252,7 @@ EOF
         if [ -n "${unlock_job_remove_all}" ] ; then
             unlock_job_args+="--remove-all "
             unlock_job_file_log=$(cat ${unlock_job_file_log} ; cat <<EOF
-## Unlock Removal Scope:                ALL
+## Unlock Removal Scope:               ALL
 EOF
                             )
         fi
@@ -2227,7 +2260,7 @@ EOF
         if [ -n "${unlock_job_unlock_args}" ] ; then
             unlock_job_args+="${unlock_job_unlock_args}"
             unlock_job_file_log=$(cat ${unlock_job_file_log} ; cat <<EOF
-## Additional Arguments:                ${unlock_job_unlock_args}
+## Additional Arguments:               ${unlock_job_unlock_args}
 EOF
                             )
         fi
@@ -2246,7 +2279,7 @@ EOF
             esac
             unlock_job_args+="--verbose=${unlock_job_verbosity_level} "
             unlock_job_file_log=$(echo "${unlock_job_file_log}" ; cat <<EOF
-## Verbosity Level:                     ${unlock_job_verbosity_level}
+## Verbosity Level:                    ${unlock_job_verbosity_level}
 EOF
                             )
         fi
@@ -2315,9 +2348,9 @@ EOF
 
         unlock_job_file_log=$(echo "${unlock_job_file_log}" ; cat <<EOF
 
-## Unlock procedure finished:           $(date -d @${unlock_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${unlock_process_finish_time})
-## Unlock procedure total time:         $(echo ${unlock_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${unlock_process_total_time})
-## Unlock procedure completion:         ${exitcode_unlock_description} (${exitcode_unlock})
+## Unlock procedure finished:          $(date -d @${unlock_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${unlock_process_finish_time})
+## Unlock procedure total time:        $(echo ${unlock_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${unlock_process_total_time})
+## Unlock procedure completion:        ${exitcode_unlock_description} (${exitcode_unlock})
 
 ### Unlock Details
 $(cat /tmp/unlock-${unlock_routines_start_time}.log)

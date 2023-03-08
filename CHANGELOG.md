@@ -1,3 +1,10 @@
+## 0.20.0 2023-03-08 <dave at tiredofit dot ca>
+
+   ### Added
+      - Introduce CLEANUP_HOST setting to scope cleanups to a specific `HOST` or `REPOSITORY`
+      - Introduce GROUP_BY command to allow for better cleanups to occur based on host, path, tag
+
+
 ## 0.19.3 2023-03-08 <dave at tiredofit dot ca>
 
    ### Changed

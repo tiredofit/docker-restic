@@ -1,7 +1,7 @@
 {
     "zabbix_export": {
         "version": "6.2",
-        "date": "2023-03-07T22:53:18Z",
+        "date": "2023-03-08T16:52:13Z",
         "template_groups": [
             {
                 "uuid": "3500ba09d0534297840ca620c9dd46bf",
@@ -849,6 +849,16 @@
                                         ]
                                     }
                                 ]
+                            },
+                            {
+                                "uuid": "c20c3bd3ed354c49a28baee6f2175021",
+                                "name": "[{#NAME}] Cleanup - Target",
+                                "type": "TRAP",
+                                "key": "restic.cleanup.target.[{#NAME}]",
+                                "delay": "0",
+                                "history": "7d",
+                                "trends": "0",
+                                "value_type": "TEXT"
                             }
                         ],
                         "graph_prototypes": [

@@ -22,21 +22,21 @@ else
         s6-svc -d /var/run/s6/legacy-services/restic-prune{{PRUNE_NUMBER}}
         exit 1
     fi
-    current_time=$(date +"%s")
+    current_time=$(date +'%s')
     today=$(date +"%Y%m%d")
 
     if [[ $PRUNE{{PRUNE_NUMBER}}_BEGIN =~ ^\+(.*)$ ]]; then
         waittime=$(( ${BASH_REMATCH[1]} * 60 ))
         target_time=$(($current_time + $waittime))
     else
-        target_time=$(date --date="${today} ${PRUNE{{PRUNE_NUMBER}}_BEGIN}" +"%s")
+        target_time=$(date --date="${today} ${PRUNE{{PRUNE_NUMBER}}_BEGIN}" +'%s')
         if [[ "$target_time" < "$current_time" ]]; then
             target_time=$(($target_time + 24*60*60))
         fi
         waittime=$(($target_time - $current_time))
     fi
     print_debug "Wait Time: ${waittime} Target time: ${target_time} Current Time: ${current_time}"
-    print_info "Next Prune at $(date -d @${target_time} +"%Y-%m-%d %T %Z")"
+    print_info "Next Prune at $(date -d @${target_time} +'%Y-%m-%d %T %Z')"
     silent sleep $waittime
 fi
 
@@ -53,14 +53,14 @@ while true; do
     if var_true "${blackout}" ; then
         print_notice "Detected Blackout Period - Not performing prune operations"
     else
-        prune_start_time=$(date +"%s")
+        prune_start_time=$(date +'%s')
         print_debug "Repository Check {{PRUNE_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
         repository prune {{PRUNE_NUMBER}}
         repository unlock "PRUNE {{PRUNE_NUMBER}}"
-        prune_finish_time=$(date +"%s")
+        prune_finish_time=$(date +'%s')
         prune_total_time=$(echo $((prune_finish_time-prune_start_time)))
         if [ -z "${exitcode_prune}" ] ; then exitcode_prune="0" ; fi
-        print_info "Repository prune {{PRUNE_NUMBER}} routines finish time: $(date -d @${prune_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_prune}"
+        print_info "Repository prune {{PRUNE_NUMBER}} routines finish time: $(date -d @${prune_finish_time} +'%Y-%m-%d %T %Z') with exit code ${exitcode_prune}"
         print_notice "Repository prune {{PRUNE_NUMBER}} routines time taken: $(echo ${prune_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
     fi
 
@@ -72,7 +72,7 @@ while true; do
             print_error "Stopping prune_scheduler due to detected errors. Fix and restart container."
             s6-svc -d /var/run/s6/legacy-services/restic-prune{{PRUNE_NUMBER}}
         else
-            print_notice "Sleeping for another $(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time))))" +"%Y-%m-%d %T %Z") "
+            print_notice "Sleeping for another $(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time))))" +'%Y-%m-%d %T %Z') "
             silent sleep $(($PRUNE{{PRUNE_NUMBER}}_INTERVAL*60-prune_total_time))
         fi
     fi

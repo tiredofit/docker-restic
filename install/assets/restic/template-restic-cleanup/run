@@ -23,21 +23,21 @@ else
         exit 1
     fi
 
-    current_time=$(date +"%s")
+    current_time=$(date +'%s')
     today=$(date +"%Y%m%d")
 
     if [[ $CLEANUP{{CLEANUP_NUMBER}}_BEGIN =~ ^\+(.*)$ ]]; then
         waittime=$(( ${BASH_REMATCH[1]} * 60 ))
         target_time=$(($current_time + $waittime))
     else
-        target_time=$(date --date="${today} ${CLEANUP{{CLEANUP_NUMBER}}_BEGIN}" +"%s")
+        target_time=$(date --date="${today} ${CLEANUP{{CLEANUP_NUMBER}}_BEGIN}" +'%s')
         if [[ "$target_time" < "$current_time" ]]; then
             target_time=$(($target_time + 24*60*60))
         fi
         waittime=$(($target_time - $current_time))
     fi
     print_debug "Wait Time: ${waittime} Target time: ${target_time} Current Time: ${current_time}"
-    print_info "Next Cleanup at $(date -d @${target_time} +"%Y-%m-%d %T %Z")"
+    print_info "Next Cleanup at $(date -d @${target_time} +'%Y-%m-%d %T %Z')"
     silent sleep $waittime
 fi
 
@@ -54,14 +54,14 @@ while true; do
     if var_true "${blackout}" ; then
         print_notice "Detected Blackout Period - Not performing cleanup operations"
     else
-        cleanup_start_time=$(date +"%s")
+        cleanup_start_time=$(date +'%s')
         print_debug "Repository Cleanup {{CLEANUP_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
         repository cleanup {{CLEANUP_NUMBER}}
         repository unlock "CLEANUP {{CLEANUP_NUMBER}}"
-        cleanup_finish_time=$(date +"%s")
+        cleanup_finish_time=$(date +'%s')
         cleanup_total_time=$(echo $((cleanup_finish_time-cleanup_start_time)))
         if [ -z "${exitcode_cleanup}" ] ; then exitcode_cleanup="0" ; fi
-        print_info "Repository cleanup {{CLEANUP_NUMBER}} routines finish time: $(date -d @${cleanup_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_cleanup}"
+        print_info "Repository cleanup {{CLEANUP_NUMBER}} routines finish time: $(date -d @${cleanup_finish_time} +'%Y-%m-%d %T %Z') with exit code ${exitcode_cleanup}"
         print_notice "Repository cleanup {{CLEANUP_NUMBER}} routines time taken: $(echo ${cleanup_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
     fi
 
@@ -73,7 +73,7 @@ while true; do
             print_error "Stopping cleanup_scheduler due to detected errors. Fix and restart container."
             s6-svc -d /var/run/s6/legacy-services/restic-cleanup{{CLEANUP_NUMBER}}
         else
-            print_notice "Sleeping for another $(($CLEANUP{{CLEANUP_NUMBER}}_INTERVAL*60-cleanup_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($CLEANUP{{CLEANUP_NUMBER}}_INTERVAL*60-cleanup_total_time))))" +"%Y-%m-%d %T %Z") "
+            print_notice "Sleeping for another $(($CLEANUP{{CLEANUP_NUMBER}}_INTERVAL*60-cleanup_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($CLEANUP{{CLEANUP_NUMBER}}_INTERVAL*60-cleanup_total_time))))" +'%Y-%m-%d %T %Z') "
             sleep $(($CLEANUP{{CLEANUP_NUMBER}}_INTERVAL*60-cleanup_total_time))
         fi
     fi

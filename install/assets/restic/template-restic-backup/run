@@ -27,21 +27,21 @@ else
         s6-svc -d /var/run/s6/legacy-services/restic-backup{{BACKUP_NUMBER}}
         exit 1
     fi
-    current_time=$(date +"%s")
+    current_time=$(date +'%s')
     today=$(date +"%Y%m%d")
 
     if [[ $BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_BEGIN =~ ^\+(.*)$ ]]; then
         waittime=$(( ${BASH_REMATCH[1]} * 60 ))
         target_time=$(($current_time + $waittime))
     else
-        target_time=$(date --date="${today} ${BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_BEGIN}" +"%s")
+        target_time=$(date --date="${today} ${BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_BEGIN}" +'%s')
         if [[ "$target_time" < "$current_time" ]]; then
             target_time=$(($target_time + 24*60*60))
         fi
         waittime=$(($target_time - $current_time))
     fi
     print_debug "Wait Time: ${waittime} Target time: ${target_time} Current Time: ${current_time}"
-    print_info "Next Backup at $(date -d @${target_time} +"%Y-%m-%d %T %Z")"
+    print_info "Next Backup at $(date -d @${target_time} +'%Y-%m-%d %T %Z')"
     silent sleep $waittime
 fi
 
@@ -58,14 +58,14 @@ while true; do
     if var_true "${blackout}" ; then
         print_notice "Detected Blackout Period - Not performing backup operations"
     else
-        backup_routines_start_time=$(date +"%s")
+        backup_routines_start_time=$(date +'%s')
         print_debug "Repository Backup Snapshot {{BACKUP_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
         repository backup {{BACKUP_NUMBER}}
         repository unlock "BACKUP {{BACKUP_NUMBER}}"
-        backup_routines_finish_time=$(date +"%s")
+        backup_routines_finish_time=$(date +'%s')
         backup_routines_total_time=$(echo $((backup_routines_finish_time-backup_routines_start_time)))
         if [ -z "${exitcode_backup}" ] ; then exitcode_backup="0" ; fi
-        print_info "Repository backup {{BACKUP_NUMBER}} routines finish time: $(date -d @${backup_routines_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_backup}"
+        print_info "Repository backup {{BACKUP_NUMBER}} routines finish time: $(date -d @${backup_routines_finish_time} +'%Y-%m-%d %T %Z') with exit code ${exitcode_backup}"
         print_notice "Repository backup {{BACKUP_NUMBER}} routines time taken: $(echo ${backup_routines_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
     fi
 
@@ -77,7 +77,7 @@ while true; do
             print_error "Stopping backup_scheduler {{BACKUP_NUMBER}} due to detected errors. Fix and restart container."
             s6-svc -d /var/run/s6/legacy-services/restic-backup{{BACKUP_NUMBER}}
         else
-            print_notice "Sleeping for another $(($BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_INTERVAL*60-backup_routines_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_INTERVAL*60-backup_routines_total_time))))" +"%Y-%m-%d %T %Z") "
+            print_notice "Sleeping for another $(($BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_INTERVAL*60-backup_routines_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_INTERVAL*60-backup_routines_total_time))))" +'%Y-%m-%d %T %Z') "
             silent sleep $(($BACKUP{{BACKUP_NUMBER}}_SNAPSHOT_INTERVAL*60-backup_routines_total_time))
         fi
     fi

@@ -327,72 +327,76 @@ A Cleanup job requires exlcusive access to the Restic Repository, therefore no o
 
 If set, these variables will be passed to each cleanup job, unless each job explicitly sets otherwise.
 
-| Variable                          | Description                                                                                                               | Default |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `DEFAULT_CLEANUP_ARGS`            | Arguments to pass to Restic cleanup command line                                                                          |         |
-| `DEFAULT_CLEANUP_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                         |         |
-| `DEFAULT_CLEANUP_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                         |         |
-| `DEFAULT_CLEANUP_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                     |         |
-| `DEFAULT_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                     |         |
-| `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                       |         |
-| `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                        |         |
-| `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data |         |
-| `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                  |         |
-| `DEFAULT_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                          |         |
-| `DEFAULT_CLEANUP_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                   |         |
-| `DEFAULT_CLEANUP_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                  |         |
-| `DEFAULT_CLEANUP_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                |         |
-| `DEFAULT_CLEANUP_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                |         |
-| `DEFAULT_CLEANUP_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                           |         |
-| `DEFAULT_CLEANUP_VERBOSITY_LEVEL` | Cleanup operations log verbosity - Best not to change this                                                                | `2`     |
-| `DEFAULT_CLEANUP_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                            |         |
-| `DEFAULT_CLEANUP_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                         |         |
+| Variable                          | Description                                                                                                                     | Default      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `DEFAULT_CLEANUP_ARGS`            | Arguments to pass to Restic cleanup command line                                                                                |              |
+| `DEFAULT_CLEANUP_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                               |              |
+| `DEFAULT_CLEANUP_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                               |              |
+| `DEFAULT_CLEANUP_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                           |              |
+| `DEFAULT_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                           |              |
+| `DEFAULT_CLEANUP_GROUP_BY`        | Group Snapshots by `host`,`paths`,`tags`                                                                                        | `host,paths` |
+| `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                             |              |
+| `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                              |              |
+| `DEFAULT_CLEANUP_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations |              |
+| `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data       |              |
+| `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                        |              |
+| `DEFAULT_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                |              |
+| `DEFAULT_CLEANUP_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                         |              |
+| `DEFAULT_CLEANUP_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                        |              |
+| `DEFAULT_CLEANUP_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                      |              |
+| `DEFAULT_CLEANUP_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                      |              |
+| `DEFAULT_CLEANUP_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                 |              |
+| `DEFAULT_CLEANUP_VERBOSITY_LEVEL` | Cleanup operations log verbosity - Best not to change this                                                                      | `2`          |
+| `DEFAULT_CLEANUP_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                  |              |
+| `DEFAULT_CLEANUP_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                               |              |
 
 ##### Job Cleanup Options
 
 If `DEFAULT_CLEANUP_` variables are set and you do not wish for the settings to carry over into your jobs, you can set the appropriate environment variable with the value of `unset`.
 Additional backup jobs can be scheduled by using `CLEANUP02_`,`CLEANUP03_`,`CLEANUP04_` ... prefixes.
 
-| Variable                    | Description                                                                                                                                    | Default |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `CLEANUP01_ARGS`            | Arguments to pass to Restic Cleanup command line                                                                                               |         |
-| `CLEANUP01_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                                              |         |
-| `CLEANUP01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |
-| `CLEANUP01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |         |
-|                             | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
-|                             | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
-| `CLEANUP01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |         |
-| `CLEANUP01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |         |
-| `CLEANUP01_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                                            |         |
-| `CLEANUP01_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                             |         |
-| `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
-| `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |         |
-| `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data                      |         |
-| `CLEANUP01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         |
-| `CLEANUP01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         |
-| `CLEANUP01_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                                       |         |
-| `CLEANUP01_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                               |         |
-| `CLEANUP01_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                                        |         |
-| `CLEANUP01_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                                       |         |
-| `CLEANUP01_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                                     |         |
-| `CLEANUP01_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                                     |         |
-| `CLEANUP01_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                                |         |
-| `CLEANUP01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`     |
+| Variable                    | Description                                                                                                                                    | Default      |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `CLEANUP01_ARGS`            | Arguments to pass to Restic Cleanup command line                                                                                               |              |
+| `CLEANUP01_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                                              |              |
+| `CLEANUP01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |              |
+| `CLEANUP01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |              |
+|                             | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |              |
+|                             | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |              |
+| `CLEANUP01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |              |
+| `CLEANUP01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |              |
+| `CLEANUP01_GROUP_BY`        | Group Snapshots by `host`,`paths`,`tags`                                                                                                       | `host,paths` |
+| `CLEANUP01_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                                            |              |
+| `CLEANUP01_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                             |              |
+| `CLEANUP01_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations                |              |
+| `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |              |
+| `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |              |
+| `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data                      |              |
+| `CLEANUP01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |              |
+| `CLEANUP01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |              |
+| `CLEANUP01_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                                       |              |
+| `CLEANUP01_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                               |              |
+| `CLEANUP01_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                                        |              |
+| `CLEANUP01_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                                       |              |
+| `CLEANUP01_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                                     |              |
+| `CLEANUP01_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                                     |              |
+| `CLEANUP01_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                                |              |
+| `CLEANUP01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`          |
 
 ##### Hooks
 The following will be sent to the hooks script :
 
-Pre: `HOSTNAME CONTAINER_NAME CLEANUP INSTANCE_NUMBER[XX] CLEANUP[XX]_NAME CLEANUP[XX]_REPOSITORY_PATH ROUTINE_START_EPOCH`
+Pre: `HOSTNAME CONTAINER_NAME CLEANUP INSTANCE_NUMBER[XX] CLEANUP[XX]_NAME CLEANUP[XX]_HOST CLEANUP[XX]_REPOSITORY_PATH ROUTINE_START_EPOCH`
 
 Example:
 ```bash
-server container_name CLEANUP 01 cleanupname rest:username:password@http://repo.url 1677953980
+server container_name CLEANUP 01 cleanupname repository rest:username:password@http://repo.url 1677953980
 ```
 
-Post: `HOSTNAME CONTAINER_NAME CLEANUP INSTANCE_NUMBER[XX] CLEANUP[XX]NAME CLEANUP[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE`
+Post: `HOSTNAME CONTAINER_NAME CLEANUP INSTANCE_NUMBER[XX] CLEANUP[XX]NAME CLEANUP[XX]_HOST CLEANUP[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE`
 
 ```bash
-server container_name CLEANUP 01 cleaupname rest:username:password@http://repo.url 1677953980 1677953981 1677953991 10 0 /logs/20230304/20230304_100501-cleanup-cleanupname.log
+server container_name CLEANUP 01 cleaupname repository rest:username:password@http://repo.url 1677953980 1677953981 1677953991 10 0 /logs/20230304/20230304_100501-cleanup-cleanupname.log
 ```
 
 #### Inventory Options

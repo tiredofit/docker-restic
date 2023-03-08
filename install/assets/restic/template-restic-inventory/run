@@ -23,33 +23,33 @@ else
         exit 1
     fi
 
-    current_time=$(date +"%s")
+    current_time=$(date +'%s')
     today=$(date +"%Y%m%d")
 
     if [[ $INVENTORY{{INVENTORY_NUMBER}}_BEGIN =~ ^\+(.*)$ ]]; then
         waittime=$(( ${BASH_REMATCH[1]} * 60 ))
         target_time=$(($current_time + $waittime))
     else
-        target_time=$(date --date="${today} ${INVENTORY{{INVENTORY_NUMBER}}_BEGIN}" +"%s")
+        target_time=$(date --date="${today} ${INVENTORY{{INVENTORY_NUMBER}}_BEGIN}" +'%s')
         if [[ "$target_time" < "$current_time" ]]; then
             target_time=$(($target_time + 24*60*60))
         fi
         waittime=$(($target_time - $current_time))
     fi
     print_debug "Wait Time: ${waittime} Target time: ${target_time} Current Time: ${current_time}"
-    print_info "Next Inventory at $(date -d @${target_time} +"%Y-%m-%d %T %Z")"
+    print_info "Next Inventory at $(date -d @${target_time} +'%Y-%m-%d %T %Z')"
     silent sleep $waittime
 fi
 
 while true; do
     bootstrap_variables inventory_init {{INVENTORY_NUMBER}}
-    inventory_start_time=$(date +"%s")
+    inventory_start_time=$(date +'%s')
     print_debug "Repository inventory {{INVENTORY_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
     repository inventory {{INVENTORY_NUMBER}}
-    inventory_finish_time=$(date +"%s")
+    inventory_finish_time=$(date +'%s')
     inventory_total_time=$(echo $((inventory_finish_time-inventory_start_time)))
     if [ -z "${exitcode_inventory}" ] ; then exitcode_inventory="0" ; fi
-    print_info "Repository inventory {{INVENTORY_NUMBER}} routines finish time: $(date -d @${inventory_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_inventory}"
+    print_info "Repository inventory {{INVENTORY_NUMBER}} routines finish time: $(date -d @${inventory_finish_time} +'%Y-%m-%d %T %Z') with exit code ${exitcode_inventory}"
     print_notice "Repository inventory {{INVENTORY_NUMBER}} routines time taken: $(echo ${inventory_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
 
     if var_false "${persist}" ; then
@@ -60,7 +60,7 @@ while true; do
             print_error "Stopping inventory_scheduler due to detected errors. Fix and restart container."
             s6-svc -d /var/run/s6/legacy-services/restic-inventory{{INVENTORY_NUMBER}}
         else
-            print_notice "Sleeping for another $(($INVENTORY{{INVENTORY_NUMBER}}_INTERVAL*60-inventory_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($INVENTORY{{INVENTORY_NUMBER}}_INTERVAL*60-inventory_total_time))))" +"%Y-%m-%d %T %Z") "
+            print_notice "Sleeping for another $(($INVENTORY{{INVENTORY_NUMBER}}_INTERVAL*60-inventory_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($INVENTORY{{INVENTORY_NUMBER}}_INTERVAL*60-inventory_total_time))))" +'%Y-%m-%d %T %Z') "
             sleep $(($INVENTORY{{INVENTORY_NUMBER}}_INTERVAL*60-inventory_total_time))
         fi
     fi

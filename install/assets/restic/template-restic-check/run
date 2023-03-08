@@ -23,21 +23,21 @@ else
         exit 1
     fi
 
-    current_time=$(date +"%s")
+    current_time=$(date +'%s')
     today=$(date +"%Y%m%d")
 
     if [[ $CHECK{{CHECK_NUMBER}}_BEGIN =~ ^\+(.*)$ ]]; then
         waittime=$(( ${BASH_REMATCH[1]} * 60 ))
         target_time=$(($current_time + $waittime))
     else
-        target_time=$(date --date="${today} ${CHECK{{CHECK_NUMBER}}_BEGIN}" +"%s")
+        target_time=$(date --date="${today} ${CHECK{{CHECK_NUMBER}}_BEGIN}" +'%s')
         if [[ "$target_time" < "$current_time" ]]; then
             target_time=$(($target_time + 24*60*60))
         fi
         waittime=$(($target_time - $current_time))
     fi
     print_debug "Wait Time: ${waittime} Target time: ${target_time} Current Time: ${current_time}"
-    print_info "Next Check at $(date -d @${target_time} +"%Y-%m-%d %T %Z")"
+    print_info "Next Check at $(date -d @${target_time} +'%Y-%m-%d %T %Z')"
     silent sleep $waittime
 fi
 
@@ -54,14 +54,14 @@ while true; do
     if var_true "${blackout}" ; then
         print_notice "Detected Blackout Period - Not performing check operations"
     else
-        check_start_time=$(date +"%s")
+        check_start_time=$(date +'%s')
         print_debug "Repository Check {{CHECK_NUMBER}} routines started time: $(date +'%Y-%m-%d %T %Z')"
         repository check {{CHECK_NUMBER}}
         repository unlock "CHECK {{CHECK_NUMBER}}"
-        check_finish_time=$(date +"%s")
+        check_finish_time=$(date +'%s')
         check_total_time=$(echo $((check_finish_time-check_start_time)))
         if [ -z "${exitcode_check}" ] ; then exitcode_check="0" ; fi
-        print_info "Repository check {{CHECK_NUMBER}} routines finish time: $(date -d @${check_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_check}"
+        print_info "Repository check {{CHECK_NUMBER}} routines finish time: $(date -d @${check_finish_time} +'%Y-%m-%d %T %Z') with exit code ${exitcode_check}"
         print_notice "Repository check {{CHECK_NUMBER}} routines time taken: $(echo ${check_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
     fi
 
@@ -73,7 +73,7 @@ while true; do
             print_error "Stopping check_scheduler due to detected errors. Fix and restart container."
             s6-svc -d /var/run/s6/legacy-services/restic-check{{CHECK_NUMBER}}
         else
-            print_notice "Sleeping for another $(($CHECK{{CHECK_NUMBER}}_INTERVAL*60-check_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($CHECK{{CHECK_NUMBER}}_INTERVAL*60-check_total_time))))" +"%Y-%m-%d %T %Z") "
+            print_notice "Sleeping for another $(($CHECK{{CHECK_NUMBER}}_INTERVAL*60-check_total_time)) seconds. Waking up at $(date -d@"$(( $(date +%s)+$(($CHECK{{CHECK_NUMBER}}_INTERVAL*60-check_total_time))))" +'%Y-%m-%d %T %Z') "
             silent sleep $(($CHECK{{CHECK_NUMBER}}_INTERVAL*60-check_total_time))
         fi
     fi
