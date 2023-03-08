@@ -60,7 +60,6 @@ while true; do
         repository unlock "CLEANUP {{CLEANUP_NUMBER}}"
         cleanup_finish_time=$(date +"%s")
         cleanup_total_time=$(echo $((cleanup_finish_time-cleanup_start_time)))
-        PROCESS_NAME="restic-cleanup{{CLEANUP_NUMBER}}-scheduler"
         if [ -z "${exitcode_cleanup}" ] ; then exitcode_cleanup="0" ; fi
         print_info "Repository cleanup {{CLEANUP_NUMBER}} routines finish time: $(date -d @${cleanup_finish_time} +"%Y-%m-%d %T %Z") with exit code ${exitcode_cleanup}"
         print_notice "Repository cleanup {{CLEANUP_NUMBER}} routines time taken: $(echo ${cleanup_total_time} | awk '{printf "Hours: %d Minutes: %02d Seconds: %02d", $1/3600, ($1/60)%60, $1%60}')"
