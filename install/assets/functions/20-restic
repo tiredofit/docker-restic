@@ -212,7 +212,6 @@ bootstrap_variables() {
         transform_cleanup_instance_variable "${cleanup_instance_number}" RETAIN_MONTHLY cleanup_job_retain_monthly
         transform_cleanup_instance_variable "${cleanup_instance_number}" RETAIN_YEARLY cleanup_job_retain_yearly
         transform_cleanup_instance_variable "${cleanup_instance_number}" RETAIN_TAGS cleanup_job_retain_tag
-        transform_cleanup_instance_variable "${cleanup_instance_number}" SHOW_INVENTORY cleanup_job_show_inventory
         transform_cleanup_instance_variable "${cleanup_instance_number}" VERBOSITY_LEVEL cleanup_job_cleanup_verbosity_level
         rm -rf "${cleanup_instance_vars}"
     }
@@ -694,7 +693,7 @@ hooks() {
                 if [ -x "${inventory_job_hook_pre}" ] ; then
                     print_notice "Executing pre inventory custom script : '${inventory_job_hook_pre}'"
                     ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
-                    "${inventory_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${inventory_instance_number}" "${inventory_job_log_suffix}" "${inventory_job_repository_path}" "${inventory_routines_start_time}"
+                    "${inventory_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" INVENTORY "${inventory_instance_number}" "${inventory_job_log_suffix}" "${inventory_job_repository_path}" "${inventory_routines_start_time}"
                 else
                     print_error "Can't run pre inventory custom script: '${inventory_job_hook_pre}' as its filesystem bit is not executible!"
                 fi
