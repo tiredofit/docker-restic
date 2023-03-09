@@ -237,6 +237,7 @@ bootstrap_variables() {
             fi
         }
         transform_inventory_instance_variable "${inventory_instance_number}" NAME inventory_job_inventory_name
+        transform_inventory_instance_variable "${inventory_instance_number}" GROUP_BY inventory_job_group_by
         transform_inventory_instance_variable "${inventory_instance_number}" HOOK_POST inventory_job_hook_post
         transform_inventory_instance_variable "${inventory_instance_number}" HOOK_PRE inventory_job_hook_pre
         transform_inventory_instance_variable "${inventory_instance_number}" REPOSITORY_PASS inventory_job_repository_pass
@@ -286,6 +287,7 @@ bootstrap_variables() {
         transform_prune_instance_variable "${prune_instance_number}" HOOK_POST prune_job_prune_hook_post
         transform_prune_instance_variable "${prune_instance_number}" HOOK_PRE prune_job_prune_hook_pre
         transform_prune_instance_variable "${prune_instance_number}" NAME prune_job_prune_name
+        transform_prune_instance_variable "${prune_instance_number}" REPACK prune_job_prune_repack
         transform_prune_instance_variable "${prune_instance_number}" REPOSITORY_PASS prune_job_repository_pass
         transform_prune_instance_variable "${prune_instance_number}" REPOSITORY_PATH prune_job_repository_path
         transform_prune_instance_variable "${prune_instance_number}" VERBOSITY_LEVEL prune_job_verbosity_level
@@ -993,7 +995,7 @@ EOF
         restic_repository=$(mktemp)
         echo "${backup_job_repository_path}" > "${restic_repository}"
         restic \
-                --cache-dir "${CACHE_PATH}" \
+                --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                 --repository-file "${restic_repository}" \
                 backup \
                     --host "${CONTAINER_NAME}" --tag auto ${backup_job_args} ${backup_job_snapshot_args} \
@@ -1277,7 +1279,7 @@ EOF
         restic_repository=$(mktemp)
         echo "${check_job_repository_path}" > "${restic_repository}"
         restic \
-                --cache-dir "${CACHE_PATH}" \
+                --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                 --repository-file "${restic_repository}" \
                 check ${check_job_args} \
                 2> /tmp/check-${check_routines_start_time}.error \
@@ -1445,6 +1447,7 @@ EOF
         else
             cleanup_job_args+="--host ${CONTAINER_NAME} "
             cleanup_job_desc_hook_host="${CONTAINER_NAME}"
+            print_notice "Cleaning up host: ${CONTAINER_NAME}"
         fi
 
         cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
@@ -1605,7 +1608,7 @@ EOF
         restic_repository=$(mktemp)
         echo "${cleanup_job_repository_path}" > "${restic_repository}"
         restic \
-                --cache-dir "${CACHE_PATH}" \
+                --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                 --repository-file "${restic_repository}" \
                 forget \
                 ${cleanup_job_args} \
@@ -1840,7 +1843,7 @@ EOF
                 restic_repository=$(mktemp)
                 echo "${repository_to_init}" | awk '{print $2}' > "${restic_repository}"
                 silent restic \
-                                --cache-dir "${CACHE_PATH}" \
+                                --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                                 --repository-file "${restic_repository}" \
                                 snapshots \
                                 --host "${CONTAINER_NAME}" \
@@ -1858,7 +1861,7 @@ EOF
                     echo "${repository_to_init}" | awk '{print $2}' > "${restic_repository}"
 
                     silent restic \
-                                    --cache-dir "${CACHE_PATH}" \
+                                    --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                                     --repository-file "${restic_repository}" \
                                     init ${repository_init_arg}
                     exitcode_init=$?
@@ -1870,7 +1873,7 @@ EOF
                         restic_repository=$(mktemp)
                         echo "${repository_to_init}" | awk '{print $2}' > "${restic_repository}"
                         restic \
-                                --cache-dir "${CACHE_PATH}" \
+                                --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                                 --repository-file "${restic_repository}" \
                                 init ${repository_init_arg}
 
@@ -1923,6 +1926,24 @@ EOF
                                     )
         fi
 
+        if [ "${inventory_job_group_by}" != "" ] ; then
+            case "${inventory_job_group_by,,}" in
+                sequential )
+                    :
+                    inventory_job_group_by_log="Sequential"
+                ;;
+                * )
+                    inventory_job_args+="--group-by ${inventory_job_group_by} "
+                    inventory_job_group_by_log="${inventory_job_group_by}"
+                ;;
+            esac
+
+            inventory_job_file_log=$(echo "${inventory_job_file_log}" ; cat <<EOF
+## Group by:                           ${inventory_job_group_by_log}
+EOF
+                                    )
+        fi
+
         if [ -n "${inventory_job_inventory_name}" ] ; then
             inventory_job_log_suffix=${inventory_job_inventory_name,,}
         else
@@ -1937,7 +1958,7 @@ EOF
         echo "${inventory_job_repository_path}" > "${restic_repository}"
         process_limiter restic 1 inventory
         restic \
-                --cache-dir "${CACHE_PATH}" \
+                --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                 --repository-file "${restic_repository}" \
                 snapshots ${inventory_job_args} \
                 2> /tmp/inventory-${inventory_routines_start_time}.error \
@@ -2078,6 +2099,36 @@ EOF
                             )
         fi
 
+        case "${prune_job_prune_repack}" in
+            cacheable )
+                prune_job_args+="--repack-cacheable-only "
+                prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
+## Repack                              Cacheable Only
+EOF
+                                    )
+            ;;
+            small )
+                prune_job_args+="--repack-small "
+                prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
+## Repack                              Small
+EOF
+                                    )
+            ;;
+            uncompressed )
+                prune_job_args+="--repack-uncompressed "
+                prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
+## Repack                              Uncompressed
+EOF
+                                    )
+            ;;
+            none )
+                prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
+## Repack                              None
+EOF
+                                    )
+            ;;
+        esac
+
         if [ -n "${prune_job_verbosity_level}" ] ; then
             case "${prune_job_verbosity_level,,}" in
                 0 | normal | standard )
@@ -2105,7 +2156,7 @@ EOF
         restic_repository=$(mktemp)
         echo "${prune_job_repository_path}" > "${restic_repository}"
         restic \
-                --cache-dir "${CACHE_PATH}" \
+                --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                 --repository-file "${restic_repository}" \
                 prune ${prune_job_args} \
                 2> /tmp/prune-${prune_routines_start_time}.error \
@@ -2308,7 +2359,7 @@ EOF
         echo "${unlock_job_repository_path}" > "${restic_repository}"
         process_limiter restic 1 unlock
         restic \
-                --cache-dir "${CACHE_PATH}" \
+                --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                 --repository-file "${restic_repository}" \
                 unlock ${unlock_job_args} \
                 2> /tmp/unlock-${unlock_routines_start_time}.error \

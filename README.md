@@ -338,7 +338,7 @@ If set, these variables will be passed to each cleanup job, unless each job expl
 | `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                             |              |
 | `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                              |              |
 | `DEFAULT_CLEANUP_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations |              |
-| `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data       |              |
+| `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`      |              |
 | `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                        |              |
 | `DEFAULT_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                |              |
 | `DEFAULT_CLEANUP_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                         |              |
@@ -371,7 +371,7 @@ Additional backup jobs can be scheduled by using `CLEANUP02_`,`CLEANUP03_`,`CLEA
 | `CLEANUP01_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations                |              |
 | `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |              |
 | `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |              |
-| `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data                      |              |
+| `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`                     |              |
 | `CLEANUP01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |              |
 | `CLEANUP01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |              |
 | `CLEANUP01_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                                       |              |
@@ -411,6 +411,7 @@ If set, these variables will be passed to each inventory job, unless each job ex
 | Variable                            | Description                                                                    | Default |
 | ----------------------------------- | ------------------------------------------------------------------------------ | ------- |
 | `DEFAULT_INVENTORY_ARGS`            | Arguments to pass to Restic `snapshots` command line                           |         |
+| `DEFAULT_INVENTORY_GROUP_BY`        | Group by `sequential`, `host`, `path`                                          | `host`  |
 | `DEFAULT_INVENTORY_HOOK_POST`       | Path and Filename to execute post inventory operation                          |         |
 | `DEFAULT_INVENTORY_HOOK_PRE`        | Path and Filename to execute pre inventory operation                           |         |
 | `DEFAULT_INVENTORY_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         |
@@ -426,6 +427,7 @@ Additional inventory jobs can be scheduled by using `INVENTORY02_`,`INVENTORY03_
 | `INVENTORY01_BEGIN`           | What time to do the first inventory. Defaults to immediate. Must be in one of two formats                                                      |         |
 |                               | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |
 |                               | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |
+| `INVENTORY01_GROUP_BY`        | Group by `sequential`, `host`, `path`                                                                                                          | `host`  |
 | `INVENTORY01_HOOK_POST`       | Path and Filename to execute post inventory operation                                                                                          |         |
 | `INVENTORY01_HOOK_PRE`        | Path and Filename to execute pre inventory operation                                                                                           |         |
 | `INVENTORY01_INTERVAL`        | Frequency after first execution of firing inventory routines again in minutes                                                                  |         |
@@ -466,6 +468,7 @@ If set, these variables will be passed to each prune job, unless each job explic
 | `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                           |         |
 | `DEFAULT_PRUNE_HOOK_POST`       | Path and Filename to execute post prune operation                                               |         |
 | `DEFAULT_PRUNE_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                |         |
+| `DEFAULT_PRUNE_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`                     |              |
 | `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                  |         |
 | `DEFAULT_PRUNE_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                               |         |
 | `DEFAULT_PRUNE_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                        | `2`     |
@@ -487,6 +490,7 @@ Additional prune jobs can be scheduled by using `PRUNE02_`,`PRUNE03_`,`PRUNE04_`
 | `PRUNE01_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                                                               |         |
 | `PRUNE01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
 | `PRUNE01_NAME`            | A friendly name to reference your prune snapshot job eg `repository_name`                                                                      |         |
+| `PRUNE01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`                     |              |
 | `PRUNE01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         |
 | `PRUNE01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         |
 | `PRUNE01_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                                                                       | `2`     |
