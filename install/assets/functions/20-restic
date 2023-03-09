@@ -1434,10 +1434,12 @@ EOF
                 case "${cleanup_job_cleanup_host,,}" in
                     repository )
                         cleanup_job_desc_hook_host="repository"
+                        print_notice "Cleaning up entire repository"
                     ;;
                     * )
                         cleanup_job_desc_hook_host="${cleanup_job_cleanup_host}"
                         cleanup_job_args+="--host ${cleanup_job_cleanup_host} "
+                        print_notice "Cleaning up host: ${cleanup_job_cleanup_host}"
                     ;;
                 esac
             else
