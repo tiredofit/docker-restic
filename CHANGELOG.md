@@ -1,3 +1,11 @@
+## 0.20.2 2023-03-09 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix cleanup log analysis for metrics
+      - Fix Month missing from Log "Start" files
+      - Add light verbosity to tell what is being cleaned up on the console
+
+
 ## 0.20.1 2023-03-08 <dave at tiredofit dot ca>
 
    ### Added
