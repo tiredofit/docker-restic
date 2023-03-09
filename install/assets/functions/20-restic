@@ -1400,7 +1400,7 @@ EOF
 
     cleanup() {
         if [ -z "${cleanup_routines_start_time}" ] ; then cleanup_routines_start_time=$(date +%s) ; fi
-            cleanup_job_file_log=$(cat <<EOF
+        cleanup_job_file_log=$(cat <<EOF
 ## Job Started:                        $(date -d @${cleanup_routines_start_time} +'%Y-%-%d %H:%M:%S') (${cleanup_routines_start_time})
 ## Repository:                         $(echo ${cleanup_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                           $(hostname)
@@ -1409,256 +1409,274 @@ EOF
 ## Task:                               Cleanup
 EOF
                             )
-            unset cleanup_job_args
-            process_limiter restic 1 cleanup
-            cleanup_process_start_time=$(date +%s)
-            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        unset cleanup_job_args
+        process_limiter restic 1 cleanup
+        cleanup_process_start_time=$(date +%s)
+        cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Cleanup procedure started:          $(date -d @${cleanup_process_start_time} +'%Y-%m-%d %H:%M:%S') (${cleanup_process_start_time})
 EOF
                             )
-            cleanup_process_delay_time=$(echo $((cleanup_process_finish_time-cleanup_process_start_time)))
-            if [ "${cleanup_process_delay_time}" -ge "5" ] ; then
-                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        cleanup_process_delay_time=$(echo $((cleanup_process_finish_time-cleanup_process_start_time)))
+        if [ "${cleanup_process_delay_time}" -ge "5" ] ; then
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Delay in starting:                  $(echo ${cleanup_process_delay_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${check_process_delay_time})
 EOF
                                 )
-            fi
+        fi
 
-            if [ -n "${cleanup_job_cleanup_name}" ] ; then
-                cleanup_job_log_suffix=${cleanup_job_cleanup_name,,}
-            else
-                cleanup_job_log_suffix=${cleanup_instance_number}
-            fi
+        if [ -n "${cleanup_job_cleanup_name}" ] ; then
+            cleanup_job_log_suffix=${cleanup_job_cleanup_name,,}
+        else
+            cleanup_job_log_suffix=${cleanup_instance_number}
+        fi
 
-            if [ -n "${cleanup_job_cleanup_host}" ] ; then
-                case "${cleanup_job_cleanup_host,,}" in
-                    repository )
-                        cleanup_job_desc_hook_host="repository"
-                        print_notice "Cleaning up entire repository"
-                    ;;
-                    * )
-                        cleanup_job_desc_hook_host="${cleanup_job_cleanup_host}"
-                        cleanup_job_args+="--host ${cleanup_job_cleanup_host} "
-                        print_notice "Cleaning up host: ${cleanup_job_cleanup_host}"
-                    ;;
-                esac
-            else
-                cleanup_job_args+="--host ${CONTAINER_NAME} "
-                cleanup_job_desc_hook_host="${CONTAINER_NAME}"
-            fi
+        if [ -n "${cleanup_job_cleanup_host}" ] ; then
+            case "${cleanup_job_cleanup_host,,}" in
+                repository )
+                    cleanup_job_desc_hook_host="repository"
+                    print_notice "Cleaning up entire repository"
+                ;;
+                * )
+                    cleanup_job_desc_hook_host="${cleanup_job_cleanup_host}"
+                    cleanup_job_args+="--host ${cleanup_job_cleanup_host} "
+                    print_notice "Cleaning up host: ${cleanup_job_cleanup_host}"
+                ;;
+            esac
+        else
+            cleanup_job_args+="--host ${CONTAINER_NAME} "
+            cleanup_job_desc_hook_host="${CONTAINER_NAME}"
+        fi
 
-            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Cleanup Target:                     ${cleanup_job_desc_hook_host}
 EOF
-                                )
+                            )
 
-            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Cleanup Group by:                   ${cleanup_job_cleanup_group_by}
 
 EOF
-                                )
-            if [ "${cleanup_job_cleanup_group_by}" = "" ] ; then
-                cleanup_job_args+="--group-by '' "
-            else
-                cleanup_job_args+="--group-by ${cleanup_job_cleanup_group_by} "
-            fi
+                            )
+        if [ "${cleanup_job_cleanup_group_by}" = "" ] ; then
+            cleanup_job_args+="--group-by '' "
+        else
+            cleanup_job_args+="--group-by ${cleanup_job_cleanup_group_by} "
+        fi
 
-            if [ -n "${cleanup_job_retain_last}" ] ; then
-                cleanup_job_keep_arg+="--keep-last ${cleanup_job_retain_last} "
-                cleanup_job_log_keep_policy="${cleanup_job_retain_last} last "
-            fi
-            if [ -n "${cleanup_job_retain_hourly}" ] ; then
-                cleanup_job_keep_arg+="--keep-hourly ${cleanup_job_retain_hourly} "
-                cleanup_job_log_keep_policy+="${cleanup_job_retain_hourly} hourly "
-            fi
-            if [ -n "${cleanup_job_retain_daily}" ] ; then
-                cleanup_job_keep_arg+="--keep-daily ${cleanup_job_retain_daily} "
-                cleanup_job_log_keep_policy+="${cleanup_job_retain_daily} daily "
-            fi
-            if [ -n "${cleanup_job_retain_weekly}" ] ; then
-                cleanup_job_keep_arg+="--keep-weekly ${cleanup_job_retain_weekly} "
-                cleanup_job_log_keep_policy+="${cleanup_job_retain_weekly} weekly "
-            fi
-            if [ -n "${cleanup_job_retain_monthly}" ] ; then
-                cleanup_job_keep_arg+="--keep-monthly ${cleanup_job_retain_monthly} "
-                cleanup_job_log_keep_policy+="${cleanup_job_retain_monthly} monthly "
-            fi
-            if [ -n "${cleanup_job_retain_yearly}" ] ; then
-                cleanup_job_keep_arg+="--keep-yearly ${cleanup_job_retain_yearly} "
-                cleanup_job_log_keep_policy+="${cleanup_job_retain_yearly} yearly"
-            fi
+        if [ -n "${cleanup_job_retain_last}" ] ; then
+            cleanup_job_keep_arg+="--keep-last ${cleanup_job_retain_last} "
+            cleanup_job_log_keep_policy="${cleanup_job_retain_last} last "
+        fi
+        if [ -n "${cleanup_job_retain_hourly}" ] ; then
+            cleanup_job_keep_arg+="--keep-hourly ${cleanup_job_retain_hourly} "
+            cleanup_job_log_keep_policy+="${cleanup_job_retain_hourly} hourly "
+        fi
+        if [ -n "${cleanup_job_retain_daily}" ] ; then
+            cleanup_job_keep_arg+="--keep-daily ${cleanup_job_retain_daily} "
+            cleanup_job_log_keep_policy+="${cleanup_job_retain_daily} daily "
+        fi
+        if [ -n "${cleanup_job_retain_weekly}" ] ; then
+            cleanup_job_keep_arg+="--keep-weekly ${cleanup_job_retain_weekly} "
+            cleanup_job_log_keep_policy+="${cleanup_job_retain_weekly} weekly "
+        fi
+        if [ -n "${cleanup_job_retain_monthly}" ] ; then
+            cleanup_job_keep_arg+="--keep-monthly ${cleanup_job_retain_monthly} "
+            cleanup_job_log_keep_policy+="${cleanup_job_retain_monthly} monthly "
+        fi
+        if [ -n "${cleanup_job_retain_yearly}" ] ; then
+            cleanup_job_keep_arg+="--keep-yearly ${cleanup_job_retain_yearly} "
+            cleanup_job_log_keep_policy+="${cleanup_job_retain_yearly} yearly"
+        fi
 
-            if [ -n "${cleanup_job_retain_tag}" ] ; then
-                cleanup_retain_tags=$(echo "${cleanup_job_retain_tag}" | tr "," "\n")
-                for cleanup_retain_tag in ${cleanup_retain_tags} ; do
-                    cleanup_job_keep_arg+="--keep-tag ${cleanup_retain_tag}"
-                done
-            fi
+        if [ -n "${cleanup_job_retain_tag}" ] ; then
+            cleanup_retain_tags=$(echo "${cleanup_job_retain_tag}" | tr "," "\n")
+            for cleanup_retain_tag in ${cleanup_retain_tags} ; do
+                cleanup_job_keep_arg+="--keep-tag ${cleanup_retain_tag}"
+            done
+        fi
 
-            if [ -n "${cleanup_job_log_keep_policy}" ] ; then
-                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        if [ -n "${cleanup_job_log_keep_policy}" ] ; then
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Cleanup Policy:                     ${cleanup_job_log_keep_policy}
 EOF
-                                    )
-            fi
+                                )
+        fi
 
-            if [ -n "${cleanup_job_log_retain_tag}" ] ; then
-                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        if [ -n "${cleanup_job_log_retain_tag}" ] ; then
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 cleanup_job_log_retain_tag="## Skipping tags:                      ${cleanup_job_retain_tag}
 EOF
-                                      )
-            fi
+                                    )
+        fi
 
-            if [ -n "${cleanup_job_keep_arg}" ] ; then
-                cleanup_job_args+=${cleanup_job_keep_arg}
-            fi
+        if [ -n "${cleanup_job_keep_arg}" ] ; then
+            cleanup_job_args+=${cleanup_job_keep_arg}
+        fi
 
-            case "${cleanup_job_cleanup_repack}" in
-                cacheable )
-                    cleanup_job_args+="--repack-cacheable-only "
-                    cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        case "${cleanup_job_cleanup_repack}" in
+            cacheable )
+                cleanup_job_args+="--repack-cacheable-only "
+                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Repack                              Cacheable Only
 EOF
-                                        )
-                ;;
-                small )
-                    cleanup_job_args+="--repack-small "
-                    cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+                                    )
+            ;;
+            small )
+                cleanup_job_args+="--repack-small "
+                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Repack                              Small
 EOF
-                                        )
-                ;;
-                uncompressed )
-                    cleanup_job_args+="--repack-uncompressed "
-                    cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+                                    )
+            ;;
+            uncompressed )
+                cleanup_job_args+="--repack-uncompressed "
+                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Repack                              Uncompressed
 EOF
-                                        )
-                ;;
-                none )
-                    cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+                                    )
+            ;;
+            none )
+                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Repack                              None
 EOF
-                                        )
-                ;;
-            esac
+                                    )
+            ;;
+        esac
 
-            if var_true "${cleanup_job_auto_prune}" ; then
-                print_notice "AUTO_PRUNE enabled - Will prune after successful cleanup"
-                cleanup_job_args+="--prune "
-                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        if var_true "${cleanup_job_auto_prune}" ; then
+            print_notice "AUTO_PRUNE enabled - Will prune after successful cleanup"
+            cleanup_job_args+="--prune "
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Auto Prune                          Enabled
 EOF
-                                )
-            fi
+                            )
+        fi
 
-            if var_true "${cleanup_job_cleanup_dryrun}" ; then
-                print_notice "DRY_RUN enabled - No cleanup will actually be performed!"
-                cleanup_job_args+="--dry-run "
-                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        if var_true "${cleanup_job_cleanup_dryrun}" ; then
+            print_notice "DRY_RUN enabled - No cleanup will actually be performed!"
+            cleanup_job_args+="--dry-run "
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Dry Run                             Enabled - No cleanup was actually performed
 EOF
-                                )
-            fi
+                            )
+        fi
 
-            if [ -n "${cleanup_job_cleanup_args}" ] ; then
-                cleanup_job_args+="${cleanup_job_cleanup_args} "
-                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        if [ -n "${cleanup_job_cleanup_args}" ] ; then
+            cleanup_job_args+="${cleanup_job_cleanup_args} "
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Additional Arguments:               ${cleanup_job_cleanup_args}
 EOF
-                                )
-            fi
+                            )
+        fi
 
-            if [ -n "${cleanup_job_cleanup_verbosity_level}" ] ; then
-                case "${cleanup_job_cleanup_verbosity_level,,}" in
-                    0 | normal | standard )
-                        cleanup_job_cleanup_verbosity_level=0
-                    ;;
-                    1 | verbose )
-                        cleanup_job_cleanup_verbosity_level=1
-                    ;;
-                    2 | verboseverbose | loud )
-                        cleanup_job_cleanup_verbosity_level=2
-                    ;;
-                esac
-                cleanup_job_args+="--verbose=${cleanup_job_cleanup_verbosity_level} "
-                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        if [ -n "${cleanup_job_cleanup_verbosity_level}" ] ; then
+            case "${cleanup_job_cleanup_verbosity_level,,}" in
+                0 | normal | standard )
+                    cleanup_job_cleanup_verbosity_level=0
+                ;;
+                1 | verbose )
+                    cleanup_job_cleanup_verbosity_level=1
+                ;;
+                2 | verboseverbose | loud )
+                    cleanup_job_cleanup_verbosity_level=2
+                ;;
+            esac
+            cleanup_job_args+="--verbose=${cleanup_job_cleanup_verbosity_level} "
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Verbosity Level:                    ${cleanup_job_cleanup_verbosity_level}
 EOF
                                 )
-            fi
+        fi
 
-            if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
-                cleanup_command_string="restic --repo ${cleanup_job_repository_path} forget --group-by ${cleanup_job_cleanup_group_by} ${cleanup_job_args}"
-                print_debug "Command execution string: '${cleanup_command_string}'"
-                cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        if var_true "${DEBUG_MODE}" || [ ${CONTAINER_LOG_LEVEL,,} = "debug" ]; then
+            cleanup_command_string="restic --repo ${cleanup_job_repository_path} forget --group-by ${cleanup_job_cleanup_group_by} ${cleanup_job_args}"
+            print_debug "Command execution string: '${cleanup_command_string}'"
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Debug Command String:               ${cleanup_command_string}
 EOF
-                                )
-            fi
+                            )
+        fi
 
-            if [ -n "${cleanup_job_hook_pre}" ]; then
-                hook cleanup pre
-            fi
+        if [ -n "${cleanup_job_hook_pre}" ]; then
+            hook cleanup pre
+        fi
 
-            print_info "Starting cleanup of old backups"
-            restic_repository=$(mktemp)
-            echo "${cleanup_job_repository_path}" > "${restic_repository}"
-            restic \
-                    --cache-dir "${CACHE_PATH}" \
-                    --repository-file "${restic_repository}" \
-                    forget \
-                    ${cleanup_job_args} \
-                    2> /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".error \
-                    > /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".log
+        print_info "Starting cleanup of old backups"
+        restic_repository=$(mktemp)
+        echo "${cleanup_job_repository_path}" > "${restic_repository}"
+        restic \
+                --cache-dir "${CACHE_PATH}" \
+                --repository-file "${restic_repository}" \
+                forget \
+                ${cleanup_job_args} \
+                2> /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".error \
+                > /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".log
 
-            exitcode_cleanup="$?"
-            rm  -rf "${restic_repository}"
-            cleanup_process_finish_time="$(date +%s)"
-            cleanup_process_total_time="$(echo $((cleanup_process_finish_time-cleanup_routines_start_time)))"
+        exitcode_cleanup="$?"
+        rm  -rf "${restic_repository}"
+        cleanup_process_finish_time="$(date +%s)"
+        cleanup_process_total_time="$(echo $((cleanup_process_finish_time-cleanup_routines_start_time)))"
 
-            case "${exitcode_cleanup}" in
-                0 )
-                    print_info "[cleanup] Cleanup successful"
-                    exitcode_cleanup_description="OK"
-                ;;
-                1 )
-                    print_error "[cleanup] Cleanup failed completely"
-                    exitcode_cleanup_description="FAIL"
-                    notify \
-                        "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
-                        "{exitcode_cleanup}" \
-                        "[FATAL] [${cleanup_job_log_suffix}] Cleanup failed completely" \
-                        "Restic is failing to cleanup the '${cleanup_job_log_suffix}' job."
-                ;;
-                3 )
-                    print_error "[cleanup] Cleanup completed with errors"
-                    exitcode_cleanup_description="ERROR"
-                    notify \
-                        "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
-                        "{exitcode_cleanup}" \
-                        "[WARN] [${cleanup_job_log_suffix}] Cleanup completed with errors" \
-                        "Restic is failing to perform a full cleanup of the '${cleanup_job_log_suffix}' job."
-                ;;
-                130 )
-                    print_error "[cleanup] Cleanup failed due to user cancellation"
-                    exitcode_cleanup_description="CANCELLED"
-                ;;
-                * )
-                    print_error "[cleanup] Cleanup Failed with exit_code ${exitcode_cleanup}"
-                    exitcode_cleanup_description="UNKNOWN"
-                    notify \
-                        "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
-                        "{exitcode_cleanup}" \
-                        "[WARN] [${cleanup_job_log_suffix}] Cleanup failed due to unknown errors" \
-                        "Restic is throwing an unknown error code while trying to cleanup the '${cleanup_job_log_suffix}' job."
-                ;;
-            esac
+        case "${exitcode_cleanup}" in
+            0 )
+                print_info "[cleanup] Cleanup successful"
+                exitcode_cleanup_description="OK"
+            ;;
+            1 )
+                print_error "[cleanup] Cleanup failed completely"
+                exitcode_cleanup_description="FAIL"
+                notify \
+                    "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                    "{exitcode_cleanup}" \
+                    "[FATAL] [${cleanup_job_log_suffix}] Cleanup failed completely" \
+                    "Restic is failing to cleanup the '${cleanup_job_log_suffix}' job."
+            ;;
+            3 )
+                print_error "[cleanup] Cleanup completed with errors"
+                exitcode_cleanup_description="ERROR"
+                notify \
+                    "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                    "{exitcode_cleanup}" \
+                    "[WARN] [${cleanup_job_log_suffix}] Cleanup completed with errors" \
+                    "Restic is failing to perform a full cleanup of the '${cleanup_job_log_suffix}' job."
+            ;;
+            130 )
+                print_error "[cleanup] Cleanup failed due to user cancellation"
+                exitcode_cleanup_description="CANCELLED"
+            ;;
+            * )
+                print_error "[cleanup] Cleanup Failed with exit_code ${exitcode_cleanup}"
+                exitcode_cleanup_description="UNKNOWN"
+                notify \
+                    "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
+                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                    "{exitcode_cleanup}" \
+                    "[WARN] [${cleanup_job_log_suffix}] Cleanup failed due to unknown errors" \
+                    "Restic is throwing an unknown error code while trying to cleanup the '${cleanup_job_log_suffix}' job."
+            ;;
+        esac
 
-            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+        cleanup_job_stats_snapshots_removed=$(grep '^[0-9]. snapshots have been removed' /tmp/${cleanup_instance_number}-cleanup-${cleanup_routines_start_time}.log | awk '{print $1}')
+        if [ "${cleanup_job_stats_snapshots_removed}" = "" ] ; then cleanup_job_stats_snapshots_removed=0 ; fi
+
+        if var_true "${cleanup_job_auto_prune}" ; then
+            cleanup_job_stats_prune_packs_processed=$(cat /tmp/${cleanup_instance_number}-cleanup-${cleanup_routines_start_time}.log | awk '/searching used packs.../,/.* \/ .* packs processed/' | tail -n 1 | awk '{print $5}')
+            if [ "${cleanup_job_stats_prune_packs_processed}" = "" ] ; then cleanup_job_stats_prune_packs_processed=0 ; fi
+            cleanup_job_stats_prune_packs_keep=$(grep "^to keep: .*[0-9]. packs" /tmp/${cleanup_instance_number}-cleanup-${cleanup_routines_start_time}.log | awk '{print $3}')
+            if [ "${cleanup_job_stats_prune_packs_keep}" = "" ] ; then cleanup_job_stats_prune_packs_keep=0 ; fi
+            cleanup_job_stats_prune_packs_repack=$(grep "^to repack: .*[0-9]. packs" /tmp/${cleanup_instance_number}-cleanup-${cleanup_routines_start_time}.log | awk '{print $3}')
+            if [ "${cleanup_job_stats_prune_packs_repack}" = "" ] ; then cleanup_job_stats_prune_packs_repack=0 ; fi
+            cleanup_job_stats_prune_packs_delete=$(grep "^to delete: .*[0-9]. packs" /tmp/${cleanup_instance_number}-cleanup-${cleanup_routines_start_time}.log | awk '{print $3}')
+            if [ "${cleanup_job_stats_prune_packs_delete}" = "" ] ; then cleanup_job_stats_prune_packs_delete=0 ; fi
+            cleanup_job_stats_prune_packs_delete_unreferenced=$(grep "^to delete: .*[0-9]. unreferenced packs" /tmp/${cleanup_instance_number}-cleanup-${cleanup_routines_start_time}.log | awk '{print $3}')
+            if [ "${cleanup_job_stats_prune_packs_delete_unreferenced}" = "" ] ; then cleanup_job_stats_prune_packs_delete_unreferenced=0 ; fi
+            cleanup_job_stats_prune_packs_delete_old=$(cat /tmp/${cleanup_instance_number}-cleanup-${cleanup_routines_start_time}.log | awk '/removing .* old packs$/,/.*\/ .* files deleted/' | tail -n 1 | awk '{print $5}')
+            if [ "${cleanup_job_stats_prune_packs_delete_old}" = "" ] ; then cleanup_job_stats_prune_packs_delete_old=0 ; fi
+        fi
+
+        cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Cleanup procedure finished:         $(date -d @${cleanup_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${cleanup_process_finish_time})
 ## Cleanup procedure total time:       $(echo ${cleanup_routines_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${cleanup_process_total_time})
 ## Cleanup procedure completion:       ${exitcode_cleanup_description} (${exitcode_cleanup})
@@ -1690,29 +1708,6 @@ EOF
         cat << EOF | silent sudo -u restic tee -a "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-${cleanup_job_log_suffix}.log
 ${cleanup_job_file_log}
 EOF
-
-        cleanup_job_stats_snapshots_removed=$(cat ${cleanup_job_file_log} | grep '^[0-9]. snapshots have been removed' | awk '{print $1}')
-        if [ "${cleanup_job_stats_snapshots_removed}" = "" ] ; then cleanup_job_stats_snapshots_removed=0 ; fi
-
-        if var_true "${cleanup_job_auto_prune}" ; then
-            cleanup_job_stats_prune_packs_processsed=$(cat ${cleanup_job_file_log} | awk '/searching used packs.../,/.* \/ .* packs processed/' | tail -n 1 | awk '{print $5}')
-            if [ "${cleanup_job_stats_prune_packs_processed}" = "" ] ; then cleanup_job_stats_prune_packs_processed=0 ; fi
-
-            cleanup_job_stats_prune_packs_keep=$(cat ${cleanup_job_file_log} | grep "^to keep: .*[0-9]. packs" | awk '{print $3}')
-            if [ "${cleanup_job_stats_prune_packs_keep}" = "" ] ; then cleanup_job_stats_prune_packs_keep=0 ; fi
-
-            cleanup_job_stats_prune_packs_repack=$(cat ${cleanup_job_file_log} | grep "^to repack: .*[0-9]. packs" | awk '{print $3}')
-            if [ "${cleanup_job_stats_prune_packs_repack}" = "" ] ; then cleanup_job_stats_prune_packs_repack=0 ; fi
-
-            cleanup_job_stats_prune_packs_delete=$(cat ${cleanup_job_file_log} | grep "^to delete: .*[0-9]. packs" | awk '{print $3}')
-            if [ "${cleanup_job_stats_prune_packs_delete}" = "" ] ; then cleanup_job_stats_prune_packs_delete=0 ; fi
-
-            cleanup_job_stats_prune_packs_delete_unreferenced=$(cat ${cleanup_job_file_log} | grep "^to delete: .*[0-9]. unreferenced packs" | awk '{print $3}')
-            if [ "${cleanup_job_stats_prune_packs_delete_unreferenced}" = "" ] ; then cleanup_job_stats_prune_packs_delete_unreferenced=0 ; fi
-
-            cleanup_job_stats_prune_packs_delete_old=$(cat ${cleanup_job_file_log} | awk '/removing .* old packs$/,/.*\/ .* files deleted/' | tail -n 1 | awk '{print $5}')
-            if [ "${cleanup_job_stats_prune_packs_delete_old}" = "" ] ; then cleanup_job_stats_prune_packs_delete_old=0 ; fi
-        fi
 
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log ../latest-cleanup-"${cleanup_job_log_suffix}".log
