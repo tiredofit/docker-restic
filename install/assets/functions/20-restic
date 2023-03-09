@@ -848,7 +848,7 @@ repository() {
         process_limiter restic "${BACKUP_JOB_CONCURRENCY}" backup
         backup_process_start_time=$(date +%s)
         backup_job_file_log=$(cat <<EOF
-# Job Started:                          $(date -d @"${backup_routines_start_time}" +'%Y-%-%d %H:%M:%S') (${backup_routines_start_time})
+# Job Started:                          $(date -d @"${backup_routines_start_time}" +'%Y-%m-%d %H:%M:%S') (${backup_routines_start_time})
 # Repository:                           $(echo "${backup_job_repository_path}" | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 # Hostname:                             $(hostname)
 # Container Name:                       $(echo "${CONTAINER_NAME}")
@@ -1177,7 +1177,7 @@ EOF
     check() {
         if [ -z "${check_routines_start_time}" ] ; then check_routines_start_time=$(date +%s) ; fi
         check_job_file_log=$(cat <<EOF
-## Job Started:                        $(date -d @${check_routines_start_time} +'%Y-%-%d %H:%M:%S') (${check_routines_start_time})
+## Job Started:                        $(date -d @${check_routines_start_time} +'%Y-%m-%d %H:%M:%S') (${check_routines_start_time})
 ## Repository:                         $(echo ${check_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                           $(hostname)
 ## Container Name:                     $(echo "${CONTAINER_NAME}")
@@ -1401,7 +1401,7 @@ EOF
     cleanup() {
         if [ -z "${cleanup_routines_start_time}" ] ; then cleanup_routines_start_time=$(date +%s) ; fi
         cleanup_job_file_log=$(cat <<EOF
-## Job Started:                        $(date -d @${cleanup_routines_start_time} +'%Y-%-%d %H:%M:%S') (${cleanup_routines_start_time})
+## Job Started:                        $(date -d @${cleanup_routines_start_time} +'%Y-%m-%d %H:%M:%S') (${cleanup_routines_start_time})
 ## Repository:                         $(echo ${cleanup_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                           $(hostname)
 ## Container Name:                     $(echo "${CONTAINER_NAME}")
@@ -1899,7 +1899,7 @@ EOF
     inventory() {
         if [ -z "${inventory_routines_start_time}" ] ; then inventory_routines_start_time=$(date +%s) ; fi
         inventory_job_file_log=$(cat <<EOF
-## Job Started:                        $(date -d @${inventory_routines_start_time} +'%Y-%-%d %H:%M:%S') (${inventory_routines_start_time})
+## Job Started:                        $(date -d @${inventory_routines_start_time} +'%Y-%m-%d %H:%M:%S') (${inventory_routines_start_time})
 ## Repository:                         $(echo ${inventory_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                           $(hostname)
 ## Container Name:                     $(echo "${CONTAINER_NAME}")
@@ -2031,7 +2031,7 @@ EOF
     prune() {
         if [ -z "${prune_routines_start_time}" ] ; then prune_routines_start_time=$(date +%s) ; fi
         prune_job_file_log=$(cat <<EOF
-## Job Started:                        $(date -d @${prune_routines_start_time} +'%Y-%-%d %H:%M:%S') (${prune_routines_start_time})
+## Job Started:                        $(date -d @${prune_routines_start_time} +'%Y-%m-%d %H:%M:%S') (${prune_routines_start_time})
 ## Repository:                         $(echo ${prune_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                           $(hostname)
 ## Container Name:                     $(echo ${CONTAINER_NAME})
@@ -2241,7 +2241,7 @@ EOF
         bootstrap_variables unlock_init $1 $2
         if [ -z "${unlock_routines_start_time}" ] ; then unlock_routines_start_time=$(date +%s) ; fi
             unlock_job_file_log=$(cat <<EOF
-## Job Started:                        $(date -d @${unlock_routines_start_time} +'%Y-%-%d %H:%M:%S') (${unlock_routines_start_time})
+## Job Started:                        $(date -d @${unlock_routines_start_time} +'%Y-%m-%d %H:%M:%S') (${unlock_routines_start_time})
 ## Repository:                         $(echo ${unlock_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
 ## Hostname:                           $(hostname)
 ## Container Name:                     $(echo "${CONTAINER_NAME}")
