@@ -188,6 +188,7 @@ bootstrap_variables() {
         transform_cleanup_instance_variable "${cleanup_instance_number}" HOOK_PRE cleanup_job_cleanup_hook_pre
         transform_cleanup_instance_variable "${cleanup_instance_number}" HOST cleanup_job_cleanup_host
         transform_cleanup_instance_variable "${cleanup_instance_number}" NAME cleanup_job_cleanup_name
+        transform_cleanup_instance_variable "${cleanup_instance_number}" MAX_REPACK_SIZE cleanup_job_cleanup_max_repack_size
         transform_cleanup_instance_variable "${cleanup_instance_number}" MAX_UNUSED cleanup_job_cleanup_max_unused
         transform_cleanup_instance_variable "${cleanup_instance_number}" REPACK cleanup_job_cleanup_repack
         transform_cleanup_instance_variable "${cleanup_instance_number}" REPOSITORY_PASS cleanup_job_repository_pass
@@ -287,6 +288,7 @@ bootstrap_variables() {
         transform_prune_instance_variable "${prune_instance_number}" DRY_RUN prune_job_prune_dryrun
         transform_prune_instance_variable "${prune_instance_number}" HOOK_POST prune_job_prune_hook_post
         transform_prune_instance_variable "${prune_instance_number}" HOOK_PRE prune_job_prune_hook_pre
+        transform_prune_instance_variable "${prune_instance_number}" MAX_REPACK_SIZE prune_job_prune_max_repack_size
         transform_prune_instance_variable "${prune_instance_number}" MAX_UNUSED prune_job_prune_max_unused
         transform_prune_instance_variable "${prune_instance_number}" NAME prune_job_prune_name
         transform_prune_instance_variable "${prune_instance_number}" REPACK prune_job_prune_repack
@@ -1526,6 +1528,14 @@ EOF
                                     )
         fi
 
+        if [ -n "${cleanup_job_prune_max_repack_size}" ] ; then
+            cleanup_job_args+="--max-repack-sze ${cleanup_job_cleanup_max_repack_size} "
+            cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
+## Max Repack Size :                   ${cleanup_job_cleanup_max_repack_size}
+EOF
+                                    )
+        fi
+
         case "${cleanup_job_cleanup_repack}" in
             cacheable )
                 cleanup_job_args+="--repack-cacheable-only "
@@ -2113,6 +2123,14 @@ EOF
             prune_job_args+="--max-unused ${prune_job_prune_max_unused} "
             prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
 ## Max Unused Limit:                   ${prune_job_prune_max_unused}
+EOF
+                                    )
+        fi
+
+        if [ -n "${prune_job_prune_max_repack_size}" ] ; then
+            prune_job_args+="--max-repack-size ${prune_job_prune_max_repack_size} "
+            prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
+## Max Repack Size :                   ${prune_job_prune_max_repack_size}
 EOF
                                     )
         fi

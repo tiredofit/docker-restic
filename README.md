@@ -327,29 +327,30 @@ A Cleanup job requires exlcusive access to the Restic Repository, therefore no o
 
 If set, these variables will be passed to each cleanup job, unless each job explicitly sets otherwise.
 
-| Variable                          | Description                                                                                                                     | Default      |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| `DEFAULT_CLEANUP_ARGS`            | Arguments to pass to Restic cleanup command line                                                                                |              |
-| `DEFAULT_CLEANUP_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                               |              |
-| `DEFAULT_CLEANUP_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                               |              |
-| `DEFAULT_CLEANUP_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                           |              |
-| `DEFAULT_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                           |              |
-| `DEFAULT_CLEANUP_GROUP_BY`        | Group Snapshots by `host`,`paths`,`tags`                                                                                        | `host,paths` |
-| `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                             |              |
-| `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                              |              |
-| `DEFAULT_CLEANUP_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations |              |
-| `DEFAULT_CLEANUP_MAX_UNUSED`      | Tolerate given limit of unused data before repack | `5%` |
-| `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`      |              |
-| `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                        |              |
-| `DEFAULT_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                |              |
-| `DEFAULT_CLEANUP_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                         |              |
-| `DEFAULT_CLEANUP_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                        |              |
-| `DEFAULT_CLEANUP_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                      |              |
-| `DEFAULT_CLEANUP_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                      |              |
-| `DEFAULT_CLEANUP_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                 |              |
-| `DEFAULT_CLEANUP_VERBOSITY_LEVEL` | Cleanup operations log verbosity - Best not to change this                                                                      | `2`          |
-| `DEFAULT_CLEANUP_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                  |              |
-| `DEFAULT_CLEANUP_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                               |              |
+| Variable                          | Description                                                                                                                         | Default      |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `DEFAULT_CLEANUP_ARGS`            | Arguments to pass to Restic cleanup command line                                                                                    |              |
+| `DEFAULT_CLEANUP_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                                   |              |
+| `DEFAULT_CLEANUP_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                   |              |
+| `DEFAULT_CLEANUP_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                               |              |
+| `DEFAULT_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                               |              |
+| `DEFAULT_CLEANUP_GROUP_BY`        | Group Snapshots by `host`,`paths`,`tags`                                                                                            | `host,paths` |
+| `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                                 |              |
+| `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                  |              |
+| `DEFAULT_CLEANUP_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations     |              |
+| `DEFAULT_CLEANUP_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`                                                                            |              |
+| `DEFAULT_CLEANUP_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                   | `5%`         |
+| `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE` |              |
+| `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                            |              |
+| `DEFAULT_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                    |              |
+| `DEFAULT_CLEANUP_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                             |              |
+| `DEFAULT_CLEANUP_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                            |              |
+| `DEFAULT_CLEANUP_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                          |              |
+| `DEFAULT_CLEANUP_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                          |              |
+| `DEFAULT_CLEANUP_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                     |              |
+| `DEFAULT_CLEANUP_VERBOSITY_LEVEL` | Cleanup operations log verbosity - Best not to change this                                                                          | `2`          |
+| `DEFAULT_CLEANUP_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                      |              |
+| `DEFAULT_CLEANUP_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                   |              |
 
 ##### Job Cleanup Options
 
@@ -371,9 +372,10 @@ Additional backup jobs can be scheduled by using `CLEANUP02_`,`CLEANUP03_`,`CLEA
 | `CLEANUP01_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                             |              |
 | `CLEANUP01_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations                |              |
 | `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |              |
-| `CLEANUP01_PRUNE_MAX_UNUSED`      | Tolerate given limit of unused data before repack | `5%` |
+| `CLEANUP01_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`                                                                                       |              |
+| `CLEANUP01_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                              | `5%`         |
 | `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |              |
-| `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`                     |              |
+| `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`            |              |
 | `CLEANUP01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |              |
 | `CLEANUP01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |              |
 | `CLEANUP01_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                                       |              |
@@ -462,19 +464,20 @@ A Prune job requires exlcusive access to the Restic Repository, therefore no oth
 
 If set, these variables will be passed to each prune job, unless each job explicitly sets otherwise.
 
-| Variable                        | Description                                                                                     | Default |
-| ------------------------------- | ----------------------------------------------------------------------------------------------- | ------- |
-| `DEFAULT_PRUNE_ARGS`            | Arguments to pass to Restic Prune command line                                                  |         |
-| `DEFAULT_PRUNE_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no prune operations occur eg `0420` |         |
-| `DEFAULT_PRUNE_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no prune operations occur eg `0430`             |         |
-| `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                           |         |
-| `DEFAULT_PRUNE_HOOK_POST`       | Path and Filename to execute post prune operation                                               |         |
-| `DEFAULT_PRUNE_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                |         |
-| `DEFAULT_PRUNE_MAX_UNUSED`      | Tolerate given limit of unused data before repack | `5%` |
-| `DEFAULT_PRUNE_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`                     |              |
-| `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                  |         |
-| `DEFAULT_PRUNE_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                               |         |
-| `DEFAULT_PRUNE_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                        | `2`     |
+| Variable                        | Description                                                                                                                         | Default |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `DEFAULT_PRUNE_ARGS`            | Arguments to pass to Restic Prune command line                                                                                      |         |
+| `DEFAULT_PRUNE_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no prune operations occur eg `0420`                                     |         |
+| `DEFAULT_PRUNE_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no prune operations occur eg `0430`                                                 |         |
+| `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                               |         |
+| `DEFAULT_PRUNE_HOOK_POST`       | Path and Filename to execute post prune operation                                                                                   |         |
+| `DEFAULT_PRUNE_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                                                    |         |
+| `DEFAULT_PRUNE_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`                                                                            |         |
+| `DEFAULT_PRUNE_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                   | `5%`    |
+| `DEFAULT_PRUNE_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE` |         |
+| `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                      |         |
+| `DEFAULT_PRUNE_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                   |         |
+| `DEFAULT_PRUNE_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                                                            | `2`     |
 
 
 If `DEFAULT_PRUNE_` variables are set and you do not wish for the settings to carry over into your jobs, you can set the appropriate environment variable with the value of `unset`.
@@ -492,9 +495,10 @@ Additional prune jobs can be scheduled by using `PRUNE02_`,`PRUNE03_`,`PRUNE04_`
 | `PRUNE01_HOOK_POST`       | Path and Filename to execute post prune operation                                                                                              |         |
 | `PRUNE01_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                                                               |         |
 | `PRUNE01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
-| `PRUNE01_MAX_UNUSED`      | Tolerate given limit of unused data before repack | `5%` |
+| `PRUNE01_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`                                                                                       |         |
+| `PRUNE01_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                              | `5%`    |
 | `PRUNE01_NAME`            | A friendly name to reference your prune snapshot job eg `repository_name`                                                                      |         |
-| `PRUNE01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`                     |              |
+| `PRUNE01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`            |         |
 | `PRUNE01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         |
 | `PRUNE01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         |
 | `PRUNE01_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                                                                       | `2`     |
