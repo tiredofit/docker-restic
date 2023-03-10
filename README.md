@@ -638,14 +638,14 @@ Copy the JSON response `access_token` that will look something like this:
 | ------------------------ | -------------------------------------------------------------------------------------------- | ------- |
 | `MATTERMOST_WEBHOOK_URL` | Full URL to send webhook notifications to                                                    |         |
 | `MATTERMOST_RECIPIENT`   | Channel or User to send Webhook notifications to. Send to multiple by seperating with comma. |         |
-| `MATTERMOST_USERNAME`    | Username to send as eg `GCDS`                                                                |         |
+| `MATTERMOST_USERNAME`    | Username to send as eg `Restic`                                                              |         |
 
 ##### Rocketchat Notifications
 | Parameter                | Description                                                                                  | Default |
 | ------------------------ | -------------------------------------------------------------------------------------------- | ------- |
 | `ROCKETCHAT_WEBHOOK_URL` | Full URL to send webhook notifications to                                                    |         |
 | `ROCKETCHAT_RECIPIENT`   | Channel or User to send Webhook notifications to. Send to multiple by seperating with comma. |         |
-| `ROCKETCHAT_USERNAME`    | Username to send as eg `GCDS`                                                                |         |
+| `ROCKETCHAT_USERNAME`    | Username to send as eg `Restic`                                                              |         |
 
 
 ### Networking
