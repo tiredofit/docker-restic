@@ -1160,8 +1160,8 @@ EOF
 - restic.backup.files.unmodified.[${backup_job_log_suffix}] "${backup_job_backup_summary_files_unmodified}"
 - restic.backup.dirs.new.[${backup_job_log_suffix}] "${backup_job_backup_summary_directory_new}"
 - restic.backup.dirs.changed.[${backup_job_log_suffix}] "${backup_job_backup_summary_directory_changed}"
-- restic.backup.dirs.unmodified.[${backup_job_log_suffix}] "$"${backup_job_backup_summary_added_size_bytes}"{backup_job_backup_summary_directory_unmodified}"
-- restic.backup.size.bytes.added.[${backup_job_log_suffix}]
+- restic.backup.dirs.unmodified.[${backup_job_log_suffix}] "${backup_job_backup_summary_directory_unmodified}"
+- restic.backup.size.bytes.added.[${backup_job_log_suffix}] "${backup_job_backup_summary_added_size_bytes}"
 - restic.backup.size.bytes.stored.[${backup_job_log_suffix}] "${backup_job_backup_summary_added_size_stored_bytes}"
 - restic.backup.size.bytes.processed.[${backup_job_log_suffix}] "${backup_job_backup_summary_processed_size_bytes}"
 - restic.backup.error.count.[${backup_job_log_suffix}] "${backup_job_backup_summary_error_count}"

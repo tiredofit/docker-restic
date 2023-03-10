@@ -1,3 +1,9 @@
+## 1.0.1 2023-03-10 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix for Zabbix Backup Metrics getting merged into same line
+
+
 ## 1.0.0 2023-03-09 <dave at tiredofit dot ca>
 
    ### Added
