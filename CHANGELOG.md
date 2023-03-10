@@ -1,3 +1,12 @@
+## 1.0.0 2023-03-09 <dave at tiredofit dot ca>
+
+   ### Added
+      - Stable release
+      - Add CLEANUP|PRUNE_MAX_REPACK_SIZE environment variables
+      - Add CLEANUP|PRUNE_MAX_UNUSED environment variables
+      - Add PRUNE_REPACK functionality
+
+
 ## 0.20.2 2023-03-09 <dave at tiredofit dot ca>
 
    ### Changed
