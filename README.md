@@ -76,7 +76,9 @@ Features:
 - [Maintenance](#maintenance)
   - [Shell Access](#shell-access)
   - [Manual Backups](#manual-backups)
+  - [Manual Cleanup](#manual-cleanup)
   - [Manual Checks](#manual-checks)
+  - [Manual Inventory](#manual-inventory)
   - [Manual Prune](#manual-prune)
   - [Creating Server Users and Passwords](#creating-server-users-and-passwords)
 - [Support](#support)
@@ -662,13 +664,19 @@ docker exec -it (whatever your container name is) bash
 ```
 
 ### Manual Backups
-Manual Backups can be performed by entering the container and typing `backup-now`. This will execute all the backups that are scheduled by means of the `BACKUPXX_` variables. Alternatively if you wanted to execute a job on its own you could simply type `backup01-now` (or whatever your number would be).
+Manual Backups can be performed by entering the container and typing `backup-now`. This will execute all the backup tasks that are scheduled by means of the `BACKUPXX_` variables. Alternatively if you wanted to execute a job on its own you could simply type `backup01-now` (or whatever your number would be). There is no concurrency, and jobs will be executed sequentially.
+
+### Manual Cleanup
+Manual Cleanup can be performed by entering the container and typing `cleanup-now`. This will execute all the cleanup tasks that are scheduled by means of the `CLEANUPXX_` variables. Alternatively if you wanted to execute a job on its own you could simply type `cleanup01-now` (or whatever your number would be). There is no concurrency, and jobs will be executed sequentially.
 
 ### Manual Checks
-Manua Checks can be performed by entering the container and typing `check-now`. This will execute all the backups that are scheduled by means of the `CHECKXX_` variables. Alternatively if you wanted to execute a job on its own you could simply type `check01-now` (or whatever your number would be).
+Manual Checks can be performed by entering the container and typing `check-now`. This will execute all the check tasks that are scheduled by means of the `CHECKXX_` variables. Alternatively if you wanted to execute a job on its own you could simply type `check01-now` (or whatever your number would be). There is no concurrency, and jobs will be executed sequentially.
+
+### Manual Inventory
+Manual Inventory can be performed by entering the container and typing `inventory-now`. This will execute all the prune tasks that are scheduled by means of the `INVENTORYXX_` variables. Alternatively if you wanted to execute a job on its own you could simply type `inventory01-now` (or whatever your number would be). There is no concurrency, and jobs will be executed sequentially.
 
 ### Manual Prune
-Manual Backups can be performed by entering the container and typing `prune-now`. This will execute all the backups that are scheduled by means of the `PRUNEXX_` variables. Alternatively if you wanted to execute a job on its own you could simply type `prune01-now` (or whatever your number would be).
+Manual Pruning can be performed by entering the container and typing `prune-now`. This will execute all the prune tasks that are scheduled by means of the `PRUNEXX_` variables. Alternatively if you wanted to execute a job on its own you could simply type `prune01-now` (or whatever your number would be). There is no concurrency, and jobs will be executed sequentially.
 
 ### Creating Server Users and Passwords
 Use the `server-user` command:
