@@ -1066,9 +1066,9 @@ EOF
         esac
 
         backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Backup procedure finished:          $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
-## Backup procedure total time:        $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
-## Backup procedure completion:        ${exitcode_backup_description} (${exitcode_backup})
+## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
+## Backup procedure total time:         $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
+## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
 
 ### Backup Details
 $(cat /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | sed "/^unchanged/d" )
