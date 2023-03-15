@@ -1,4 +1,4 @@
-# github.com/tiredofit/restic
+# github.com/tiredofit/docker-restic
 
 [![GitHub release](https://img.shields.io/github/v/tag/tiredofit/docker-restic?style=flat-square)](https://github.com/tiredofit/docker-restic/releases/latest)
 [![Build Status](https://img.shields.io/github/workflow/status/tiredofit/docker-restic/build?style=flat-square)](https://github.com/tiredofit/docker-restic/actions?query=workflow%3Abuild)
