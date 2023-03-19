@@ -1027,7 +1027,7 @@ EOF
                 backup_job_error_log=true
                 notify \
                         "$(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_routines_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_process_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
                         "{exitcode_backup}" \
                         "[FATAL] [${backup_job_log_suffix}] Backup failed completely" \
                         "Restic is failing to backup the '${backup_job_log_suffix}' job."
@@ -1042,7 +1042,7 @@ EOF
                 backup_job_error_log=true
                 notify \
                         "$(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_routines_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_process_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
                         "{exitcode_backup}" \
                         "[WARN] [${backup_job_log_suffix}] Backup completed with errors" \
                         "Restic is failing to perform a full backup of the '${backup_job_log_suffix}' job."
@@ -1058,7 +1058,7 @@ EOF
                 backup_job_error_log=true
                 notify \
                         "$(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_routines_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_process_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
                         "{exitcode_backup}" \
                         "[WARN] [${backup_job_log_suffix}] Backup failed due to unknown errors" \
                         "Restic is throwing an unknown error code while trying to backup the '${backup_job_log_suffix}' job."
@@ -1066,9 +1066,9 @@ EOF
         esac
 
         backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
-## Backup procedure total time:         $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
-## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
+## Backup procedure finished:            $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
+## Backup procedure total time:          $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
+## Backup procedure completion:          ${exitcode_backup_description} (${exitcode_backup})
 
 ### Backup Details
 $(cat /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | sed "/^unchanged/d" )
@@ -1145,7 +1145,6 @@ EOF
         else
             backup_job_backup_summary_error_count="0"
         fi
-        rm -rf /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".*
 
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
@@ -1178,6 +1177,8 @@ EOF
             unset "$(echo "${backup_instance_var}" | cut -d = -f 1)"
         done < "${backup_instance_vars}"
         rm -rf "${backup_instance_vars}"
+
+        rm -rf /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".{error,log}
     }
 
     check() {
@@ -1286,8 +1287,8 @@ EOF
                 --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                 --repository-file "${restic_repository}" \
                 check ${check_job_args} \
-                2> /tmp/check-${check_routines_start_time}.error \
-                > /tmp/check-${check_routines_start_time}.log
+                2> /tmp/${check_instance_number}-check-${check_routines_start_time}.error \
+                > /tmp/${check_instance_number}-check-${check_routines_start_time}.log
 
         exitcode_check=$?
         rm -rf "${restic_repository}"
@@ -1304,7 +1305,7 @@ EOF
                 exitcode_check_description="FAIL"
                 notify \
                         "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
+                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
                         "{exitcode_check}" \
                         "[FATAL] [${check_job_log_suffix}] Check failed completely" \
                         "Restic is failing to check the '${check_job_log_suffix}' job."
@@ -1314,7 +1315,7 @@ EOF
                 exitcode_check_description="ERROR"
                 notify \
                         "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
+                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
                         "{exitcode_check}" \
                         "[WARN] [${check_job_log_suffix}] Check completed with errors" \
                         "Restic is failing to perform a full check of the '${check_job_log_suffix}' job."
@@ -1324,7 +1325,7 @@ EOF
                 exitcode_check_description="UNKNOWN"
                 notify \
                         "$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_routines_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
+                        "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log \
                         "{exitcode_check}" \
                         "[WARN] [${check_job_log_suffix}] Check failed due to unknown errors" \
                         "Restic is throwing an unknown error code while trying to check the '${check_job_log_suffix}' job."
@@ -1338,14 +1339,14 @@ EOF
 ## Check procedure completion:         ${exitcode_check_description} (${exitcode_check})
 
 ### Check Details
-$(cat /tmp/check-"${check_routines_start_time}".log)
+$(cat /tmp/"${check_instance_number}"-check-"${check_routines_start_time}".log)
 
 EOF
                         )
 
-        if [ -s /tmp/check-"${check_routines_start_time}".error ] ; then
-            if grep -q "^error: .*" /tmp/check-"${check_routines_start_time}".error ; then
-                check_job_error_count=$(grep "^error: .*" /tmp/check-"${check_routines_start_time}".error | wc -l)
+        if [ -s /tmp/"${check_instance_number}"-check-"${check_routines_start_time}".error ] ; then
+            if grep -q "^error: .*" /tmp/"${check_instance_number}"-check-"${check_routines_start_time}".error ; then
+                check_job_error_count=$(grep "^error: .*" /tmp/"${check_instance_number}"-check-"${check_routines_start_time}".error | wc -l)
                 print_error "[check] ${check_job_error_count} errors detected"
             fi
             check_job_file_log=$(echo "${check_job_file_log}" ; cat <<EOF
@@ -1353,7 +1354,7 @@ EOF
 ### Error Log
 ## Errors: ${check_job_error_count}
 
-$(cat /tmp/check-${check_routines_start_time}.error)
+$(cat /tmp/${check_instance_number}-check-${check_routines_start_time}.error)
 
 
 EOF
@@ -1369,14 +1370,14 @@ EOF
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log ../latest-check-"${check_job_log_suffix}".log
 
-        if grep -q "^pack .* not referenced in any index" /tmp/check-"${check_routines_start_time}".log ; then
-            check_job_pack_unreferenced_count=$(grep "^pack .* not referenced in any index" /tmp/check-"${check_routines_start_time}".log | wc -l)
+        if grep -q "^pack .* not referenced in any index" /tmp/"${check_instance_number}"-check-"${check_routines_start_time}".log ; then
+            check_job_pack_unreferenced_count=$(grep "^pack .* not referenced in any index" /tmp/"${check_instance_number}"-check-"${check_routines_start_time}".log | wc -l)
             print_debug "[check] ${check_job_pack_unreferenced_count} unreferenced packs detected"
         fi
 
-        if grep -q "^\[.*\] .*% .* snapshots" /tmp/check-"${check_routines_start_time}".log ; then
-            check_job_snapshots_processed=$(grep "^\[.*\] .*% .* snapshots" /tmp/check-"${check_routines_start_time}".log | awk '{print $3}')
-            print_debug "[check] Processed ${check_job_snapshots_processed} of ${check_job_snapshots_total}"
+        if grep -q "^\[.*\] .*% .* snapshots" /tmp/"${check_instance_number}"-check-"${check_routines_start_time}".log ; then
+            check_job_snapshots_processed=$(grep "^\[.*\] .*% .* snapshots" /tmp/"${check_instance_number}"-check-"${check_routines_start_time}".log | awk '{print $3}')
+            print_debug "[check] Processed ${check_job_snapshots_processed}"
         fi
 
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
@@ -1402,6 +1403,8 @@ EOF
             unset "$(echo "${check_instance_var}" | cut -d = -f 1)"
         done < "${check_instance_vars}"
         rm -rf "${check_instance_vars}"
+
+        rm -rf /tmp/"${check_instance_number}"-check-"${check_routines_start_time}".{error,log}
     }
 
     cleanup() {
@@ -1528,7 +1531,7 @@ EOF
                                     )
         fi
 
-        if [ -n "${cleanup_job_prune_max_repack_size}" ] ; then
+        if [ -n "${cleanup_job_cleanup_max_repack_size}" ] ; then
             cleanup_job_args+="--max-repack-sze ${cleanup_job_cleanup_max_repack_size} "
             cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Max Repack Size :                   ${cleanup_job_cleanup_max_repack_size}
@@ -1650,7 +1653,7 @@ EOF
                 exitcode_cleanup_description="FAIL"
                 notify \
                     "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_process_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
                     "{exitcode_cleanup}" \
                     "[FATAL] [${cleanup_job_log_suffix}] Cleanup failed completely" \
                     "Restic is failing to cleanup the '${cleanup_job_log_suffix}' job."
@@ -1660,7 +1663,7 @@ EOF
                 exitcode_cleanup_description="ERROR"
                 notify \
                     "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_process_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
                     "{exitcode_cleanup}" \
                     "[WARN] [${cleanup_job_log_suffix}] Cleanup completed with errors" \
                     "Restic is failing to perform a full cleanup of the '${cleanup_job_log_suffix}' job."
@@ -1674,7 +1677,7 @@ EOF
                 exitcode_cleanup_description="UNKNOWN"
                 notify \
                     "$(date -d @"${cleanup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_routines_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
+                    "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${cleanup_process_start_time} +'%Y%m%d_%H%M%S')-cleanup-${cleanup_job_log_suffix}.log" \
                     "{exitcode_cleanup}" \
                     "[WARN] [${cleanup_job_log_suffix}] Cleanup failed due to unknown errors" \
                     "Restic is throwing an unknown error code while trying to cleanup the '${cleanup_job_log_suffix}' job."
@@ -1726,7 +1729,6 @@ EOF
                             )
         fi
 
-        rm -rf /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".*
         sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
         cat << EOF | silent sudo -u restic tee -a "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-${cleanup_job_log_suffix}.log
 ${cleanup_job_file_log}
@@ -1770,6 +1772,8 @@ EOF
             unset "$(echo "${cleanup_instance_var}" | cut -d = -f 1)"
         done < "${cleanup_instance_vars}"
         rm -rf "${cleanup_instance_vars}"
+
+        rm -rf /tmp/"${cleanup_instance_number}"-cleanup-"${cleanup_routines_start_time}".{error,log}
     }
 
     init() {
@@ -1981,8 +1985,8 @@ EOF
                 --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                 --repository-file "${restic_repository}" \
                 snapshots ${inventory_job_args} \
-                2> /tmp/inventory-${inventory_routines_start_time}.error \
-                > /tmp/inventory-${inventory_routines_start_time}.log
+                2> /tmp/${inventory_instance_number}-inventory-${inventory_routines_start_time}.error \
+                > /tmp/${inventory_instance_number}-inventory-${inventory_routines_start_time}.log
 
         exitcode_inventory=$?
         rm -rf "${restic_repository}"
@@ -1999,7 +2003,7 @@ EOF
                 exitcode_inventory_description="FAIL"
                 notify \
                         "$(date -d @"${inventory_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${inventory_routines_start_time} +'%Y%m%d_%H%M%S')-inventory-${inventory_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${inventory_process_start_time} +'%Y%m%d_%H%M%S')-inventory-${inventory_job_log_suffix}.log" \
                         "{exitcode_inventory}" \
                         "[FATAL] [${inventory_job_log_suffix}] Inventory failed completely" \
                         "Restic is failing to inventory the '${inventory_job_log_suffix}' job."
@@ -2009,7 +2013,7 @@ EOF
                 exitcode_inventory_description="ERROR"
                 notify \
                         "$(date -d @"${inventory_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${inventory_routines_start_time} +'%Y%m%d_%H%M%S')-inventory-${inventory_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${inventory_process_start_time} +'%Y%m%d_%H%M%S')-inventory-${inventory_job_log_suffix}.log" \
                         "{exitcode_inventory}" \
                         "[WARN] [${inventory_job_log_suffix}] Inventory completed with errors" \
                         "Restic is failing to perform a full inventory of the '${inventory_job_log_suffix}' job."
@@ -2019,7 +2023,7 @@ EOF
                 exitcode_inventory_description="UNKNOWN"
                 notify \
                         "$(date -d @"${inventory_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${inventory_routines_start_time} +'%Y%m%d_%H%M%S')-inventory-${inventory_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${inventory_process_start_time} +'%Y%m%d_%H%M%S')-inventory-${inventory_job_log_suffix}.log" \
                         "{exitcode_inventory}" \
                         "[WARN] [${inventory_job_log_suffix}] Inventory failed due to unknown errors" \
                         "Restic is throwing an unknown error code while trying to perform the '${inventory_job_log_suffix}' job."
@@ -2032,13 +2036,13 @@ EOF
 ## Inventory procedure completion:     ${exitcode_inventory_description} (${exitcode_inventory})
 
 ### Inventory Details
-$(cat /tmp/inventory-${inventory_routines_start_time}.log | awk '/ID/,/snapshots/')
+$(cat /tmp/${inventory_instance_number}-inventory-${inventory_routines_start_time}.log | awk '/ID/,/snapshots/')
 
 EOF
                         )
 
 
-        if [ -s /tmp/inventory-"${inventory_routines_start_time}".log ] ; then
+        if [ -s /tmp/"${inventory_instance_number}"-inventory-"${inventory_routines_start_time}".log ] ; then
             sudo -u restic mkdir -p "${LOG_PATH}"/"$(date +'%Y%m%d')"
             cat << EOF | silent sudo -u restic tee "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${inventory_process_start_time}" +'%Y%m%d_%H%M%S')"-inventory-${inventory_job_log_suffix}.log
 ${inventory_job_file_log}
@@ -2048,7 +2052,7 @@ EOF
             ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${inventory_process_start_time}" +'%Y%m%d_%H%M%S')"-inventory-${inventory_job_log_suffix}.log ../latest-inventory-${inventory_job_log_suffix}.log
         fi
 
-        inventory_job_snapshots_total=$(cat /tmp/inventory-"${inventory_routines_start_time}".log  | grep -E "[0-9]. snapshots$" | awk '{print $1}')
+        inventory_job_snapshots_total=$(cat /tmp/"${inventory_instance_number}"-inventory-"${inventory_routines_start_time}".log  | grep -E "[0-9]. snapshots$" | awk '{print $1}')
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
             print_notice "Sending Inventory Statistics to Zabbix"
@@ -2066,7 +2070,7 @@ EOF
         fi
 
         unset inventory_job_args
-        rm -rf /tmp/inventory-"${inventory_routines_start_time}".*
+        rm -rf /tmp/"${inventory_instance_number}"-inventory-"${inventory_routines_start_time}".{error,log}
     }
 
     prune() {
@@ -2195,8 +2199,8 @@ EOF
                 --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                 --repository-file "${restic_repository}" \
                 prune ${prune_job_args} \
-                2> /tmp/prune-${prune_routines_start_time}.error \
-                > /tmp/prune-${prune_routines_start_time}.log
+                2> /tmp/${prune_instance_number}-prune-${prune_routines_start_time}.error \
+                > /tmp/${prune_instance_number}-prune-${prune_routines_start_time}.log
 
         exitcode_prune=$?
         rm -rf "${restic_repository}"
@@ -2213,7 +2217,7 @@ EOF
                 exitcode_prune_description="FAIL"
                 notify \
                         "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_process_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
                         "{exitcode_prune}" \
                         "[FATAL] [${prune_job_log_suffix}] Prune failed completely" \
                         "Restic is failing to prune the '${prune_job_log_suffix}' job."
@@ -2223,7 +2227,7 @@ EOF
                 exitcode_prune_description="ERROR"
                 notify \
                         "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_process_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
                         "{exitcode_prune}" \
                         "[WARN] [${prune_job_log_suffix}] Prune completed with errors" \
                         "Restic is failing to perform a full prune of the '${prune_job_log_suffix}' job."
@@ -2233,7 +2237,7 @@ EOF
                 exitcode_prune_description="UNKNOWN"
                 notify \
                         "$(date -d @"${prune_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_routines_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${prune_process_start_time} +'%Y%m%d_%H%M%S')-prune-${prune_job_log_suffix}.log" \
                         "{exitcode_prune}" \
                         "[WARN] [${prune_job_log_suffix}] Prune failed due to unknown errors" \
                         "Restic is throwing an unknown error code while trying to prune the '${backup_job_log_suffix}' job."
@@ -2247,19 +2251,19 @@ EOF
 ## Prune procedure completion:         ${exitcode_prune_description} (${exitcode_prune})
 
 ### Prune Details
-$(cat /tmp/prune-${prune_routines_start_time}.log)
+$(cat /tmp/${prune_instance_number}-prune-${prune_routines_start_time}.log)
 
 EOF
                         )"
 
-        if [ -s /tmp/prune-"${prune_routines_start_time}".error ] ; then
-            prune_job_error_count=$(grep "^error: .*" /tmp/prune-"${prune_routines_start_time}".error | wc -l)
+        if [ -s /tmp/${prune_instance_number}-prune-"${prune_routines_start_time}".error ] ; then
+            prune_job_error_count=$(grep "^error: .*" /tmp/${prune_instance_number}-prune-"${prune_routines_start_time}".error | wc -l)
             print_error "${prune_job_error_count} errors detected"
             prune_job_file_log="$(echo "${prune_job_file_log}" ; cat <<EOF
 ### Error Log
 ## Errors: ${prune_job_error_count}
 
-$(cat /tmp/prune-${prune_routines_start_time}.error)
+$(cat /tmp/${prune_instance_number}-prune-${prune_routines_start_time}.error)
 
 EOF
                             )"
@@ -2273,12 +2277,12 @@ EOF
         cd "${LOG_PATH}"/"$(date +'%Y%m%d')"
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +'%Y%m%d_%H%M%S')"-prune-"${prune_job_log_suffix}".log ../latest-prune-"${prune_job_log_suffix}".log
 
-        prune_job_packs_reviewed=$(awk '/collecting packs for deletion and repacking/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $11}')
-        prune_job_packs_deleted_unreferenced=$(awk '/deleting unreferenced packs/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $8}')
-        prune_job_packs_repacked=$(awk '/repacking packs/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $7}')
-        prune_job_packs_reindexed=$(awk '/rebuilding index/,/packs processed/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $7}')
-        prune_job_index_deleted_obsolete=$(awk '/deleting obsolete index files/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $9}')
-        prune_job_packs_deleted_old=$(awk '/removing .* old packs/,/files deleted/' /tmp/prune-"${prune_routines_start_time}".log | xargs | awk '{print $9}')
+        prune_job_packs_reviewed=$(awk '/collecting packs for deletion and repacking/,/packs processed/' /tmp/${prune_instance_number}-prune-"${prune_routines_start_time}".log | xargs | awk '{print $11}')
+        prune_job_packs_deleted_unreferenced=$(awk '/deleting unreferenced packs/,/files deleted/' /tmp/${prune_instance_number}-prune-"${prune_routines_start_time}".log | xargs | awk '{print $8}')
+        prune_job_packs_repacked=$(awk '/repacking packs/,/packs processed/' /tmp/${prune_instance_number}-prune-"${prune_routines_start_time}".log | xargs | awk '{print $7}')
+        prune_job_packs_reindexed=$(awk '/rebuilding index/,/packs processed/' /tmp/${prune_instance_number}-prune-"${prune_routines_start_time}".log | xargs | awk '{print $7}')
+        prune_job_index_deleted_obsolete=$(awk '/deleting obsolete index files/,/files deleted/' /tmp/${prune_instance_number}-prune-"${prune_routines_start_time}".log | xargs | awk '{print $9}')
+        prune_job_packs_deleted_old=$(awk '/removing .* old packs/,/files deleted/' /tmp/${prune_instance_number}-prune-"${prune_routines_start_time}".log | xargs | awk '{print $9}')
 
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
@@ -2307,6 +2311,8 @@ EOF
             unset "$(echo "${prune_instance_var}" | cut -d = -f 1)"
         done < "${prune_instance_vars}"
         rm -rf "${prune_instance_vars}"
+
+        rm -rf /tmp/${prune_instance_number}-prune-"${prune_routines_start_time}".{error,log}
     }
 
     server() {
@@ -2422,7 +2428,7 @@ EOF
                 exitcode_unlock_description="FAIL"
                 notify \
                         "$(date -d @"${unlock_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${unlock_routines_start_time} +'%Y%m%d_%H%M%S')-unlock-${unlock_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${unlock_process_start_time} +'%Y%m%d_%H%M%S')-unlock-${unlock_job_log_suffix}.log" \
                         "{exitcode_unlock}" \
                         "[FATAL] [${unlock_job_log_suffix}] Unlock failed completely" \
                         "Restic is failing to unlock the '${unlock_job_log_suffix}' job."
@@ -2432,7 +2438,7 @@ EOF
                 exitcode_unlock_description="ERROR"
                 notify \
                         "$(date -d @"${unlock_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${unlock_routines_start_time} +'%Y%m%d_%H%M%S')-unlock-${unlock_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${unlock_process_start_time} +'%Y%m%d_%H%M%S')-unlock-${unlock_job_log_suffix}.log" \
                         "{exitcode_unlock}" \
                         "[WARN] [${unlock_job_log_suffix}] Unlock completed with errors" \
                         "Restic is failing to perform a full unlock of the '${unlock_job_log_suffix}' job."
@@ -2442,7 +2448,7 @@ EOF
                 exitcode_unlock_description="UNKNOWN"
                 notify \
                         "$(date -d @"${unlock_routines_start_time}" +'%Y%m%d_%H%M%S')" \
-                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${unlock_routines_start_time} +'%Y%m%d_%H%M%S')-unlock-${unlock_job_log_suffix}.log" \
+                        "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${unlock_process_start_time} +'%Y%m%d_%H%M%S')-unlock-${unlock_job_log_suffix}.log" \
                         "{exitcode_unlock}" \
                         "[WARN] [${unlock_job_log_suffix}] Unlock failed due to unknown errors" \
                         "Restic is throwing an unknown error code while trying to backup the '${unlock_job_log_suffix}' job."
@@ -2492,7 +2498,7 @@ EOF
         fi
 
         unset unlock_job_args
-        rm -rf /tmp/unlock-"${unlock_routines_start_time}".*
+        rm -rf /tmp/unlock-"${unlock_routines_start_time}".{error,log}
     }
 
     case "${1}" in

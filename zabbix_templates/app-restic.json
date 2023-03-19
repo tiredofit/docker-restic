@@ -1,7 +1,7 @@
 {
     "zabbix_export": {
         "version": "6.2",
-        "date": "2023-03-08T20:41:11Z",
+        "date": "2023-03-19T17:26:06Z",
         "template_groups": [
             {
                 "uuid": "3500ba09d0534297840ca620c9dd46bf",
@@ -212,7 +212,7 @@
                                         "uuid": "e6b41326cab742ce920b45545f8b1a69",
                                         "expression": "nodata(/Restic/restic.backup.start_date.[{#NAME}],2d)=1",
                                         "name": "[{#NAME}] No backups detected in 2 days",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
                                         "manual_close": "YES",
                                         "tags": [
                                             {
@@ -225,7 +225,7 @@
                                         "uuid": "bc54d2fa965e4a6c8fbcb1264635b4f6",
                                         "expression": "nodata(/Restic/restic.backup.start_date.[{#NAME}],3d)=1",
                                         "name": "[{#NAME}] No backups detected in 3 days",
-                                        "priority": "INFO",
+                                        "priority": "DISASTER",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -237,7 +237,7 @@
                                         "uuid": "fd66288606514cce9dfca5f2cf55eeaa",
                                         "expression": "nodata(/Restic/restic.backup.start_date.[{#NAME}],4d)=1",
                                         "name": "[{#NAME}] No backups detected in 4 days",
-                                        "priority": "INFO",
+                                        "priority": "DISASTER",
                                         "manual_close": "YES",
                                         "tags": [
                                             {
@@ -250,7 +250,7 @@
                                         "uuid": "98f2de17a15c4fff9cb6c83ee40bc0ce",
                                         "expression": "nodata(/Restic/restic.backup.start_date.[{#NAME}],5d)=1",
                                         "name": "[{#NAME}] No backups detected in 5 days",
-                                        "priority": "INFO",
+                                        "priority": "DISASTER",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -295,7 +295,7 @@
                                         "uuid": "e4e9626728f64d6ca614f3347da3ab2a",
                                         "expression": "last(/Restic/restic.backup.status.[{#NAME}])=2",
                                         "name": "[{#NAME}] Backup - Failed (2)",
-                                        "priority": "INFO",
+                                        "priority": "AVERAGE",
                                         "manual_close": "YES",
                                         "tags": [
                                             {
@@ -308,7 +308,7 @@
                                         "uuid": "b3be0f7bb9394c87bf0fec83ce4e4444",
                                         "expression": "last(/Restic/restic.backup.status.[{#NAME}])=1",
                                         "name": "[{#NAME}] Backup - Failed Completely",
-                                        "priority": "INFO",
+                                        "priority": "DISASTER",
                                         "manual_close": "YES",
                                         "tags": [
                                             {
@@ -321,7 +321,7 @@
                                         "uuid": "12b0f3c6e5954e8195c5217e19c41025",
                                         "expression": "last(/Restic/restic.backup.status.[{#NAME}])=3",
                                         "name": "[{#NAME}] Backup - Failed with errors",
-                                        "priority": "INFO",
+                                        "priority": "WARNING",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -333,7 +333,7 @@
                                         "uuid": "1340200a94c74988a768248aed1e8749",
                                         "expression": "(last(/Restic/restic.backup.status.[{#NAME}])>=4 and last(/Restic/restic.backup.status.[{#NAME}])<=129) or last(/Restic/restic.backup.status.[{#NAME}])>=131",
                                         "name": "[{#NAME}] Backup - Unknown Error",
-                                        "priority": "INFO",
+                                        "priority": "AVERAGE",
                                         "manual_close": "YES",
                                         "tags": [
                                             {
@@ -492,7 +492,7 @@
                                 "tags": [
                                     {
                                         "tag": "Application",
-                                        "value": "Restic"
+                                        "value": "Restic Check"
                                     }
                                 ],
                                 "trigger_prototypes": [
@@ -501,7 +501,13 @@
                                         "expression": "last(/Restic/restic.check.packs_unreferenced.[{#NAME}])>=1",
                                         "name": "[{#NAME}] Check - Unreferenced Packs",
                                         "priority": "INFO",
-                                        "manual_close": "YES"
+                                        "manual_close": "YES",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "Restic Check"
+                                            }
+                                        ]
                                     }
                                 ]
                             },
@@ -512,7 +518,13 @@
                                 "key": "restic.check.snapshots.processed.[{#NAME}]",
                                 "delay": "0",
                                 "history": "7d",
-                                "description": "Amount of Snapshots processed with Check Operation"
+                                "description": "Amount of Snapshots processed with Check Operation",
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "Restic Check"
+                                    }
+                                ]
                             },
                             {
                                 "uuid": "5c1785391f394afda66877e283725b7c",
@@ -533,11 +545,12 @@
                                         "uuid": "fb560a7a00a34c328e333773e1206638",
                                         "expression": "nodata(/Restic/restic.check.start_date.[{#NAME}],2d)=1",
                                         "name": "[{#NAME}] No check detected in 2 days",
-                                        "priority": "INFO",
+                                        "priority": "AVERAGE",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
-                                                "value": "Restic"
+                                                "value": "Restic Check"
                                             }
                                         ]
                                     },
@@ -545,11 +558,11 @@
                                         "uuid": "8d373fcbe6f44cc49cf2fe5bb3c1b18d",
                                         "expression": "nodata(/Restic/restic.check.start_date.[{#NAME}],3d)=1",
                                         "name": "[{#NAME}] No check detected in 3 days",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
                                         "tags": [
                                             {
                                                 "tag": "Application",
-                                                "value": "Restic"
+                                                "value": "Restic Check"
                                             }
                                         ]
                                     },
@@ -557,11 +570,11 @@
                                         "uuid": "f5fbc53f2848425192cf73ac22d07fea",
                                         "expression": "nodata(/Restic/restic.check.start_date.[{#NAME}],4d)=1",
                                         "name": "[{#NAME}] No check detected in 4 days",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
                                         "tags": [
                                             {
                                                 "tag": "Application",
-                                                "value": "Restic"
+                                                "value": "Restic Check"
                                             }
                                         ]
                                     },
@@ -569,11 +582,11 @@
                                         "uuid": "804833632261491aafe6c452b91ab37d",
                                         "expression": "nodata(/Restic/restic.check.start_date.[{#NAME}],5d)=1",
                                         "name": "[{#NAME}] No check detected in 5 days",
-                                        "priority": "INFO",
+                                        "priority": "DISASTER",
                                         "tags": [
                                             {
                                                 "tag": "Application",
-                                                "value": "Restic"
+                                                "value": "Restic Check"
                                             }
                                         ]
                                     }
@@ -606,7 +619,7 @@
                                         "tags": [
                                             {
                                                 "tag": "Application",
-                                                "value": "Restic"
+                                                "value": "Restic Check"
                                             }
                                         ]
                                     },
@@ -614,11 +627,11 @@
                                         "uuid": "d96ad6803d2c4ce08bec8564a7f03940",
                                         "expression": "last(/Restic/restic.check.status.[{#NAME}])=2",
                                         "name": "[{#NAME}] Check - Failed (2)",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
                                         "tags": [
                                             {
                                                 "tag": "Application",
-                                                "value": "Restic"
+                                                "value": "Restic Check"
                                             }
                                         ]
                                     },
@@ -626,11 +639,11 @@
                                         "uuid": "e3033771054b489d9bf64032b852ed69",
                                         "expression": "last(/Restic/restic.check.status.[{#NAME}])=1",
                                         "name": "[{#NAME}] Check - Failed Completely",
-                                        "priority": "INFO",
+                                        "priority": "DISASTER",
                                         "tags": [
                                             {
                                                 "tag": "Application",
-                                                "value": "Restic"
+                                                "value": "Restic Check"
                                             }
                                         ]
                                     },
@@ -638,11 +651,11 @@
                                         "uuid": "38de166f3839469982faf3d0723377ae",
                                         "expression": "last(/Restic/restic.check.status.[{#NAME}])=3",
                                         "name": "[{#NAME}] Check - Failed with errors",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
                                         "tags": [
                                             {
                                                 "tag": "Application",
-                                                "value": "Restic"
+                                                "value": "Restic Check"
                                             }
                                         ]
                                     },
@@ -650,11 +663,11 @@
                                         "uuid": "0a49fb717f0e4fecb919723e2e49c611",
                                         "expression": "(last(/Restic/restic.check.status.[{#NAME}])>=4 and last(/Restic/restic.check.status.[{#NAME}])<=129) or last(/Restic/restic.check.status.[{#NAME}])>=131",
                                         "name": "[{#NAME}] Check - Unknown Error",
-                                        "priority": "INFO",
+                                        "priority": "AVERAGE",
                                         "tags": [
                                             {
                                                 "tag": "Application",
-                                                "value": "Restic"
+                                                "value": "Restic Check"
                                             }
                                         ]
                                     }
@@ -777,7 +790,8 @@
                                         "uuid": "0010711e610d498ba97b248bf3659aae",
                                         "expression": "nodata(/Restic/restic.cleanup.start_date.[{#NAME}],2d)=1",
                                         "name": "[{#NAME}] No cleanup detected in 2 days",
-                                        "priority": "INFO",
+                                        "priority": "AVERAGE",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -789,7 +803,8 @@
                                         "uuid": "1ce6a9c83bf844219cf5cad75e2eb9b9",
                                         "expression": "nodata(/Restic/restic.cleanup.start_date.[{#NAME}],3d)=1",
                                         "name": "[{#NAME}] No cleanup detected in 3 days",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -801,7 +816,8 @@
                                         "uuid": "2e60613dbe9f479c81d007edd0678c7d",
                                         "expression": "nodata(/Restic/restic.cleanup.start_date.[{#NAME}],4d)=1",
                                         "name": "[{#NAME}] No cleanup detected in 4 days",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -813,7 +829,8 @@
                                         "uuid": "98fcf9922ec8434d97e1f676441c8a00",
                                         "expression": "nodata(/Restic/restic.cleanup.start_date.[{#NAME}],5d)=1",
                                         "name": "[{#NAME}] No cleanup detected in 5 days",
-                                        "priority": "INFO",
+                                        "priority": "DISASTER",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -845,7 +862,8 @@
                                         "uuid": "460577490a474c47ac9007d2055f0deb",
                                         "expression": "last(/Restic/restic.cleanup.status.[{#NAME}])=130",
                                         "name": "[{#NAME}] Cleanup - Cancelled",
-                                        "priority": "INFO",
+                                        "priority": "WARNING",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -857,7 +875,7 @@
                                         "uuid": "9610d81973c44cebafc06606e6f2f011",
                                         "expression": "last(/Restic/restic.cleanup.status.[{#NAME}])=2",
                                         "name": "[{#NAME}] Cleanup - Failed (2)",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
                                         "manual_close": "YES",
                                         "tags": [
                                             {
@@ -870,7 +888,7 @@
                                         "uuid": "d80e906f17b0403d924be7abc44aff1b",
                                         "expression": "last(/Restic/restic.cleanup.status.[{#NAME}])=1",
                                         "name": "[{#NAME}] Cleanup - Failed Completely",
-                                        "priority": "INFO",
+                                        "priority": "DISASTER",
                                         "manual_close": "YES",
                                         "tags": [
                                             {
@@ -883,7 +901,7 @@
                                         "uuid": "3256fcbad3e84578991091d4b56fa011",
                                         "expression": "last(/Restic/restic.cleanup.status.[{#NAME}])=3",
                                         "name": "[{#NAME}] Cleanup - Failed with errors",
-                                        "priority": "INFO",
+                                        "priority": "AVERAGE",
                                         "manual_close": "YES",
                                         "tags": [
                                             {
@@ -896,7 +914,7 @@
                                         "uuid": "30f1f84453d24368bffd712d6781c5a4",
                                         "expression": "(last(/Restic/restic.cleanup.status.[{#NAME}])>=4 and last(/Restic/restic.cleanup.status.[{#NAME}])<=129) or last(/Restic/restic.cleanup.status.[{#NAME}])>=131",
                                         "name": "[{#NAME}] Cleanup - Unknown Error",
-                                        "priority": "INFO",
+                                        "priority": "AVERAGE",
                                         "manual_close": "YES",
                                         "tags": [
                                             {
@@ -1071,7 +1089,8 @@
                                         "uuid": "49a49d1088b442d7a936443413218cd4",
                                         "expression": "nodata(/Restic/restic.prune.start_date.[{#NAME}],2d)=1",
                                         "name": "[{#NAME}] No prune detected in 2 days",
-                                        "priority": "INFO",
+                                        "priority": "AVERAGE",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -1083,7 +1102,8 @@
                                         "uuid": "6d6c4822b6bf4e74b7d61d34ffa38368",
                                         "expression": "nodata(/Restic/restic.prune.start_date.[{#NAME}],3d)=1",
                                         "name": "[{#NAME}] No prune detected in 3 days",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -1095,7 +1115,8 @@
                                         "uuid": "9ea5bf038da746dabe1825530081d55c",
                                         "expression": "nodata(/Restic/restic.prune.start_date.[{#NAME}],4d)=1",
                                         "name": "[{#NAME}] No prune detected in 4 days",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -1107,7 +1128,8 @@
                                         "uuid": "ba50dbb5852c466ab92eb3df3056389e",
                                         "expression": "nodata(/Restic/restic.prune.start_date.[{#NAME}],5d)=1",
                                         "name": "[{#NAME}] No prune detected in 5 days",
-                                        "priority": "INFO",
+                                        "priority": "DISASTER",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -1139,7 +1161,8 @@
                                         "uuid": "1f0f4fe517d547ffa779dec193b9eaf3",
                                         "expression": "last(/Restic/restic.prune.status.[{#NAME}])=130",
                                         "name": "[{#NAME}] Prune - Cancelled",
-                                        "priority": "INFO",
+                                        "priority": "WARNING",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -1151,7 +1174,8 @@
                                         "uuid": "dabaf8e173414e78b51ade288027f90b",
                                         "expression": "last(/Restic/restic.prune.status.[{#NAME}])=2",
                                         "name": "[{#NAME}] Prune - Failed (2)",
-                                        "priority": "INFO",
+                                        "priority": "HIGH",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -1163,7 +1187,8 @@
                                         "uuid": "65942e712d37440bb68b2d990dea3558",
                                         "expression": "last(/Restic/restic.prune.status.[{#NAME}])=1",
                                         "name": "[{#NAME}] Prune - Failed Completely",
-                                        "priority": "INFO",
+                                        "priority": "DISASTER",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -1175,7 +1200,8 @@
                                         "uuid": "c13e0531edbc43869a1b08a6e2ccc96f",
                                         "expression": "last(/Restic/restic.prune.status.[{#NAME}])=3",
                                         "name": "[{#NAME}] Prune - Failed with errors",
-                                        "priority": "INFO",
+                                        "priority": "AVERAGE",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",
@@ -1187,7 +1213,8 @@
                                         "uuid": "127a7b82fc074791b327f69e6c4909fd",
                                         "expression": "(last(/Restic/restic.prune.status.[{#NAME}])>=4 and last(/Restic/restic.prune.status.[{#NAME}])<=129) or last(/Restic/restic.prune.status.[{#NAME}])>=131",
                                         "name": "[{#NAME}] Prune - Unknown Error",
-                                        "priority": "INFO",
+                                        "priority": "AVERAGE",
+                                        "manual_close": "YES",
                                         "tags": [
                                             {
                                                 "tag": "Application",

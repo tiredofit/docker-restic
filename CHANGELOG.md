@@ -1,3 +1,16 @@
+## 1.0.2 2023-03-19 <dave at tiredofit dot ca>
+
+   ### Added
+      - RClone 1.62.1
+
+   ### Changed
+      - Fix indentation with backup logs
+      - Fix Job started detail in logs not changing per execution
+      - Better handle concurrent check/cleanup/prune job logging
+      - Fix for notifications not stating the right log file name
+      - Safer temporary files deletion
+
+
 ## 1.0.1 2023-03-10 <dave at tiredofit dot ca>
 
    ### Changed
