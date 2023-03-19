@@ -1532,9 +1532,9 @@ EOF
         fi
 
         if [ -n "${cleanup_job_cleanup_max_repack_size}" ] ; then
-            cleanup_job_args+="--max-repack-sze ${cleanup_job_cleanup_max_repack_size} "
+            cleanup_job_args+="--max-repack-size ${cleanup_job_cleanup_max_repack_size} "
             cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
-## Max Repack Size :                   ${cleanup_job_cleanup_max_repack_size}
+## Max Repack Size:                    ${cleanup_job_cleanup_max_repack_size}
 EOF
                                     )
         fi
@@ -2134,7 +2134,7 @@ EOF
         if [ -n "${prune_job_prune_max_repack_size}" ] ; then
             prune_job_args+="--max-repack-size ${prune_job_prune_max_repack_size} "
             prune_job_file_log=$(echo "${prune_job_file_log}" ; cat <<EOF
-## Max Repack Size :                   ${prune_job_prune_max_repack_size}
+## Max Repack Size:                    ${prune_job_prune_max_repack_size}
 EOF
                                     )
         fi

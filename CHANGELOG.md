@@ -1,3 +1,9 @@
+## 1.0.3 2023-03-19 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix issue where cleanup has a max-repack-size
+
+
 ## 1.0.2 2023-03-19 <dave at tiredofit dot ca>
 
    ### Added
