@@ -1704,7 +1704,7 @@ EOF
 
         cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
 ## Cleanup procedure finished:         $(date -d @${cleanup_process_finish_time} +'%Y-%m-%d %H:%M:%S') (${cleanup_process_finish_time})
-## Cleanup procedure total time:       $(echo ${cleanup_routines_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${cleanup_process_total_time})
+## Cleanup procedure total time:       $(echo ${cleanup_process_total_time} | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${cleanup_process_total_time})
 ## Cleanup procedure completion:       ${exitcode_cleanup_description} (${exitcode_cleanup})
 
 ### Cleanup Details
