@@ -959,7 +959,7 @@ EOF
             esac
             backup_job_args+="--verbose=${backup_job_snapshot_verbosity_level} "
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Verbosity Level:                    ${backup_job_snapshot_verbosity_level}
+## Verbosity Level:                     ${backup_job_snapshot_verbosity_level}
 EOF
                             )
         fi

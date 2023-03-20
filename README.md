@@ -340,7 +340,7 @@ If set, these variables will be passed to each cleanup job, unless each job expl
 | `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                                 |              |
 | `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                  |              |
 | `DEFAULT_CLEANUP_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations     |              |
-| `DEFAULT_CLEANUP_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`                                                                            |              |
+| `DEFAULT_CLEANUP_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                           |              |
 | `DEFAULT_CLEANUP_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                   | `5%`         |
 | `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE` |              |
 | `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                            |              |
@@ -374,7 +374,7 @@ Additional backup jobs can be scheduled by using `CLEANUP02_`,`CLEANUP03_`,`CLEA
 | `CLEANUP01_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                             |              |
 | `CLEANUP01_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations                |              |
 | `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |              |
-| `CLEANUP01_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`                                                                                       |              |
+| `CLEANUP01_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                                      |              |
 | `CLEANUP01_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                              | `5%`         |
 | `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |              |
 | `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`            |              |
@@ -474,7 +474,7 @@ If set, these variables will be passed to each prune job, unless each job explic
 | `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                               |         |
 | `DEFAULT_PRUNE_HOOK_POST`       | Path and Filename to execute post prune operation                                                                                   |         |
 | `DEFAULT_PRUNE_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                                                    |         |
-| `DEFAULT_PRUNE_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`                                                                            |         |
+| `DEFAULT_PRUNE_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                           |         |
 | `DEFAULT_PRUNE_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                   | `5%`    |
 | `DEFAULT_PRUNE_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE` |         |
 | `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                      |         |
@@ -497,7 +497,7 @@ Additional prune jobs can be scheduled by using `PRUNE02_`,`PRUNE03_`,`PRUNE04_`
 | `PRUNE01_HOOK_POST`       | Path and Filename to execute post prune operation                                                                                              |         |
 | `PRUNE01_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                                                               |         |
 | `PRUNE01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |
-| `PRUNE01_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`                                                                                       |         |
+| `PRUNE01_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                                      |         |
 | `PRUNE01_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                              | `5%`    |
 | `PRUNE01_NAME`            | A friendly name to reference your prune snapshot job eg `repository_name`                                                                      |         |
 | `PRUNE01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`            |         |
