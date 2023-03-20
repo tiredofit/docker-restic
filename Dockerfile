@@ -19,7 +19,7 @@ ENV RESTIC_VERSION=v0.15.1 \
     NGINX_ENABLE_CREATE_SAMPLE_HTML=FALSE \
     NGINX_WORKER_PROCESSES=1 \
     IMAGE_NAME="tiredofit/restic" \
-    IMAGE_REPO_URL="https://github.com/tiredofit/restic/"
+    IMAGE_REPO_URL="https://github.com/tiredofit/docker-restic/"
 
 RUN source assets/functions/00-container && \
     set -x && \
