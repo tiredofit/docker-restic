@@ -373,7 +373,7 @@ create_schedulers() {
     backup() {
         bootstrap_variables upgrade BACKUP
         local backup_instances=$(printenv | sort | grep -c "^BACKUP[0-9]._SNAPSHOT_PATH")
-        for (( instance = 01; instance <= backup_instances; instance++ )) ; do
+        for (( instance = 01; instance <= backup_instances; )) ; do
             instance=$(printf "%02d" $instance)
             if [ -v BACKUP${instance}_REPOSITORY_PATH ] && [ "$(set -o posix; set | grep -E "^BACKUP${instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
                 echo "BACKUP${instance} $(grep -E "^BACKUP${instance}_REPOSITORY_PATH" | cut -d = -f 2)" >> /tmp/.container/toi_restic/INIT_REPOSITORIES
@@ -406,13 +406,15 @@ EOF
             else
                 echo "/usr/bin/backup${instance}-now" >> /usr/bin/backup-now
             fi
+
+            instance=$(echo "${instance} +1" | bc)
         done
     }
 
     check() {
         bootstrap_variables upgrade CHECK
         check_instances=$(set -o posix ; set | sort | grep -E "^CHECK[0-9]._" | cut -d _ -f1 | uniq | wc -l)
-        for (( instance = 01; instance <= check_instances; instance++ )) ; do
+        for (( instance = 01; instance <= check_instances; )) ; do
             instance=$(printf "%02d" $instance)
 
             if [ -v CHECK${instance}_REPOSITORY_PATH ] && [ "$(set -o posix; set | grep -E "^CHECK${instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
@@ -446,13 +448,14 @@ EOF
             else
                 echo "/usr/bin/check${instance}-now" >> /usr/bin/check-now
             fi
+            instance=$(echo "${instance} +1" | bc)
         done
     }
 
     cleanup() {
         bootstrap_variables upgrade CLEANUP
         cleanup_instances=$(set -o posix ; set | sort | grep -E "^CLEANUP[0-9]._" | cut -d _ -f1 | uniq | wc -l)
-        for (( instance = 01; instance <= cleanup_instances; instance++ )) ; do
+        for (( instance = 01; instance <= cleanup_instances; )) ; do
             instance=$(printf "%02d" $instance)
 
             if [ -v CLEANUP${instance}_REPOSITORY_PATH ] && [ "$(set -o posix; set | grep -E "^CLEANUP${instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
@@ -487,6 +490,7 @@ EOF
             else
                 echo "/usr/bin/cleanup${instance}-now" >> /usr/bin/cleanup-now
             fi
+            instance=$(echo "${instance} +1" | bc)
         done
     }
 
@@ -503,7 +507,7 @@ EOF
     inventory() {
         bootstrap_variables upgrade INVENTORY
         inventory_instances=$(set -o posix ; set | sort | grep -E "^INVENTORY[0-9]._" | cut -d _ -f1 | uniq | wc -l)
-        for (( instance = 01; instance <= inventory_instances; instance++ )) ; do
+        for (( instance = 01; instance <= inventory_instances; )) ; do
             instance=$(printf "%02d" $instance)
 
             if [ -v INVENTORY${instance}_REPOSITORY_PATH ] && [ "$(set -o posix; set | grep -E "^INVENTORY${instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
@@ -538,13 +542,14 @@ EOF
             else
                 echo "/usr/bin/inventory${instance}-now" >> /usr/bin/inventory-now
             fi
+            instance=$(echo "${instance} +1" | bc)
         done
     }
 
     prune() {
         bootstrap_variables upgrade PRUNE
         local prune_instances=$(set -o posix ; set | sort | grep -E "^PRUNE[0-9]._" | cut -d _ -f1 | uniq | wc -l)
-        for (( instance = 01; instance <= prune_instances; instance++ )) ; do
+        for (( instance = 01; instance <= prune_instances; )) ; do
             instance=$(printf "%02d" $instance)
 
             if [ -v PRUNE${instance}_REPOSITORY_PATH ] && [ "$(set -o posix; set | grep -E "^PRUNE${instance}_REPOSITORY_PATH" | cut -d = -f 2)" != "unset" ]; then
@@ -579,6 +584,7 @@ EOF
             else
                 echo "/usr/bin/prune${instance}-now" >> /usr/bin/prune-now
             fi
+        instance=$(echo "${instance} +1" | bc)
         done
     }
 
@@ -1019,12 +1025,13 @@ EOF
             ;;
             1 )
                 exitcode_backup_description="FAIL"
-                backup_job_error_log=true
-                if grep -q "^Fatal: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
-                    backup_fatal_error="- Fatal errors detected"
+                if [ -f /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ] ; then
+                    if grep -q "^Fatal: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
+                        backup_fatal_error="- Fatal errors detected"
+                    fi
+                    print_error "Backup Failed completely ${backup_fatal_error}"
+                    backup_job_error_log=true
                 fi
-                print_error "Backup Failed completely ${backup_fatal_error}"
-                backup_job_error_log=true
                 notify \
                         "$(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
                         "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_process_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
@@ -1034,12 +1041,14 @@ EOF
             ;;
             3 )
                 exitcode_backup_description="ERROR"
-                if grep -q "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
-                    backup_error_count="$(grep -c "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error)"
+                if [ -f /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ] ; then
+                    if grep -q "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ; then
+                        backup_error_count="$(grep -c "^error: .*" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error)"
+                    fi
+                    backup_error_description="#### Error Count: ${backup_error_count}"
+                    print_error "Backup completed with ${backup_error_count} errors detected"
+                    backup_job_error_log=true
                 fi
-                backup_error_description="#### Error Count: ${backup_error_count}"
-                print_error "Backup completed with ${backup_error_count} errors detected"
-                backup_job_error_log=true
                 notify \
                         "$(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
                         "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_process_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
@@ -1055,7 +1064,9 @@ EOF
             * )
                 print_error "Backup Failed with exit code ${exitcode_backup}"
                 exitcode_backup_description="UNKNOWN"
-                backup_job_error_log=true
+                if [ -f /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error ] ; then
+                    backup_job_error_log=true
+                fi
                 notify \
                         "$(date -d @"${backup_routines_start_time}" +'%Y%m%d_%H%M%S')" \
                         "${LOG_PATH}/$(date +'%Y%m%d')/$(date -d @${backup_process_start_time} +'%Y%m%d_%H%M%S')-backup-${backup_job_log_suffix}.log" \
@@ -1066,9 +1077,9 @@ EOF
         esac
 
         backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
-## Backup procedure finished:            $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
-## Backup procedure total time:          $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
-## Backup procedure completion:          ${exitcode_backup_description} (${exitcode_backup})
+## Backup procedure finished:           $(date -d @"${backup_process_finish_time}" +'%Y-%m-%d %H:%M:%S') (${backup_process_finish_time})
+## Backup procedure total time:         $(echo "${backup_process_total_time}" | awk '{printf "%dh%02dm%02ds", $1/3600, ($1/60)%60, $1%60}') (${backup_process_total_time})
+## Backup procedure completion:         ${exitcode_backup_description} (${exitcode_backup})
 
 ### Backup Details
 $(cat /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | sed "/^unchanged/d" )
@@ -1098,48 +1109,34 @@ EOF
         ln -sf "$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +'%Y%m%d_%H%M%S')"-backup-"${backup_job_log_suffix}".log ../latest-backup-"${backup_job_log_suffix}".log
 
         backup_job_backup_summary_files=$(grep "^Files:" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | xargs | sed "s|Files:||g")
-        print_debug "[summary] Backup Summary Files: ${backup_job_backup_summary_files}"
         backup_job_backup_summary_files_new=$(echo "${backup_job_backup_summary_files}" | awk '{print $1}')
-        print_debug "[summary] Files new: ${backup_job_backup_summary_files_new}"
         backup_job_backup_summary_files_changed=$(echo "${backup_job_backup_summary_files}" | awk '{print $3}')
-        print_debug "[summary] Files changed: ${backup_job_backup_summary_files_changed}"
         backup_job_backup_summary_files_unmodified=$(echo "${backup_job_backup_summary_files}" | awk '{print $5}')
-        print_debug "[summary] Files unmodified: ${backup_job_backup_summary_files_unmodified}"
         backup_job_backup_summary_directory=$(grep "^Dirs:" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | xargs | sed "s|Dirs:||g")
-        print_debug "[summary] Backup_summary_directory: ${backup_job_backup_summary_directory}"
         backup_job_backup_summary_directory_new=$(echo "${backup_job_backup_summary_directory}" | awk '{print $1}')
-        print_debug "[summary] Directory new: ${backup_job_backup_summary_directory_new}"
         backup_job_backup_summary_directory_changed=$(echo "${backup_job_backup_summary_directory}" | awk '{print $3}')
-        print_debug "[summary] Directory changed: ${backup_job_backup_summary_directory_changed}"
         backup_job_backup_summary_directory_unmodified=$(echo "${backup_job_backup_summary_directory}" | awk '{print $5}')
-        print_debug "[summary] Directory unmodified: ${backup_job_backup_summary_directory_unmodified}"
         backup_job_backup_summary_added=$(grep "^Added to the repository:" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | xargs | sed "s|Added to the repository:||g" | tr "," "\n")
-        print_debug "[summary] Backup_summary added: ${backup_job_backup_summary_added}"
         backup_job_backup_summary_added_size_bytes=$(echo "${backup_job_backup_summary_added}" | awk '{print$1 $2}')
         if [ "${backup_job_backup_summary_added_size_bytes}" = "0B" ] ; then
             backup_job_backup_summary_added_size_bytes=0
         else
             backup_job_backup_summary_added_size_bytes=$(echo "${backup_job_backup_summary_added}" | awk '{print$1 $2}' | numfmt --from=iec-i --to=none --suffix=B 2>/dev/null| sed "s|B$||g")
         fi
-        print_debug "[summary] added size bytes: ${backup_job_backup_summary_added_size_bytes}"
         backup_job_backup_summary_added_size_stored_bytes=$(echo "${backup_job_backup_summary_added}" | awk '{print$3 $4}' | sed -e "s|(||g" -e "s|)||g" )
         if [ "${backup_job_backup_summary_added_size_stored_bytes}" = "0B" ] ; then
             backup_job_backup_summary_added_size_stored_bytes=0
         else
             backup_job_backup_summary_added_size_stored_bytes=$(echo "${backup_job_backup_summary_added}" | awk '{print$3 $4}' | sed -e "s|(||g" -e "s|)||g" | numfmt --from=iec-i --to=none --suffix=B 2>/dev/null| sed "s|B$||g")
         fi
-        print_debug "[summary] Added size stored bytes: ${backup_job_backup_summary_added_size_stored_bytes}"
         backup_job_backup_summary_processed=$(grep "^processed" /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log | sed "s|processed||g" )
-        print_debug "[summary] Backup_summary processed: ${backup_job_backup_summary_processed}"
         backup_job_backup_summary_proccessed_files=$(echo "${backup_job_backup_summary_processed}" | awk '{print $1}')
-        print_debug "[summary] Processed files: ${backup_job_backup_summary_proccessed_files}"
         backup_job_backup_summary_processed_size_bytes=$(echo "${backup_job_backup_summary_processed}" | awk '{print $3 $4}')
         if [ "${backup_job_backup_summary_processed_size_bytes}" = "0B" ] ; then
             backup_job_backup_summary_processed_size_bytes=0
         else
             backup_job_backup_summary_processed_size_bytes=$(echo "${backup_job_backup_summary_processed}" | awk '{print $3 $4}' | numfmt --from=iec-i --to=none --suffix=B 2>/dev/null | sed "s|B$||g")
         fi
-        print_debug "[summary] Processed size bytes: ${backup_job_backup_summary_processed_size_bytes}"
         if [ -n "${backup_error_count}" ] ; then
             backup_job_backup_summary_error_count="${backup_error_count}"
         else

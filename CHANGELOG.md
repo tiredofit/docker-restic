@@ -1,3 +1,12 @@
+## 1.0.4 2023-03-27 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Logfile cleanup
+      - Get rid of some debug statements that are no longer needed
+      - Fix weird issue with for loop reading numbers as base 8
+      - Do a better errlog check for some specific cases
+
+
 ## 1.0.3 2023-03-19 <dave at tiredofit dot ca>
 
    ### Changed
