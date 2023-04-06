@@ -221,8 +221,6 @@ Additional backup jobs can be scheduled by using `BACKUP02_`,`BACKUP03_`,`BACKUP
 | `BACKUP01_SNAPSHOT_HOOK_POST`       | Path and Filename to execute post snapshot operation                                                                                           |         |
 | `BACKUP01_SNAPSHOT_HOOK_PRE`        | Path and Filename to execute pre snapshot operation                                                                                            |         |
 | `BACKUP01_SNAPSHOT_INTERVAL`        | Frequency after first execution of firing backup routines again in                                                                             |         |
-| `BACKUP01_SNAPSHOT_NAME`            | A friendly name to reference your snapshot job eg home, or var_local                                                                           |         |
-| `BACKUP01_SNAPSHOT_PATH`            | The path to backup from your filesystem eg `/rootfs/home`                                                                                      |         |
 | `BACKUP01_SNAPSHOT_EXCLUDE`         | Comma seperated list of files or paths to exclude from backup eg `.snapshots,.cache`                                                           |         |
 | `BACKUP01_SNAPSHOT_EXCLUDE_FILE`    | Line seperated list of files or directories to exclude                                                                                         |         |
 | `BACKUP01_SNAPSHOT_PATH`            | Folder or file to backup eg `/etc`                                                                                                             |         |
@@ -251,8 +249,8 @@ server container_name BACKUP 01 backupjobname rest:username:password@http://repo
 
 #### Check Options
 
-This allows restic to check your repository for errors. There is functionality to check minimally, a subset of the fata, or all data.
-A Check job requires exlcusive access to the Restic Repository, therefore no other jobs should be running on them at any time.
+This allows restic to check your repository for errors. There is functionality to check minimally, a subset of the data, or all data.
+A Check job requires exclusive access to the Restic Repository, therefore no other jobs should be running on them at any time.
 
 ##### Default Check Options
 
@@ -323,7 +321,7 @@ server container_name CHECK 01 checkjobname rest:username:password@http://repo.u
 
 This allows restic to cleanup old backups from your repository, only retaining snapshots that have a certain criteria.
 By default this does not actually delete the files from your repository, only the snapshot references. You can run a seperate `PRUNE` job, or use the included `AUTO_PRUNE` environment variable.
-A Cleanup job requires exlcusive access to the Restic Repository, therefore no other jobs should be running on them at any time.
+A Cleanup job requires exclusive access to the Restic Repository, therefore no other jobs should be running on them at any time.
 
 ##### Default Cleanup Options
 
@@ -460,7 +458,7 @@ server container_name INVENTORY 01 cleaupname rest:username:password@http://repo
 #### Prune Options
 
 This allows restic to delete from the repository filesystem the snapshots that have been marked as "cleaned up".
-A Prune job requires exlcusive access to the Restic Repository, therefore no other jobs should be running on them at any time.
+A Prune job requires exclusive access to the Restic Repository, therefore no other jobs should be running on them at any time.
 
 ##### Default Prune Options
 
