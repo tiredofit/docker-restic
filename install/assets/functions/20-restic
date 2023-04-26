@@ -777,6 +777,9 @@ notify() {
     }
 
     notification_email() {
+        transform_file_var \
+                                SMTP_HOST \
+                                SMTP_PORT
         if [ -z "${MAIL_FROM}" ] ; then print_error "[notifications] No MAIL_FROM variable set - Skipping sending Email notifications" ; skip_mail=true ; fi
         if [ -z "${MAIL_TO}" ] ; then print_error "[notifications] No MAIL_TO variable set - Skipping sending Email notifications" ; skip_mail=true ; fi
         if [ -z "${SMTP_HOST}" ] ; then print_error "[notifications] No SMTP_HOST variable set - Skipping sending Email notifications" ; skip_mail=true ; fi
@@ -800,6 +803,10 @@ EOF
     }
 
     notification_mattermost() {
+        transform_file_var \
+                                MATTERMOST_RECIPIENT \
+                                MATTERMOST_USERNAME \
+                                MATTERMOST_WEBHOOK_URL
         if [ -z "${MATTERMOST_RECIPIENT}" ] ; then print_error "[notifications] No MATTERMOST_RECIPIENT variable set - Skipping sending Mattermost notifications" ; skip_mattermost=true ; fi
         if [ -z "${MATTERMOST_USERNAME}" ] ; then print_error "[notifications] No MATTERMOST_USERNAME variable set - Skipping sending Mattermost notifications" ; skip_mattermost=true ; fi
         if [ -z "${MATTERMOST_WEBHOOK_URL}" ] ; then print_error "[notifications] No MATTERMOST_WEBHOOK_URL variable set - Skipping sending Mattermost notifications" ; skip_mattermost=true ; fi
@@ -818,6 +825,10 @@ EOF
     }
 
     notification_matrix() {
+        transform_file_var \
+                                MATRIX_HOST \
+                                MATRIX_ROOM \
+                                MATRIX_ACCESS_TOKEN
         if [ -z "${MATRIX_HOST}" ] ; then print_error "[notifications] No MATRIX_HOST variable set - Skipping sending matrix notifications" ; skip_matrix=true ; fi
         if [ -z "${MATRIX_ROOM}" ] ; then print_error "[notifications] No MATRIX_ROOM variable set - Skipping sending matrix notifications" ; skip_matrix=true ; fi
         if [ -z "${MATRIX_ACCESS_TOKEN}" ] ; then print_error "[notifications] No MATRIX_ACCESS_TOKEN variable set - Skipping sending matrix notifications" ; skip_matrix=true ; fi
@@ -833,6 +844,10 @@ EOF
     }
 
     notification_rocketchat() {
+        transform_file_var \
+                                ROCKETCHAT_RECIPIENT \
+                                ROCKETCHAT_USERNAME \
+                                ROCKETCHAT_WEBHOOK_URL
         if [ -z "${ROCKETCHAT_RECIPIENT}" ] ; then print_error "[notifications] No ROCKETCHAT_RECIPIENT variable set - Skipping sending Rocket.Chat notifications" ; skip_rocketchat=true ; fi
         if [ -z "${ROCKETCHAT_USERNAME}" ] ; then print_error "[notifications] No ROCKETCHAT_USERNAME variable set - Skipping sending Rocket.Chat notifications" ; skip_rocketchat=true ; fi
         if [ -z "${ROCKETCHAT_WEBHOOK_URL}" ] ; then print_error "[notifications] No ROCKETCHAT_WEBHOOK_URL variable set - Skipping sending Rocket.Chat notifications" ; skip_rocketchat=true ; fi
