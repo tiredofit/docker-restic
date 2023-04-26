@@ -50,6 +50,14 @@ bootstrap_variables() {
             unset "$(echo "${backup_instance_var}" | cut -d = -f 1)"
         done < "${backup_instance_vars}"
 
+        transform_file_var \
+                                BACKUP"${backup_instance_number}"_REPOSITORY_PASS \
+                                BACKUP"${backup_instance_number}"_REPOSITORY_PATH \
+                                DEFAULT_BACKUP_REPOSITORY_PASS \
+                                DEFAULT_BACKUP_REPOSITORY_PATH \
+                                REPOSITORY_PASS \
+                                REPOSITORY_PATH
+
         if [ -v "$(echo BACKUP"${backup_instance_number}"_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
             export RESTIC_PASSWORD="$(set -o posix; set | grep -E "^BACKUP${backup_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)"
         elif [ -n "${DEFAULT_BACKUP_REPOSITORY_PASS}" ] && [ "${DEFAULT_BACKUP_REPOSITORY_PASS}" != "unset" ]; then
@@ -102,6 +110,14 @@ bootstrap_variables() {
             unset "$(echo "${check_instance_var}" | cut -d = -f 1)"
         done < "${check_instance_vars}"
 
+        transform_file_var \
+                                CHECK"${check_instance_number}"_REPOSITORY_PASS \
+                                CHECK"${check_instance_number}"_REPOSITORY_PATH \
+                                DEFAULT_CHECK_REPOSITORY_PASS \
+                                DEFAULT_CHECK_REPOSITORY_PATH \
+                                REPOSITORY_PASS \
+                                REPOSITORY_PATH
+
         set -o posix ; set | grep -E "^CHECK${check_instance_number}_|^DEFAULT_CHECK_" | tr " " "\n" > "${check_instance_vars}"
 
         if [ -v "$(echo CHECK${check_instance_number}_REPOSITORY_PASS)" ] && [ "$(set -o posix; set | grep -E "^CHECK${check_instance_number}_REPOSITORY_PASS" | cut -d = -f 2)" != "unset" ]; then
@@ -151,6 +167,14 @@ bootstrap_variables() {
         while read -r cleanup_instance_var ; do
             unset "$(echo "${cleanup_instance_var}" | cut -d = -f 1)"
         done < "${cleanup_instance_vars}"
+
+        transform_file_var \
+                                CLEANUP"${cleanup_instance_number}"_REPOSITORY_PASS \
+                                CLEANUP"${cleanup_instance_number}"_REPOSITORY_PATH \
+                                DEFAULT_CLEANUP_REPOSITORY_PASS \
+                                DEFAULT_CLEANUP_REPOSITORY_PATH \
+                                REPOSITORY_PASS \
+                                REPOSITORY_PATH
 
         set -o posix ; set | grep -E "^CLEANUP${cleanup_instance_number}_|^DEFAULT_CLEANUP_" | tr " " "\n" > "${cleanup_instance_vars}"
 
@@ -208,6 +232,15 @@ bootstrap_variables() {
         inventory_instance_number=${1}
         PROCESS_NAME=inventory${inventory_instance_number}
         inventory_instance_vars=$(mktemp)
+
+        transform_file_var \
+                                INVENTORY"${inventory_instance_number}"_REPOSITORY_PASS \
+                                INVENTORY"${inventory_instance_number}"_REPOSITORY_PATH \
+                                DEFAULT_INVENTORY_REPOSITORY_PASS \
+                                DEFAULT_INVENTORY_REPOSITORY_PATH \
+                                REPOSITORY_PASS \
+                                REPOSITORY_PATH
+
         set -o posix ; set | grep -oE "^inventory_job_.*=" | tr " " "\n" | grep -oE ".*=" | sed "/--/d" > "${inventory_instance_vars}"
         while read -r inventory_instance_var ; do
             unset "$(echo "${inventory_instance_var}" | cut -d = -f 1)"
