@@ -1,3 +1,12 @@
+## 1.1.2 2023-07-05 <dave at tiredofit dot ca>
+
+   ### Added
+      - RClone 1.63.0
+
+   ### Changed
+      - Fix errors not showing up in backup log file
+
+
 ## 1.1.1 2023-05-10 <dave at tiredofit dot ca>
 
    ### Added

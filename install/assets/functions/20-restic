@@ -1141,7 +1141,7 @@ EOF
 #### Error Log
 ${backup_error_description}
 
-$(cat "${backup_instance_number}"-backup-"${backup_routines_start_time}".error)
+$(cat /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error)
 
 EOF
                             )

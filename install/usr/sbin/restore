@@ -1,0 +1,76 @@
+#!/command/with-contenv /bin/bash
+
+source /assets/functions/00-container
+source /assets/defaults/10-db-backup
+source /assets/functions/10-db-backup
+PROCESS_NAME="db-backup-restore"
+
+oldcolumns=$COLUMNS
+
+########################################################################################
+### System Functions                                                                 ###
+########################################################################################
+### Colours
+# Foreground (Text) Colors
+cdgy="\e[90m"      # Color Dark Gray
+clg="\e[92m"       # Color Light Green
+clm="\e[95m"       # Color Light Magenta
+cwh="\e[97m"       # Color White
+
+# Turns off all formatting
+coff="\e[0m"       # Color Off
+
+# Background Colors
+bdr="\e[41m"       # Background Color Dark Red
+bdg="\e[42m"       # Background Color Dark Green
+bdb="\e[44m"       # Background Color Dark Blue
+bdm="\e[45m"       # Background Color Dark Magenta
+bdgy="\e[100m"     # Background Color Dark Gray
+blr="\e[101m"      # Background Color Light Red
+boff="\e[49m"      # Background Color Off
+
+bootstrap_variables
+
+if [ -z "${1}" ] ; then
+    interactive_mode=true
+else
+    case "$1" in
+        "-h" )
+            cat <<EOF
+${IMAGE_NAME} Restore Tool ${IMAGE_VERSION}
+(c) 2023 Dave Conroy (https://www.tiredofit.ca)
+
+This script will assist you in recovering or mounting snapshots taken by the Docker image.
+You will be presented with a series of menus allowing you to choose:
+#   - What file to restore
+#   - What type of DB Backup
+#   - What Host to restore to
+#   - What Database Name to restore to
+#   - What Database User to use
+#   - What Database Password to use
+#   - What Database Port to use
+
+#The image will try to do autodetection based on the filename for the type, hostname, and database name.
+#The image will also allow you to use environment variables or Docker secrets used to backup the images
+
+#The script can also be executed skipping the interactive mode by using the following syntax/
+
+#    $(basename "$0") <filename> <db_type> <db_hostname> <db_name> <db_user> <db_pass> <db_port>
+
+#If you only enter some of the arguments you will be prompted to fill them in.
+
+Other arguments
+    -h This help screen
+
+EOF
+        exit 0
+        ;;
+        "-i" )
+            echo "interactive mode"
+            interactive_mode=true
+        ;;
+        * )
+            interactive_mode=false
+        ;;
+    esac
+fi
