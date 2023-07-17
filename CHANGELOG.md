@@ -1,3 +1,9 @@
+## 1.1.4 2023-07-17 <dave at tiredofit dot ca>
+
+   ### Added
+      - Rclone 1.6.3.1
+
+
 ## 1.1.3 2023-07-10 <dave at tiredofit dot ca>
 
    ### Changed
