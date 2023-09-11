@@ -1,3 +1,9 @@
+## 1.1.6 2023-09-11 <dave at tiredofit dot ca>
+
+   ### Added
+      - RClone 1.64.0 for multithreaded repository transfers to S3
+
+
 ## 1.1.5 2023-07-31 <dave at tiredofit dot ca>
 
    ### Added
