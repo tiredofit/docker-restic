@@ -637,8 +637,8 @@ hooks() {
             backup )
                 if [ -x "${backup_job_hook_post}" ] ; then
                     print_notice "Executing post snapshot custom script : '${backup_job_hook_post}'"
-                    ## script HOSTNAME CONTAINER_NAME BACKUP INSTANCE_NUMBER[XX] BACKUP[XX]NAME BACKUP[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE FILES_NEW FILES_CHANGED FILES_UNMODIFIED DIRS_NEW DIRS_CHANGED DIRS_UNMODIFIED SIZE_BYTES_ADDED SIZE_BYTES_STORED SIZE_BYTES_PROCESSED ERROR_COUNT
-                    "${backup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" BACKUP "${backup_instance_number}" "${backup_job_log_suffix}" "${backup_job_repository_path}" "${backup_routines_start_time}" "${backup_process_start_time}" "${backup_process_finish_time}" "${backup_process_total_time}" "${exitcode_backup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +'%Y%m%d_%H%M%S')"-backup-"${backup_job_log_suffix}".log "${backup_job_backup_summary_files_new}" "${backup_job_backup_summary_files_changed}" "${backup_job_backup_summary_files_unmodified}" "${backup_job_backup_summary_directory_new}" "${backup_job_backup_summary_directory_changed}" "${backup_job_backup_summary_directory_unmodified}" "${backup_job_backup_summary_added_size_bytes}" "${backup_job_backup_summary_added_size_stored_bytes}" "${backup_job_backup_summary_processed_size_bytes}" "${backup_job_backup_summary_error_count}"
+                    ## script HOSTNAME _restic_hostname BACKUP INSTANCE_NUMBER[XX] BACKUP[XX]NAME BACKUP[XX]REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_EPOCH EXITCODE LOGFILE FILES_NEW FILES_CHANGED FILES_UNMODIFIED DIRS_NEW DIRS_CHANGED DIRS_UNMODIFIED SIZE_BYTES_ADDED SIZE_BYTES_STORED SIZE_BYTES_PROCESSED ERROR_COUNT
+                    "${backup_job_hook_post}" "$(hostname)" "${_restic_hostname}" BACKUP "${backup_instance_number}" "${backup_job_log_suffix}" "${backup_job_repository_path}" "${backup_routines_start_time}" "${backup_process_start_time}" "${backup_process_finish_time}" "${backup_process_total_time}" "${exitcode_backup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${backup_process_start_time}" +'%Y%m%d_%H%M%S')"-backup-"${backup_job_log_suffix}".log "${backup_job_backup_summary_files_new}" "${backup_job_backup_summary_files_changed}" "${backup_job_backup_summary_files_unmodified}" "${backup_job_backup_summary_directory_new}" "${backup_job_backup_summary_directory_changed}" "${backup_job_backup_summary_directory_unmodified}" "${backup_job_backup_summary_added_size_bytes}" "${backup_job_backup_summary_added_size_stored_bytes}" "${backup_job_backup_summary_processed_size_bytes}" "${backup_job_backup_summary_error_count}"
                 else
                     print_error "Can't run post snapshot custom script: '${backup_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -646,8 +646,8 @@ hooks() {
             check )
                 if [ -x "${check_job_hook_post}" ] ; then
                     print_notice "Executing post check custom script : '${check_job_hook_post}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE PACKS_UNREFERENCED_COUNT SNAPSHOTS_PROCESSED
-                    "${check_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CHECK "${check_instance_number}" "${check_job_log_suffix}" "${check_job_repository_path}" "${check_routines_start_time}" "${check_process_start_time}" "${check_process_finish_time}" "${check_process_total_time}" "${exitcode_check}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log "${check_job_pack_unreferenced_count}" "${check_job_snapshots_processed}"
+                    ## script HOSTNAME _restic_name TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE PACKS_UNREFERENCED_COUNT SNAPSHOTS_PROCESSED
+                    "${check_job_hook_post}" "$(hostname)" "${_restic_hostname}" CHECK "${check_instance_number}" "${check_job_log_suffix}" "${check_job_repository_path}" "${check_routines_start_time}" "${check_process_start_time}" "${check_process_finish_time}" "${check_process_total_time}" "${exitcode_check}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${check_process_start_time}" +'%Y%m%d_%H%M%S')"-check-"${check_job_log_suffix}".log "${check_job_pack_unreferenced_count}" "${check_job_snapshots_processed}"
                 else
                     print_error "Can't run post check custom script: '${check_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -655,8 +655,8 @@ hooks() {
             cleanup )
                 if [ -x "${cleanup_job_hook_post}" ] ; then
                     print_notice "Executing post cleanup custom script : '${cleanup_job_hook_post}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME CLEANUP_HOST REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE SNAPSHOTS_REMOVED PRUNE_PACKS_PROCESSED PRUNE_PACKS_KEEP PRUNE_PACKS_REPACK PRUNE_PACKS_DELETE PRUNE_PACKS_DELETE_UNREFERENCED PRUNE_PACKS_DELETE_OLD
-                    "${cleanup_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_desc_hook_host}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}" "${cleanup_process_start_time}" "${cleanup_process_finish_time}" "${cleanup_process_total_time}" "${exitcode_cleanup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log ${cleanup_job_stats_snapshots_removed} ${cleanup_job_stats_prune_packs_processed} ${cleanup_job_stats_prune_packs_keep} ${cleanup_job_stats_prune_packs_repack} ${cleanup_job_stats_prune_packs_delete} ${cleanup_job_stats_prune_packs_delete_unreferenced} ${cleanup_job_stats_prune_packs_delete_old}
+                    ## script HOSTNAME _restic_hostname TYPE INSTANCE_NUMBER NAME CLEANUP_HOST REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE SNAPSHOTS_REMOVED PRUNE_PACKS_PROCESSED PRUNE_PACKS_KEEP PRUNE_PACKS_REPACK PRUNE_PACKS_DELETE PRUNE_PACKS_DELETE_UNREFERENCED PRUNE_PACKS_DELETE_OLD
+                    "${cleanup_job_hook_post}" "$(hostname)" "${_restic_hostname}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_desc_hook_host}" "${cleanup_job_log_suffix}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}" "${cleanup_process_start_time}" "${cleanup_process_finish_time}" "${cleanup_process_total_time}" "${exitcode_cleanup}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${cleanup_process_start_time}" +'%Y%m%d_%H%M%S')"-cleanup-"${cleanup_job_log_suffix}".log ${cleanup_job_stats_snapshots_removed} ${cleanup_job_stats_prune_packs_processed} ${cleanup_job_stats_prune_packs_keep} ${cleanup_job_stats_prune_packs_repack} ${cleanup_job_stats_prune_packs_delete} ${cleanup_job_stats_prune_packs_delete_unreferenced} ${cleanup_job_stats_prune_packs_delete_old}
                 else
                     print_error "Can't run post cleanup custom script: '${cleanup_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -665,8 +665,8 @@ hooks() {
             inventory )
                 if [ -x "${inventory_job_hook_post}" ] ; then
                     print_notice "Executing post inventory custom script : '${inventory_job_hook_post}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE SNAPSHOTS_TOTAL
-                    "${inventory_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" INVENTORY "${inventory_instance_number}" "${inventory_job_log_suffix}" "${inventory_job_repository_path}" "${inventory_routines_start_time}" "${inventory_process_start_time}" "${inventory_process_finish_time}" "${inventory_process_total_time}" "${exitcode_inventory}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${inventory_process_start_time}" +'%Y%m%d_%H%M%S')"-inventory-"${inventory_job_log_suffix}".log ${inventory_job_snapshots_total}
+                    ## script HOSTNAME _restic_hostname TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE SNAPSHOTS_TOTAL
+                    "${inventory_job_hook_post}" "$(hostname)" "${_restic_hostname}" INVENTORY "${inventory_instance_number}" "${inventory_job_log_suffix}" "${inventory_job_repository_path}" "${inventory_routines_start_time}" "${inventory_process_start_time}" "${inventory_process_finish_time}" "${inventory_process_total_time}" "${exitcode_inventory}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${inventory_process_start_time}" +'%Y%m%d_%H%M%S')"-inventory-"${inventory_job_log_suffix}".log ${inventory_job_snapshots_total}
                 else
                     print_error "Can't run post inventory custom script: '${cleanup_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -674,8 +674,8 @@ hooks() {
             prune )
                 if [ -x "${prune_job_hook_post}" ] ; then
                     print_notice "Executing post prune custom script : '${prune_job_hook_post}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE PACKS_REVIEWED PACKS_DELETED_UNREFERENCED PACKS_REPACKED PACKS_REINDEXED PACKS_DELETED_OLD PACKS_INDEX_DELETED_OBSOLETE
-                    "${prune_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" PRUNE "${prune_instance_number}" "${prune_job_log_suffix}" "${prune_job_repository_path}" "${prune_routines_start_time}" "${prune_process_start_time}" "${prune_process_finish_time}" "${prune_process_total_time}" "${exitcode_prune}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +'%Y%m%d_%H%M%S')"-prune-"${prune_job_log_suffix}".log "${prune_job_packs_reviewed}" "{prune_job_packs_deleted_unreferenced}" "{prune_job_packs_repacked}" "{prune_job_packs_reindexed}" "{prune_job_index_deleted_obsolete}" "{prune_job_packs_deleted_old}"
+                    ## script HOSTNAME _restic_hostname TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE PACKS_REVIEWED PACKS_DELETED_UNREFERENCED PACKS_REPACKED PACKS_REINDEXED PACKS_DELETED_OLD PACKS_INDEX_DELETED_OBSOLETE
+                    "${prune_job_hook_post}" "$(hostname)" "${_restic_hostname}" PRUNE "${prune_instance_number}" "${prune_job_log_suffix}" "${prune_job_repository_path}" "${prune_routines_start_time}" "${prune_process_start_time}" "${prune_process_finish_time}" "${prune_process_total_time}" "${exitcode_prune}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${prune_process_start_time}" +'%Y%m%d_%H%M%S')"-prune-"${prune_job_log_suffix}".log "${prune_job_packs_reviewed}" "{prune_job_packs_deleted_unreferenced}" "{prune_job_packs_repacked}" "{prune_job_packs_reindexed}" "{prune_job_index_deleted_obsolete}" "{prune_job_packs_deleted_old}"
                 else
                     print_error "Can't run post prune custom script: '${prune_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -683,8 +683,8 @@ hooks() {
             unlock )
                 if [ -x "${unlock_job_hook_post}" ] ; then
                     print_notice "Executing post unlock custom script : '${unlock_job_hook_post}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
-                    "${unlock_job_hook_post}" "$(hostname)" "${CONTAINER_NAME}" UNLOCK "${unlock_job_repository_path}" "${unlock_routines_start_time}" "${unlock_process_start_time}" "${unlock_process_finish_time}" "${unlock_process_total_time}" "${exitcode_unlock}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +'%Y%m%d_%H%M%S')"-unlock.log
+                    ## script HOSTNAME _restic_hostname TYPE REPOSITORY_PATH ROUTINE_START_EPOCH PROCESS_START_EPOCH PROCESS_FINISH_EPOCH PROCESS_TOTAL_SECONDS EXITCODE LOGFILE
+                    "${unlock_job_hook_post}" "$(hostname)" "${_restic_hostname}" UNLOCK "${unlock_job_repository_path}" "${unlock_routines_start_time}" "${unlock_process_start_time}" "${unlock_process_finish_time}" "${unlock_process_total_time}" "${exitcode_unlock}" "${LOG_PATH}"/"$(date +'%Y%m%d')"/"$(date -d @"${unlock_process_start_time}" +'%Y%m%d_%H%M%S')"-unlock.log
                 else
                     print_error "Can't run post unlock custom script: '${unlock_job_hook_post}' as its filesystem bit is not executible!"
                 fi
@@ -697,8 +697,8 @@ hooks() {
             backup )
                 if [ -x "${backup_job_hook_pre}" ] ; then
                     print_notice "Executing pre snapshot custom script : '${backup_job_hook_pre}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH BACKUP_PATH BACKUP_PATH_FILE
-                    "${backup_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" BACKUP "${backup_instance_number}" "${backup_job_log_suffix}" "${backup_job_repository_path}" "${backup_routines_start_time}" "${backup_job_snapshot_path}" "${backup_job_snapshot_path_file}"
+                    ## script HOSTNAME _restic_hostname TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH BACKUP_PATH BACKUP_PATH_FILE
+                    "${backup_job_hook_pre}" "$(hostname)" "${_restic_hostname}" BACKUP "${backup_instance_number}" "${backup_job_log_suffix}" "${backup_job_repository_path}" "${backup_routines_start_time}" "${backup_job_snapshot_path}" "${backup_job_snapshot_path_file}"
                 else
                     print_error "Can't run pre snapshot custom script: '${backup_job_hook_pre}' as its filesystem bit is not executible!"
                 fi
@@ -706,8 +706,8 @@ hooks() {
             check )
                 if [ -x "${check_job_hook_pre}" ] ; then
                     print_notice "Executing pre check custom script : '${check_job_hook_pre}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
-                    "${check_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" CHECK "${check_instance_number}" "${check_job_log_suffix}" "${check_job_repository_path}" "${check_routines_start_time}"
+                    ## script HOSTNAME _restic_hostname TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${check_job_hook_pre}" "$(hostname)" "${_restic_hostname}" CHECK "${check_instance_number}" "${check_job_log_suffix}" "${check_job_repository_path}" "${check_routines_start_time}"
                 else
                     print_error "Can't run pre check custom script: '${check_job_hook_pre}' as its filesystem bit is not executible!"
                 fi
@@ -715,8 +715,8 @@ hooks() {
             cleanup )
                 if [ -x "${cleanup_job_hook_pre}" ] ; then
                     print_notice "Executing pre cleanup custom script : '${cleanup_job_hook_pre}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME CLEANUP_HOST REPOSITORY_PATH ROUTINE_START_EPOCH
-                    "${cleanup_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_desc_hook_host}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}"
+                    ## script HOSTNAME _restic_hostname TYPE INSTANCE_NUMBER NAME CLEANUP_HOST REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${cleanup_job_hook_pre}" "$(hostname)" "${_restic_hostname}" CLEANUP "${cleanup_instance_number}" "${cleanup_job_log_suffix}" "${cleanup_job_desc_hook_host}" "${cleanup_job_repository_path}" "${cleanup_routines_start_time}"
                 else
                     print_error "Can't run pre cleanup custom script: '${cleanup_job_hook_pre}' as its filesystem bit is not executible!"
                 fi
@@ -724,8 +724,8 @@ hooks() {
             inventory )
                 if [ -x "${inventory_job_hook_pre}" ] ; then
                     print_notice "Executing pre inventory custom script : '${inventory_job_hook_pre}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
-                    "${inventory_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" INVENTORY "${inventory_instance_number}" "${inventory_job_log_suffix}" "${inventory_job_repository_path}" "${inventory_routines_start_time}"
+                    ## script HOSTNAME _restic_hostname TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${inventory_job_hook_pre}" "$(hostname)" "${_restic_hostname}" INVENTORY "${inventory_instance_number}" "${inventory_job_log_suffix}" "${inventory_job_repository_path}" "${inventory_routines_start_time}"
                 else
                     print_error "Can't run pre inventory custom script: '${inventory_job_hook_pre}' as its filesystem bit is not executible!"
                 fi
@@ -733,8 +733,8 @@ hooks() {
             prune )
                 if [ -x "${prune_job_hook_pre}" ] ; then
                     print_notice "Executing pre prune custom script : '${prune_job_hook_pre}'"
-                    ## script HOSTNAME CONTAINER_NAME TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
-                    "${prune_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" PRUNE "${prune_instance_number}" "${prune_job_log_suffix}" "${prune_job_repository_path}" "${prune_routines_start_time}"
+                    ## script HOSTNAME _restic_hostname TYPE INSTANCE_NUMBER NAME REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${prune_job_hook_pre}" "$(hostname)" "${_restic_hostname}" PRUNE "${prune_instance_number}" "${prune_job_log_suffix}" "${prune_job_repository_path}" "${prune_routines_start_time}"
                 else
                     print_error "Can't run pre prune custom script: '${prune_job_hook_pre}' as its filesystem bit is not executible!"
                 fi
@@ -742,8 +742,8 @@ hooks() {
             unlock )
                 if [ -x "${unlock_job_hook_pre}" ] ; then
                     print_notice "Executing pre unlock custom script : '${unlock_job_hook_pre}'"
-                    ## script HOSTNAME CONTAINER_NAME REPOSITORY_PATH ROUTINE_START_EPOCH
-                    "${unlock_job_hook_pre}" "$(hostname)" "${CONTAINER_NAME}" "${unlock_job_repository_path}" "${unlock_routines_start_time}"
+                    ## script HOSTNAME _restic_hostname REPOSITORY_PATH ROUTINE_START_EPOCH
+                    "${unlock_job_hook_pre}" "$(hostname)" "${_restic_hostname}" "${unlock_job_repository_path}" "${unlock_routines_start_time}"
                 else
                     print_error "Can't run pre unlock custom script: '${unlock_job_hook_pre}' as its filesystem bit is not executible!"
                 fi
@@ -910,8 +910,8 @@ repository() {
         backup_job_file_log=$(cat <<EOF
 # Job Started:                          $(date -d @"${backup_routines_start_time}" +'%Y-%m-%d %H:%M:%S') (${backup_routines_start_time})
 # Repository:                           $(echo "${backup_job_repository_path}" | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-# Hostname:                             $(hostname)
-# Container Name:                       $(echo "${CONTAINER_NAME}")
+# Container Hostname:                   $(hostname)
+# Restic Hostname:                      $(echo "${_restic_hostname}")
 
 ## Task:                                Backup (${backup_instance_number})
 EOF
@@ -1037,7 +1037,7 @@ EOF
         fi
 
         if var_true "${DEBUG_MODE}" || [ "${CONTAINER_LOG_LEVEL,,}" = "debug" ]; then
-            command_string="restic --cache-dir ${CACHE_PATH} --repo ${backup_job_repository_path} backup --host ${CONTAINER_NAME} --tag auto ${backup_job_args} ${backup_job_snapshot_args}"
+            command_string="restic --cache-dir ${CACHE_PATH} --repo ${backup_job_repository_path} backup --host ${_restic_hostname} --tag auto ${backup_job_args} ${backup_job_snapshot_args}"
             print_info "Command execution string: '${command_string}'"
             backup_job_file_log=$(echo "${backup_job_file_log}" ; cat <<EOF
 ## Debug Command String:               ${command_string}
@@ -1056,7 +1056,7 @@ EOF
                 --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                 --repository-file "${restic_repository}" \
                 backup \
-                    --host "${CONTAINER_NAME}" --tag auto ${backup_job_args} ${backup_job_snapshot_args} \
+                    --host "${_restic_hostname}" --tag auto ${backup_job_args} ${backup_job_snapshot_args} \
                 2> /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".error \
                 > /tmp/"${backup_instance_number}"-backup-"${backup_routines_start_time}".log
 
@@ -1231,8 +1231,8 @@ EOF
         check_job_file_log=$(cat <<EOF
 ## Job Started:                        $(date -d @${check_routines_start_time} +'%Y-%m-%d %H:%M:%S') (${check_routines_start_time})
 ## Repository:                         $(echo ${check_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-## Hostname:                           $(hostname)
-## Container Name:                     $(echo "${CONTAINER_NAME}")
+## Container Hostname:                 $(hostname)
+## Restic Hostname:                    $(echo "${_restic_hostname}")
 
 ## Task:                               Check
 EOF
@@ -1457,8 +1457,8 @@ EOF
         cleanup_job_file_log=$(cat <<EOF
 ## Job Started:                        $(date -d @${cleanup_routines_start_time} +'%Y-%m-%d %H:%M:%S') (${cleanup_routines_start_time})
 ## Repository:                         $(echo ${cleanup_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-## Hostname:                           $(hostname)
-## Container Name:                     $(echo "${CONTAINER_NAME}")
+## Container Hostname:                 $(hostname)
+## Restic Hostname:                    $(echo "${_restic_hostname}")
 
 ## Task:                               Cleanup
 EOF
@@ -1497,9 +1497,9 @@ EOF
                 ;;
             esac
         else
-            cleanup_job_args+="--host ${CONTAINER_NAME} "
-            cleanup_job_desc_hook_host="${CONTAINER_NAME}"
-            print_notice "Cleaning up host: ${CONTAINER_NAME}"
+            cleanup_job_args+="--host ${_restic_hostname} "
+            cleanup_job_desc_hook_host="${_restic_hostname}"
+            print_notice "Cleaning up restic host: ${_restic_hostname}"
         fi
 
         cleanup_job_file_log=$(echo "${cleanup_job_file_log}" ; cat <<EOF
@@ -1915,7 +1915,7 @@ EOF
                                 --cache-dir "${CACHE_PATH}"  --cleanup-cache \
                                 --repository-file "${restic_repository}" \
                                 snapshots \
-                                --host "${CONTAINER_NAME}" \
+                                --host "${_restic_hostname}" \
                                 --quiet ${repository_init_arg}
                 exitcode_init=$?
                 rm -rf "${restic_repository}"
@@ -1973,8 +1973,8 @@ EOF
         inventory_job_file_log=$(cat <<EOF
 ## Job Started:                        $(date -d @${inventory_routines_start_time} +'%Y-%m-%d %H:%M:%S') (${inventory_routines_start_time})
 ## Repository:                         $(echo ${inventory_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-## Hostname:                           $(hostname)
-## Container Name:                     $(echo "${CONTAINER_NAME}")
+## Container Hostname:                 $(hostname)
+## Restic Hostname:                    $(echo "${_restic_hostname}")
 
 ## Task:                               Inventory
 EOF
@@ -2123,8 +2123,8 @@ EOF
         prune_job_file_log=$(cat <<EOF
 ## Job Started:                        $(date -d @${prune_routines_start_time} +'%Y-%m-%d %H:%M:%S') (${prune_routines_start_time})
 ## Repository:                         $(echo ${prune_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-## Hostname:                           $(hostname)
-## Container Name:                     $(echo ${CONTAINER_NAME})
+## Container Hostname:                 $(hostname)
+## Restic Hostname:                    $(echo "${_restic_hostname}")
 
 ## Task:                               Prune
 EOF
@@ -2381,8 +2381,8 @@ EOF
             unlock_job_file_log=$(cat <<EOF
 ## Job Started:                        $(date -d @${unlock_routines_start_time} +'%Y-%m-%d %H:%M:%S') (${unlock_routines_start_time})
 ## Repository:                         $(echo ${unlock_job_repository_path} | sed "s|\(.*\):\(.*\):.*@\(.*\)|\1:\2:redacted@\3|g")
-## Hostname:                           $(hostname)
-## Container Name:                     $(echo "${CONTAINER_NAME}")
+## Container Hostname:                 $(hostname)
+## Restic Hostname:                    $(echo "${_restic_hostname}")
 
 ## Task:                               Unlock
 EOF

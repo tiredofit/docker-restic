@@ -144,32 +144,33 @@ Be sure to view the following repositories to understand all the customizable op
 
 #### Container Options
 
-| Variable      | Description                                               | Default    |
-| ------------- | --------------------------------------------------------- | ---------- |
-| `MODE`        | Run multiple modes by seperating with comma:              |            |
-|               | `BACKUP` filesystem                                       |            |
-|               | `CHECK` repository - See options below                    |            |
-|               | `CLEANUP` repository - See options below                  |            |
-|               | `INVENTORY` repository - See options below                |            |
-|               | `PRUNE` repository - See options below                    |            |
-|               | `RCLONE` Run a copy of RClone                             |            |
-|               | `SERVER` REST repository access - see options below       |            |
-|               | `STANDALONE` (Do nothing, just run container)             |            |
-| `CACHE_PATH`  | Cached files to optimize performance                      | `/cache/`  |
-| `CONFIG_PATH` | Configuration files for Server                            | `/config/` |
-| `LOG_PATH`    | Log file path                                             | `/logs/`   |
-| `LOG_TYPE`    | `FILE` only at this time                                  | `FILE`     |
-| `SETUP_MODE`  | `AUTO` only at this time                                  | `AUTO`     |
-| `DELAY_INIT`  | Delay Repository Initialization routines by `int` seconds |            |
-| `SKIP_INIT`   | Skip Repository Initialization Checks                     | `FALSE`    |
+| Variable          | Description                                               | Default           |
+| ----------------- | --------------------------------------------------------- | ----------------- |
+| `MODE`            | Run multiple modes by seperating with comma:              |                   |
+|                   | `BACKUP` filesystem                                       |                   |
+|                   | `CHECK` repository - See options below                    |                   |
+|                   | `CLEANUP` repository - See options below                  |                   |
+|                   | `INVENTORY` repository - See options below                |                   |
+|                   | `PRUNE` repository - See options below                    |                   |
+|                   | `RCLONE` Run a copy of RClone                             |                   |
+|                   | `SERVER` REST repository access - see options below       |                   |
+|                   | `STANDALONE` (Do nothing, just run container)             |                   |
+| `CACHE_PATH`      | Cached files to optimize performance                      | `/cache/`         |
+| `CONFIG_PATH`     | Configuration files for Server                            | `/config/`        |
+| `LOG_PATH`        | Log file path                                             | `/logs/`          |
+| `LOG_TYPE`        | `FILE` only at this time                                  | `FILE`            |
+| `SETUP_MODE`      | `AUTO` only at this time                                  | `AUTO`            |
+| `RESTIC_HOSTNAME` | Name of host to report to Restic                          | `$CONTAINER_NAME` |
+| `DELAY_INIT`      | Delay Repository Initialization routines by `int` seconds |                   |
+| `SKIP_INIT`       | Skip Repository Initialization Checks                     | `FALSE`           |
 
 #### Job Defaults
 If these are set and no other defaults or variables are set explicitly, they will be added to any of the `BACKUP`, `CHECK`, `CLEANUP`, `INVENTORY` or `PRUNE` jobs.
 
-| Variable                        | Description                                                                                                                         | Default | `_FILE` |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `DEFAULT_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         | x |
-| `DEFAULT_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |         | x |
+| Variable                  | Description                                                                    | Default | `_FILE` |
+| ------------------------- | ------------------------------------------------------------------------------ | ------- | ------- |
+| `DEFAULT_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         | x       |
+| `DEFAULT_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |         | x       |
 
 #### Backup Options
 
@@ -180,24 +181,24 @@ Multiple Backup Jobs can be scheduled at once. Be careful not so schedule jobs s
 
 If set, these variables will be passed to each backup job, unless each job explicitly sets otherwise.
 
-| Variable                        | Description                                                                                                                         | Default | `_FILE` |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `BACKUP_JOB_CONCURRENCY`                  | How many restic backup processes can run at once                                     | `2`     | |
-| `DEFAULT_BACKUP_ENABLE_CLEANUP`           | Enable cleanup operations post successful backup job                                 | `TRUE`  | |
-| `DEFAULT_BACKUP_REPOSITORY_PATH`          | Path of repository eg `/repository` or `rest:user:password@http://rest.server`       |         | x|
-| `DEFAULT_BACKUP_REPOSITORY_PASS`          | Encryption Key for repository eg `secretpassword`                                    |         | x |
-| `DEFAULT_BACKUP_SNAPSHOT_ARGS`            | Arguments to pass to Restic Backup command line                                      |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_BLACKOUT_BEGIN`  | Use `HHMM` notation to start a blackout period where no backups occur eg `0420`      |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no backups occur eg `0430`           |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_EXCLUDE`         | Comma seperated list of files or paths to exclude from backup eg `.snapshots,.cache` |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_EXCLUDE_FILE`    | Line seperated list of files or directories to exclude                               |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_HOOK_POST`       | Path and Filename to execute post snapshot operation                                 |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_HOOK_PRE`        | Path and Filename to execute pre snapshot operation                                  |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_PATH`            | Folder or file to backup eg `/etc`                                                   |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_PATH_FILE`       | Line seperated list of files or directories to backup                                |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_TAGS`            | Comma seperated list of tags to attach to snapshot                                   |         | |
-| `DEFAULT_BACKUP_SNAPSHOT_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                            | `2`     | |
+| Variable                                  | Description                                                                          | Default | `_FILE` |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ | ------- | ------- |
+| `BACKUP_JOB_CONCURRENCY`                  | How many restic backup processes can run at once                                     | `2`     |         |
+| `DEFAULT_BACKUP_ENABLE_CLEANUP`           | Enable cleanup operations post successful backup job                                 | `TRUE`  |         |
+| `DEFAULT_BACKUP_REPOSITORY_PATH`          | Path of repository eg `/repository` or `rest:user:password@http://rest.server`       |         | x       |
+| `DEFAULT_BACKUP_REPOSITORY_PASS`          | Encryption Key for repository eg `secretpassword`                                    |         | x       |
+| `DEFAULT_BACKUP_SNAPSHOT_ARGS`            | Arguments to pass to Restic Backup command line                                      |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_BLACKOUT_BEGIN`  | Use `HHMM` notation to start a blackout period where no backups occur eg `0420`      |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no backups occur eg `0430`           |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_EXCLUDE`         | Comma seperated list of files or paths to exclude from backup eg `.snapshots,.cache` |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_EXCLUDE_FILE`    | Line seperated list of files or directories to exclude                               |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_HOOK_POST`       | Path and Filename to execute post snapshot operation                                 |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_HOOK_PRE`        | Path and Filename to execute pre snapshot operation                                  |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_PATH`            | Folder or file to backup eg `/etc`                                                   |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_PATH_FILE`       | Line seperated list of files or directories to backup                                |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_TAGS`            | Comma seperated list of tags to attach to snapshot                                   |         |         |
+| `DEFAULT_BACKUP_SNAPSHOT_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                            | `2`     |         |
 
 
 ##### Job Backup Options
@@ -206,27 +207,27 @@ If `DEFAULT_BACKUP_` variables are set and you do not wish for the settings to c
 Additional backup jobs can be scheduled by using `BACKUP02_`,`BACKUP03_`,`BACKUP04_` ... prefixes.
 
 
-| Variable                        | Description                                                                                                                         | Default | `_FILE` |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `BACKUP01_ARGS`                     | Arguments to pass to Restic Backup command | |line                                                                                                |         |
-| `BACKUP01_SNAPSHOT_NAME`            | A friendly name to reference your backup snapshot job eg | |`var_local`                                                                           |         |
-| `BACKUP01_REPOSITORY_PATH`          | Path of repository eg `/repository` or `rest:user:password@http://rest.| |server`                                                                 | x        |
-| `BACKUP01_REPOSITORY_PASS`          | Encryption Key for repository eg | |`secretpassword`                                                                                              | x |
-| `BACKUP01_SNAPSHOT_BEGIN`           | What time to do the first snapshot. Defaults to immediate. Must be in one of two | |formats                                                       |         |
-|                                     | Absolute HHMM, e.g. `2330` or | |`0415`                                                                                                           |         |
-|                                     | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a | |half |         |
-| `BACKUP01_SNAPSHOT_BLACKOUT_BEGIN`  | Use `HHMM` notation to start a blackout period where no backups occur eg | |`0420`                                                                |         |
-| `BACKUP01_SNAPSHOT_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no backups occur eg | |`0430`                                                                     |         |
-| `BACKUP01_SNAPSHOT_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` | |`FALSE`                                                                          |         |
-| `BACKUP01_SNAPSHOT_HOOK_POST`       | Path and Filename to execute post snapshot | |operation                                                                                           |         |
-| `BACKUP01_SNAPSHOT_HOOK_PRE`        | Path and Filename to execute pre snapshot | |operation                                                                                            |         |
-| `BACKUP01_SNAPSHOT_INTERVAL`        | Frequency after first execution of firing backup routines again | |in                                                                             |         |
-| `BACKUP01_SNAPSHOT_EXCLUDE`         | Comma seperated list of files or paths to exclude from backup eg `.snapshots,.| |cache`                                                           |         |
-| `BACKUP01_SNAPSHOT_EXCLUDE_FILE`    | Line seperated list of files or directories to | |exclude                                                                                         |         |
-| `BACKUP01_SNAPSHOT_PATH`            | Folder or file to backup eg `/| |etc`                                                                                                             |         |
-| `BACKUP01_SNAPSHOT_PATH_FILE`       | Line seperated list of files or directories to | |backup                                                                                          |         |
-| `BACKUP01_SNAPSHOT_TAGS`            | Comma seperated list of tags to attach to | |snapshot                                                                                             |         |
-| `BACKUP01_SNAPSHOT_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | | |`2`     |
+| Variable                            | Description                                                                                                                               | Default | `_FILE`          |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------- | ---------------- |
+| `BACKUP01_ARGS`                     | Arguments to pass to Restic Backup command                                                                                                |         | line             |     |
+| `BACKUP01_SNAPSHOT_NAME`            | A friendly name to reference your backup snapshot job eg                                                                                  |         | `var_local`      |     |
+| `BACKUP01_REPOSITORY_PATH`          | Path of repository eg `/repository` or `rest:user:password@http://rest.                                                                   |         | server`          | x   |
+| `BACKUP01_REPOSITORY_PASS`          | Encryption Key for repository eg                                                                                                          |         | `secretpassword` | x   |
+| `BACKUP01_SNAPSHOT_BEGIN`           | What time to do the first snapshot. Defaults to immediate. Must be in one of two                                                          |         | formats          |     |
+|                                     | Absolute HHMM, e.g. `2330` or                                                                                                             |         | `0415`           |     |
+|                                     | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a |         | half             |     |
+| `BACKUP01_SNAPSHOT_BLACKOUT_BEGIN`  | Use `HHMM` notation to start a blackout period where no backups occur eg                                                                  |         | `0420`           |     |
+| `BACKUP01_SNAPSHOT_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no backups occur eg                                                                       |         | `0430`           |     |
+| `BACKUP01_SNAPSHOT_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE`                                                                             |         | `FALSE`          |     |
+| `BACKUP01_SNAPSHOT_HOOK_POST`       | Path and Filename to execute post snapshot                                                                                                |         | operation        |     |
+| `BACKUP01_SNAPSHOT_HOOK_PRE`        | Path and Filename to execute pre snapshot                                                                                                 |         | operation        |     |
+| `BACKUP01_SNAPSHOT_INTERVAL`        | Frequency after first execution of firing backup routines again                                                                           |         | in               |     |
+| `BACKUP01_SNAPSHOT_EXCLUDE`         | Comma seperated list of files or paths to exclude from backup eg `.snapshots,.                                                            |         | cache`           |     |
+| `BACKUP01_SNAPSHOT_EXCLUDE_FILE`    | Line seperated list of files or directories to                                                                                            |         | exclude          |     |
+| `BACKUP01_SNAPSHOT_PATH`            | Folder or file to backup eg `/                                                                                                            |         | etc`             |     |
+| `BACKUP01_SNAPSHOT_PATH_FILE`       | Line seperated list of files or directories to                                                                                            |         | backup           |     |
+| `BACKUP01_SNAPSHOT_TAGS`            | Comma seperated list of tags to attach to                                                                                                 |         | snapshot         |     |
+| `BACKUP01_SNAPSHOT_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                 |         |                  | `2` |
 
 ##### Hooks
 
@@ -256,19 +257,19 @@ A Check job requires exclusive access to the Restic Repository, therefore no oth
 
 If set, these variables will be passed to each prune job, unless each job explicitly sets otherwise.
 
-| Variable                        | Description                                                                                                                         | Default | `_FILE` |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `DEFAULT_CHECK_AMOUNT`          | Amount of repository to check                                                             |         | |
-| `DEFAULT_CHECK_ARGS`            | Arguments to pass to Restic Check command line                                            |         | |
-| `DEFAULT_CHECK_BLACKOUT_BEGIN`  | Use `HHMM` notation to set the start of a blackout period where no checks occur eg `0420` |         | |
-| `DEFAULT_CHECK_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no checks occur eg `0430`                 |         | |
-| `DEFAULT_CHECK_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                     |         | |
-| `DEFAULT_CHECK_HOOK_POST`       | Path and Filename to execute post repository check operation                              |         | |
-| `DEFAULT_CHECK_HOOK_PRE`        | Path and Filename to execute pre repository check operation                               |         | |
-| `DEFAULT_CHECK_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`            |         | x |
-| `DEFAULT_CHECK_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                         |         | x |
-| `DEFAULT_CHECK_USE_CACHE`       | Use cache                                                                                 |         | |
-| `DEFAULT_CHECK_VERBOSITY_LEVEL` | Check operations log verbosity - Best not to change this                                  | `2`     | |
+| Variable                        | Description                                                                               | Default | `_FILE` |
+| ------------------------------- | ----------------------------------------------------------------------------------------- | ------- | ------- |
+| `DEFAULT_CHECK_AMOUNT`          | Amount of repository to check                                                             |         |         |
+| `DEFAULT_CHECK_ARGS`            | Arguments to pass to Restic Check command line                                            |         |         |
+| `DEFAULT_CHECK_BLACKOUT_BEGIN`  | Use `HHMM` notation to set the start of a blackout period where no checks occur eg `0420` |         |         |
+| `DEFAULT_CHECK_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no checks occur eg `0430`                 |         |         |
+| `DEFAULT_CHECK_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                     |         |         |
+| `DEFAULT_CHECK_HOOK_POST`       | Path and Filename to execute post repository check operation                              |         |         |
+| `DEFAULT_CHECK_HOOK_PRE`        | Path and Filename to execute pre repository check operation                               |         |         |
+| `DEFAULT_CHECK_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`            |         | x       |
+| `DEFAULT_CHECK_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                         |         | x       |
+| `DEFAULT_CHECK_USE_CACHE`       | Use cache                                                                                 |         |         |
+| `DEFAULT_CHECK_VERBOSITY_LEVEL` | Check operations log verbosity - Best not to change this                                  | `2`     |         |
 
 
 ##### Job Check Options
@@ -277,24 +278,24 @@ If `DEFAULT_CHECK_` variables are set and you do not wish for the settings to ca
 Additional check jobs can be scheduled by using `CHECK02_`,`CHECK03_`,`CHECK04_` ... prefixes.
 
 
-| Variable                        | Description                                                                                                                         | Default | `_FILE` |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `CHECK01_AMOUNT`          | Amount of repository to check (Read Data)                                                                                                      |         | |
-| `CHECK01_ARGS`            | Arguments to pass to Restic check command line                                                                                                 |         | |
-| `CHECK01_BLACKOUT_BEGIN`  | Use `HHMM` notation to set the start of a blackout period where no checks occur eg `0420`                                                      |         | |
-| `CHECK01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no checks occur eg `0430`                                                                      |         | |
-| `CHECK01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         | |
-| `CHECK01_BEGIN`           | What time to do the first check. Defaults to immediate. Must be in one of two formats                                                          |         | |
-|                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         | |
-|                           | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         | |
-| `CHECK01_HOOK_POST`       | Path and Filename to execute post repository check operation                                                                                   |         | |
-| `CHECK01_HOOK_PRE`        | Path and Filename to execute pre repository check operation                                                                                    |         | |
-| `CHECK01_INTERVAL`        | Frequency after first execution of firing check routines again in minutes                                                                      |         | |
-| `CHECK01_NAME`            | A friendly name to reference your check snapshot job eg `consistency_check`                                                                    |         | |
-| `CHECK01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         | x |
-| `CHECK01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         | x |
-| `CHECK01_USE_CACHE`       | Use cache                                                                                                                                      |         | |
-| `CHECK01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`     | |
+| Variable                  | Description                                                                                                                                    | Default | `_FILE` |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
+| `CHECK01_AMOUNT`          | Amount of repository to check (Read Data)                                                                                                      |         |         |
+| `CHECK01_ARGS`            | Arguments to pass to Restic check command line                                                                                                 |         |         |
+| `CHECK01_BLACKOUT_BEGIN`  | Use `HHMM` notation to set the start of a blackout period where no checks occur eg `0420`                                                      |         |         |
+| `CHECK01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no checks occur eg `0430`                                                                      |         |         |
+| `CHECK01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |         |
+| `CHECK01_BEGIN`           | What time to do the first check. Defaults to immediate. Must be in one of two formats                                                          |         |         |
+|                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |         |
+|                           | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |         |
+| `CHECK01_HOOK_POST`       | Path and Filename to execute post repository check operation                                                                                   |         |         |
+| `CHECK01_HOOK_PRE`        | Path and Filename to execute pre repository check operation                                                                                    |         |         |
+| `CHECK01_INTERVAL`        | Frequency after first execution of firing check routines again in minutes                                                                      |         |         |
+| `CHECK01_NAME`            | A friendly name to reference your check snapshot job eg `consistency_check`                                                                    |         |         |
+| `CHECK01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         | x       |
+| `CHECK01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         | x       |
+| `CHECK01_USE_CACHE`       | Use cache                                                                                                                                      |         |         |
+| `CHECK01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`     |         |
 
 
 ##### Hooks
@@ -327,65 +328,65 @@ A Cleanup job requires exclusive access to the Restic Repository, therefore no o
 
 If set, these variables will be passed to each cleanup job, unless each job explicitly sets otherwise.
 
-| Variable                        | Description                                                                                                                         | Default | `_FILE` |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `DEFAULT_CLEANUP_ARGS`            | Arguments to pass to Restic cleanup command line                                                                                    |              | |
-| `DEFAULT_CLEANUP_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                                   |              | |
-| `DEFAULT_CLEANUP_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                   |              | |
-| `DEFAULT_CLEANUP_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                               |              | |
-| `DEFAULT_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                               |              | |
-| `DEFAULT_CLEANUP_GROUP_BY`        | Group Snapshots by `host`,`paths`,`tags`                                                                                            | `host,paths` | |
-| `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                                 |              | |
-| `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                  |              | |
-| `DEFAULT_CLEANUP_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations     |              | |
-| `DEFAULT_CLEANUP_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                           |              | |
-| `DEFAULT_CLEANUP_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                   | `5%`         | |
-| `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE` |              | |
-| `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                            |              | |
-| `DEFAULT_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                    |              | |
-| `DEFAULT_CLEANUP_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                             |              | |
-| `DEFAULT_CLEANUP_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                            |              | |
-| `DEFAULT_CLEANUP_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                          |              | |
-| `DEFAULT_CLEANUP_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                          |              | |
-| `DEFAULT_CLEANUP_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                     |              | |
-| `DEFAULT_CLEANUP_VERBOSITY_LEVEL` | Cleanup operations log verbosity - Best not to change this                                                                          | `2`          | |
-| `DEFAULT_CLEANUP_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                      |              | x |
-| `DEFAULT_CLEANUP_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                   |              | x |
+| Variable                          | Description                                                                                                                         | Default      | `_FILE` |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------- |
+| `DEFAULT_CLEANUP_ARGS`            | Arguments to pass to Restic cleanup command line                                                                                    |              |         |
+| `DEFAULT_CLEANUP_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                                   |              |         |
+| `DEFAULT_CLEANUP_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                   |              |         |
+| `DEFAULT_CLEANUP_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                               |              |         |
+| `DEFAULT_CLEANUP_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                               |              |         |
+| `DEFAULT_CLEANUP_GROUP_BY`        | Group Snapshots by `host`,`paths`,`tags`                                                                                            | `host,paths` |         |
+| `DEFAULT_CLEANUP_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                                 |              |         |
+| `DEFAULT_CLEANUP_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                  |              |         |
+| `DEFAULT_CLEANUP_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations     |              |         |
+| `DEFAULT_CLEANUP_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                           |              |         |
+| `DEFAULT_CLEANUP_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                   | `5%`         |         |
+| `DEFAULT_CLEANUP_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE` |              |         |
+| `DEFAULT_CLEANUP_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                            |              |         |
+| `DEFAULT_CLEANUP_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                    |              |         |
+| `DEFAULT_CLEANUP_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                             |              |         |
+| `DEFAULT_CLEANUP_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                            |              |         |
+| `DEFAULT_CLEANUP_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                          |              |         |
+| `DEFAULT_CLEANUP_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                          |              |         |
+| `DEFAULT_CLEANUP_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                     |              |         |
+| `DEFAULT_CLEANUP_VERBOSITY_LEVEL` | Cleanup operations log verbosity - Best not to change this                                                                          | `2`          |         |
+| `DEFAULT_CLEANUP_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                      |              | x       |
+| `DEFAULT_CLEANUP_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                   |              | x       |
 
 ##### Job Cleanup Options
 
 If `DEFAULT_CLEANUP_` variables are set and you do not wish for the settings to carry over into your jobs, you can set the appropriate environment variable with the value of `unset`.
 Additional backup jobs can be scheduled by using `CLEANUP02_`,`CLEANUP03_`,`CLEANUP04_` ... prefixes.
 
-| Variable                        | Description                                                                                                                         | Default | `_FILE` |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `CLEANUP01_ARGS`            | Arguments to pass to Restic Cleanup command line                                                                                               |              | |
-| `CLEANUP01_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                                              |              | |
-| `CLEANUP01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |              | |
-| `CLEANUP01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |              | |
-|                             | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |              | |
-|                             | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |              | |
-| `CLEANUP01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |              | |
-| `CLEANUP01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |              | |
-| `CLEANUP01_GROUP_BY`        | Group Snapshots by `host`,`paths`,`tags`                                                                                                       | `host,paths` | |
-| `CLEANUP01_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                                            |              | |
-| `CLEANUP01_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                             |              | |
-| `CLEANUP01_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations                |              | |
-| `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |              | |
-| `CLEANUP01_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                                      |              | |
-| `CLEANUP01_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                              | `5%`         | |
-| `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |              | |
-| `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`            |              | |
-| `CLEANUP01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |              | x |
-| `CLEANUP01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |              | x |
-| `CLEANUP01_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                                       |              | |
-| `CLEANUP01_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                               |              | |
-| `CLEANUP01_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                                        |              | |
-| `CLEANUP01_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                                       |              | |
-| `CLEANUP01_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                                     |              | |
-| `CLEANUP01_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                                     |              | |
-| `CLEANUP01_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                                |              | |
-| `CLEANUP01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`          | |
+| Variable                    | Description                                                                                                                                    | Default      | `_FILE` |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------- |
+| `CLEANUP01_ARGS`            | Arguments to pass to Restic Cleanup command line                                                                                               |              |         |
+| `CLEANUP01_AUTO_PRUNE`      | Automatically prune the data (delete from filesystem) upon success `TRUE` `FALSE`                                                              |              |         |
+| `CLEANUP01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |              |         |
+| `CLEANUP01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |              |         |
+|                             | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |              |         |
+|                             | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |              |         |
+| `CLEANUP01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |              |         |
+| `CLEANUP01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |              |         |
+| `CLEANUP01_GROUP_BY`        | Group Snapshots by `host`,`paths`,`tags`                                                                                                       | `host,paths` |         |
+| `CLEANUP01_HOOK_POST`       | Path and Filename to execute post cleanup operation                                                                                            |              |         |
+| `CLEANUP01_HOOK_PRE`        | Path and Filename to execute pre cleanup operation                                                                                             |              |         |
+| `CLEANUP01_HOST`            | The hostname to perform cleanup operations against. Default is $HOSTNAME / $CONTAINER NAME. Use `ALL` for repository operations                |              |         |
+| `CLEANUP01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |              |         |
+| `CLEANUP01_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                                      |              |         |
+| `CLEANUP01_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                              | `5%`         |         |
+| `CLEANUP01_NAME`            | A friendly name to reference your cleanup job eg `repository_name`                                                                             |              |         |
+| `CLEANUP01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`            |              |         |
+| `CLEANUP01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |              | x       |
+| `CLEANUP01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |              | x       |
+| `CLEANUP01_RETAIN_LATEST`   | How many latest backups to retain eg `3`                                                                                                       |              |         |
+| `CLEANUP01_RETAIN_HOURLY`   | How many latest hourly backups to retain eg `24`                                                                                               |              |         |
+| `CLEANUP01_RETAIN_DAILY`    | How many daily backups to retain eg `7`                                                                                                        |              |         |
+| `CLEANUP01_RETAIN_WEEKLY`   | How many weekly backups to retain eg `5`                                                                                                       |              |         |
+| `CLEANUP01_RETAIN_MONTHLY`  | How many monthly backups to retain eg `18`                                                                                                     |              |         |
+| `CLEANUP01_RETAIN_YEARLY`   | How many yearly backups to retrain eg `10`                                                                                                     |              |         |
+| `CLEANUP01_RETAIN_TAG`      | A comma seperated list of tags that should not be cleaned up using this process                                                                |              |         |
+| `CLEANUP01_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                      | `2`          |         |
 
 ##### Hooks
 The following will be sent to the hooks script :
@@ -412,32 +413,32 @@ An Inventory job takes lots of time if working with remote repositories.
 
 If set, these variables will be passed to each inventory job, unless each job explicitly sets otherwise.
 
-| Variable                        | Description                                                                                                                         | Default | `_FILE` |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `DEFAULT_INVENTORY_ARGS`            | Arguments to pass to Restic `snapshots` command line                           |         | |
-| `DEFAULT_INVENTORY_GROUP_BY`        | Group by `sequential`, `host`, `path`                                          | `host`  | |
-| `DEFAULT_INVENTORY_HOOK_POST`       | Path and Filename to execute post inventory operation                          |         | |
-| `DEFAULT_INVENTORY_HOOK_PRE`        | Path and Filename to execute pre inventory operation                           |         | |
-| `DEFAULT_INVENTORY_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         | x |
-| `DEFAULT_INVENTORY_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |         | x |
+| Variable                            | Description                                                                    | Default | `_FILE` |
+| ----------------------------------- | ------------------------------------------------------------------------------ | ------- | ------- |
+| `DEFAULT_INVENTORY_ARGS`            | Arguments to pass to Restic `snapshots` command line                           |         |         |
+| `DEFAULT_INVENTORY_GROUP_BY`        | Group by `sequential`, `host`, `path`                                          | `host`  |         |
+| `DEFAULT_INVENTORY_HOOK_POST`       | Path and Filename to execute post inventory operation                          |         |         |
+| `DEFAULT_INVENTORY_HOOK_PRE`        | Path and Filename to execute pre inventory operation                           |         |         |
+| `DEFAULT_INVENTORY_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server` |         | x       |
+| `DEFAULT_INVENTORY_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                              |         | x       |
 
 
 If `DEFAULT_INVENTORY_` variables are set and you do not wish for the settings to carry over into your jobs, you can set the appropriate environment variable with the value of `unset`.
 Additional inventory jobs can be scheduled by using `INVENTORY02_`,`INVENTORY03_`,`INVENTORY04_` ... prefixes.
 
-| Variable                        | Description                                                                                                                         | Default | `_FILE` |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `INVENTORY01_ARGS`            | Arguments to pass to Restic inventory command line                                                                                             |         | |
-| `INVENTORY01_BEGIN`           | What time to do the first inventory. Defaults to immediate. Must be in one of two formats                                                      |         | |
-|                               | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         | |
-|                               | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         | |
-| `INVENTORY01_GROUP_BY`        | Group by `sequential`, `host`, `path`                                                                                                          | `host`  | |
-| `INVENTORY01_HOOK_POST`       | Path and Filename to execute post inventory operation                                                                                          |         | |
-| `INVENTORY01_HOOK_PRE`        | Path and Filename to execute pre inventory operation                                                                                           |         | |
-| `INVENTORY01_INTERVAL`        | Frequency after first execution of firing inventory routines again in minutes                                                                  |         | |
-| `INVENTORY01_NAME`            | A friendly name to reference your inventory job eg `repository_name`                                                                           |         | |
-| `INVENTORY01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         | x |
-| `INVENTORY01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         | x |
+| Variable                      | Description                                                                                                                                    | Default | `_FILE` |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
+| `INVENTORY01_ARGS`            | Arguments to pass to Restic inventory command line                                                                                             |         |         |
+| `INVENTORY01_BEGIN`           | What time to do the first inventory. Defaults to immediate. Must be in one of two formats                                                      |         |         |
+|                               | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |         |
+|                               | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |         |
+| `INVENTORY01_GROUP_BY`        | Group by `sequential`, `host`, `path`                                                                                                          | `host`  |         |
+| `INVENTORY01_HOOK_POST`       | Path and Filename to execute post inventory operation                                                                                          |         |         |
+| `INVENTORY01_HOOK_PRE`        | Path and Filename to execute pre inventory operation                                                                                           |         |         |
+| `INVENTORY01_INTERVAL`        | Frequency after first execution of firing inventory routines again in minutes                                                                  |         |         |
+| `INVENTORY01_NAME`            | A friendly name to reference your inventory job eg `repository_name`                                                                           |         |         |
+| `INVENTORY01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         | x       |
+| `INVENTORY01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         | x       |
 
 ##### Hooks
 The following will be sent to the hooks script :
@@ -466,42 +467,42 @@ If set, these variables will be passed to each prune job, unless each job explic
 
 | Variable                        | Description                                                                                                                         | Default | `_FILE` |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `DEFAULT_PRUNE_ARGS`            | Arguments to pass to Restic Prune command line                                                                                      |         | |
-| `DEFAULT_PRUNE_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no prune operations occur eg `0420`                                     |         | |
-| `DEFAULT_PRUNE_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no prune operations occur eg `0430`                                                 |         | |
-| `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                               |         | |
-| `DEFAULT_PRUNE_HOOK_POST`       | Path and Filename to execute post prune operation                                                                                   |         | |
-| `DEFAULT_PRUNE_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                                                    |         | |
-| `DEFAULT_PRUNE_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                           |         | |
-| `DEFAULT_PRUNE_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                   | `5%`    | |
-| `DEFAULT_PRUNE_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE` |         | |
-| `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                      |         | x |
-| `DEFAULT_PRUNE_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                   |         | x |
-| `DEFAULT_PRUNE_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                                                            | `2`     | |
+| `DEFAULT_PRUNE_ARGS`            | Arguments to pass to Restic Prune command line                                                                                      |         |         |
+| `DEFAULT_PRUNE_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no prune operations occur eg `0420`                                     |         |         |
+| `DEFAULT_PRUNE_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no prune operations occur eg `0430`                                                 |         |         |
+| `DEFAULT_PRUNE_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                               |         |         |
+| `DEFAULT_PRUNE_HOOK_POST`       | Path and Filename to execute post prune operation                                                                                   |         |         |
+| `DEFAULT_PRUNE_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                                                    |         |         |
+| `DEFAULT_PRUNE_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                           |         |         |
+| `DEFAULT_PRUNE_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                   | `5%`    |         |
+| `DEFAULT_PRUNE_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE` |         |         |
+| `DEFAULT_PRUNE_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                      |         | x       |
+| `DEFAULT_PRUNE_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                   |         | x       |
+| `DEFAULT_PRUNE_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                                                            | `2`     |         |
 
 
 If `DEFAULT_PRUNE_` variables are set and you do not wish for the settings to carry over into your jobs, you can set the appropriate environment variable with the value of `unset`.
 Additional prune jobs can be scheduled by using `PRUNE02_`,`PRUNE03_`,`PRUNE04_` ... prefixes.
 
-| Variable                        | Description                                                                                                                         | Default | `_FILE` |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
-| `PRUNE01_ARGS`            | Arguments to pass to Restic prune command line                                                                                                 |         | |
-| `PRUNE01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |         | |
-|                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         | |
-|                           | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         | |
-| `PRUNE01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |         | |
-| `PRUNE01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |         | |
-| `PRUNE01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         | |
-| `PRUNE01_HOOK_POST`       | Path and Filename to execute post prune operation                                                                                              |         | |
-| `PRUNE01_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                                                               |         | |
-| `PRUNE01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         | |
-| `PRUNE01_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                                      |         | |
-| `PRUNE01_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                              | `5%`    | |
-| `PRUNE01_NAME`            | A friendly name to reference your prune snapshot job eg `repository_name`                                                                      |         | |
-| `PRUNE01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`            |         | |
-| `PRUNE01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         | x |
-| `PRUNE01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         | x |
-| `PRUNE01_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                                                                       | `2`     | |
+| Variable                  | Description                                                                                                                                    | Default | `_FILE` |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- |
+| `PRUNE01_ARGS`            | Arguments to pass to Restic prune command line                                                                                                 |         |         |
+| `PRUNE01_BEGIN`           | What time to do the first prune. Defaults to immediate. Must be in one of two formats                                                          |         |         |
+|                           | Absolute HHMM, e.g. `2330` or `0415`                                                                                                           |         |         |
+|                           | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a half |         |         |
+| `PRUNE01_BLACKOUT_BEGIN`  | Use `HHMM` notation to the start of a blackout period where no cleanup operations occur eg `0420`                                              |         |         |
+| `PRUNE01_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no cleanup operations occur eg `0430`                                                          |         |         |
+| `PRUNE01_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE` `FALSE`                                                                          |         |         |
+| `PRUNE01_HOOK_POST`       | Path and Filename to execute post prune operation                                                                                              |         |         |
+| `PRUNE01_HOOK_PRE`        | Path and Filename to execute pre prune operation                                                                                               |         |         |
+| `PRUNE01_INTERVAL`        | Frequency after first execution of firing prune routines again in minutes                                                                      |         |         |
+| `PRUNE01_MAX_REPACK_SIZE` | Maximum size to repack (with suffix of `k`,`m`, `g`, `t`)                                                                                      |         |         |
+| `PRUNE01_MAX_UNUSED`      | Tolerate given limit of unused data before repack                                                                                              | `5%`    |         |
+| `PRUNE01_NAME`            | A friendly name to reference your prune snapshot job eg `repository_name`                                                                      |         |         |
+| `PRUNE01_REPACK`          | Repack files which are `CACHEABLE`, `SMALL` files which are below 80% target pack size, or repack all `UNCOMPRESSED` data or `NONE`            |         |         |
+| `PRUNE01_REPOSITORY_PATH` | Path of repository eg `/repository` or `rest:user:password@http://rest.server`                                                                 |         | x       |
+| `PRUNE01_REPOSITORY_PASS` | Encryption Key for repository eg `secretpassword`                                                                                              |         | x       |
+| `PRUNE01_VERBOSITY_LEVEL` | Prune operations log verbosity - Best not to change this                                                                                       | `2`     |         |
 
 ##### Hooks
 
@@ -545,9 +546,9 @@ See the maintenance section to [create users and passwords](#creating-server-use
 #### RClone Options
 
 If set in `MODE` this will spawn an RClone instance
-| Parameter                | Description                                                                                  | Default | `_FILE` |
-| ------------------------ | -------------------------------------------------------------------------------------------- | ------- | ------- |
-| `RCLONE_ARGS` | This will pass arguments to a RClone process that will startup after container initialization |         | x |
+| Parameter     | Description                                                                                   | Default | `_FILE` |
+| ------------- | --------------------------------------------------------------------------------------------- | ------- | ------- |
+| `RCLONE_ARGS` | This will pass arguments to a RClone process that will startup after container initialization |         | x       |
 
 #### Unlock Options
 Sometimes repositories will get stuck and in a `locked` state. The image attempts to perform automatic unlocking if it detects errors. These settings shouldn't need to be touched.
@@ -604,12 +605,12 @@ $5 body/error message
 
 
 ##### Email Notifications
-| Parameter                | Description                                                                                  | Default | `_FILE` |
-| ------------------------ | -------------------------------------------------------------------------------------------- | ------- | ------- |
-| `MAIL_FROM` | What email address to send mail from for errors                                           |         | |
-| `MAIL_TO`   | What email address to send mail to for errors. Send to multiple by seperating with comma. |         | |
-| `SMTP_HOST` | What SMTP server to use for sending mail                                                  |         | x |
-| `SMTP_PORT` | What SMTP port to use for sending mail                                                    |         | x |
+| Parameter   | Description                                                                               | Default | `_FILE` |
+| ----------- | ----------------------------------------------------------------------------------------- | ------- | ------- |
+| `MAIL_FROM` | What email address to send mail from for errors                                           |         |         |
+| `MAIL_TO`   | What email address to send mail to for errors. Send to multiple by seperating with comma. |         |         |
+| `SMTP_HOST` | What SMTP server to use for sending mail                                                  |         | x       |
+| `SMTP_PORT` | What SMTP port to use for sending mail                                                    |         | x       |
 
 ##### Matrix Notifications
 
@@ -625,25 +626,25 @@ Copy the JSON response `access_token` that will look something like this:
 {"access_token":"MDAxO...blahblah","refresh_token":"MDAxO...blahblah","home_server":"matrix.org","user_id":"@myuserid:matrix.org"}
 ````
 
-| Parameter                | Description                                                                                  | Default | `_FILE` |
-| ------------------------ | -------------------------------------------------------------------------------------------- | ------- | ------- |
-| `MATRIX_HOST`         | URL (https://matrix.example.com) of Matrix Homeserver                                    |         | x |
-| `MATRIX_ROOM`         | Room ID eg `\!abcdef:example.com` to send to. Send to multiple by seperating with comma. |         | x |
-| `MATRIX_ACCESS_TOKEN` | Access token of user authorized to send to room                                          |         | x |
+| Parameter             | Description                                                                              | Default | `_FILE` |
+| --------------------- | ---------------------------------------------------------------------------------------- | ------- | ------- |
+| `MATRIX_HOST`         | URL (https://matrix.example.com) of Matrix Homeserver                                    |         | x       |
+| `MATRIX_ROOM`         | Room ID eg `\!abcdef:example.com` to send to. Send to multiple by seperating with comma. |         | x       |
+| `MATRIX_ACCESS_TOKEN` | Access token of user authorized to send to room                                          |         | x       |
 
 ##### Mattermost Notifications
 | Parameter                | Description                                                                                  | Default | `_FILE` |
 | ------------------------ | -------------------------------------------------------------------------------------------- | ------- | ------- |
-| `MATTERMOST_WEBHOOK_URL` | Full URL to send webhook notifications to                                                    |         | x |
-| `MATTERMOST_RECIPIENT`   | Channel or User to send Webhook notifications to. Send to multiple by seperating with comma. |         | x |
-| `MATTERMOST_USERNAME`    | Username to send as eg `Restic`                                                              |         | x |
+| `MATTERMOST_WEBHOOK_URL` | Full URL to send webhook notifications to                                                    |         | x       |
+| `MATTERMOST_RECIPIENT`   | Channel or User to send Webhook notifications to. Send to multiple by seperating with comma. |         | x       |
+| `MATTERMOST_USERNAME`    | Username to send as eg `Restic`                                                              |         | x       |
 
 ##### Rocketchat Notifications
 | Parameter                | Description                                                                                  | Default | `_FILE` |
 | ------------------------ | -------------------------------------------------------------------------------------------- | ------- | ------- |
-| `ROCKETCHAT_WEBHOOK_URL` | Full URL to send webhook notifications to                                                    |         | x |
-| `ROCKETCHAT_RECIPIENT`   | Channel or User to send Webhook notifications to. Send to multiple by seperating with comma. |         | x |
-| `ROCKETCHAT_USERNAME`    | Username to send as eg `Restic`                                                              |         | x |
+| `ROCKETCHAT_WEBHOOK_URL` | Full URL to send webhook notifications to                                                    |         | x       |
+| `ROCKETCHAT_RECIPIENT`   | Channel or User to send Webhook notifications to. Send to multiple by seperating with comma. |         | x       |
+| `ROCKETCHAT_USERNAME`    | Username to send as eg `Restic`                                                              |         | x       |
 
 
 ### Networking

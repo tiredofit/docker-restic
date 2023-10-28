@@ -1,3 +1,9 @@
+## 1.2.0 2023-10-28 <dave at tiredofit dot ca>
+
+   ### Added
+      - Add RESTIC_HOSTNAME environment variable to override CONTAINER_NAME variable useful in certain automated situatiosn
+
+
 ## 1.1.9 2023-10-24 <dave at tiredofit dot ca>
 
    ### Added
