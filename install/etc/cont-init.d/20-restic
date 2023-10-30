@@ -7,7 +7,6 @@ PROCESS_NAME="restic"
 setup_container_mode
 bootstrap_filesystem
 
-if [ ! -f "/tmp/.container/container-restart" ] ; then
     if var_true "${ENABLE_BACKUP}" ; then
         print_debug "Configuring Backup"
         create_schedulers backup
@@ -77,6 +76,6 @@ if [ ! -f "/tmp/.container/container-restart" ] ; then
     fi
 
     create_schedulers init
-fi
+
 
 liftoff
