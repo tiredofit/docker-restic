@@ -1,3 +1,9 @@
+## 1.2.2 2023-11-01 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix an issue with hardcoding Zabbix configuration files isntead of using variables
+
+
 ## 1.2.1 2023-10-29 <dave at tiredofit dot ca>
 
    ### Added

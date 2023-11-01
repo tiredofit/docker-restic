@@ -1194,7 +1194,7 @@ EOF
         if var_true "${CONTAINER_ENABLE_MONITORING}" && [ "${CONTAINER_MONITORING_BACKEND,,}" = "zabbix" ]; then
             source /assets/defaults/03-monitoring
             print_notice "Sending Backup Statistics to Zabbix"
-            silent zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k restic.backup -o '[{"{#NAME}":"'${backup_job_log_suffix}'"}]'
+            silent zabbix_sender -c -c "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}" -k restic.backup -o '[{"{#NAME}":"'${backup_job_log_suffix}'"}]'
             cat <<EOF | silent zabbix_sender -c "${ZABBIX_CONFIG_PATH}"/"${ZABBIX_CONFIG_FILE}" -i -
 - restic.backup.start_date.[${backup_job_log_suffix}] "${backup_routines_start_time}"
 - restic.backup.status.[${backup_job_log_suffix}] "${exitcode_backup}"
