@@ -1,3 +1,9 @@
+## 1.2.3 2023-11-13 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix for 1.2.2 and double arguments for Zabbix
+
+
 ## 1.2.2 2023-11-01 <dave at tiredofit dot ca>
 
    ### Changed
