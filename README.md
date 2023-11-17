@@ -209,15 +209,13 @@ Additional backup jobs can be scheduled by using `BACKUP02_`,`BACKUP03_`,`BACKUP
 
 | Variable                            | Description                                                                                                                               | Default | `_FILE`          |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------- | ---------------- |
-| `BACKUP01_ARGS`                     | Arguments to pass to Restic Backup command                                                                                                |         | line             |     |
-| `BACKUP01_SNAPSHOT_NAME`            | A friendly name to reference your backup snapshot job eg                                                                                  |         | `var_local`      |     |
-| `BACKUP01_REPOSITORY_PATH`          | Path of repository eg `/repository` or `rest:user:password@http://rest.                                                                   |         | server`          | x   |
-| `BACKUP01_REPOSITORY_PASS`          | Encryption Key for repository eg                                                                                                          |         | `secretpassword` | x   |
-| `BACKUP01_SNAPSHOT_BEGIN`           | What time to do the first snapshot. Defaults to immediate. Must be in one of two                                                          |         | formats          |     |
-|                                     | Absolute HHMM, e.g. `2330` or                                                                                                             |         | `0415`           |     |
-|                                     | Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a |         | half             |     |
-| `BACKUP01_SNAPSHOT_BLACKOUT_BEGIN`  | Use `HHMM` notation to start a blackout period where no backups occur eg                                                                  |         | `0420`           |     |
-| `BACKUP01_SNAPSHOT_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no backups occur eg                                                                       |         | `0430`           |     |
+| `BACKUP01_ARGS`                     | Arguments to pass to Restic Backup command line             |                                                                                                         |     |
+| `BACKUP01_SNAPSHOT_NAME`            | A friendly name to reference your backup snapshot job eg `var_local`                                                                                       |         | |
+| `BACKUP01_REPOSITORY_PATH`          | Path of repository eg `/repository` or `rest:user:password@http://rest.server`          | | x   |
+| `BACKUP01_REPOSITORY_PASS`          | Encryption Key for repository eg `secretpassword`                                                                                                          |         |  x   |
+| `BACKUP01_SNAPSHOT_BEGIN`           | What time to do the first snapshot. Defaults to immediate. Must be in one of two formats Absolute HHMM, e.g. `2330` or `0415` , Relative +MM, i.e. how many minutes after starting the container, e.g. `+0` (immediate), `+10` (in 10 minutes), or `+90` in an hour and a  half   |     |
+| `BACKUP01_SNAPSHOT_BLACKOUT_BEGIN`  | Use `HHMM` notation to start a blackout period where no backups occur eg  `0420`                                                                |         |          |     
+| `BACKUP01_SNAPSHOT_BLACKOUT_END`    | Use `HHMM` notation to set the end period where no backups occur eg  `0430`          |           |     |
 | `BACKUP01_SNAPSHOT_DRY_RUN`         | Don't actually do anything, just emulate the procedure `TRUE`                                                                             |         | `FALSE`          |     |
 | `BACKUP01_SNAPSHOT_HOOK_POST`       | Path and Filename to execute post snapshot                                                                                                |         | operation        |     |
 | `BACKUP01_SNAPSHOT_HOOK_PRE`        | Path and Filename to execute pre snapshot                                                                                                 |         | operation        |     |
@@ -227,7 +225,7 @@ Additional backup jobs can be scheduled by using `BACKUP02_`,`BACKUP03_`,`BACKUP
 | `BACKUP01_SNAPSHOT_PATH`            | Folder or file to backup eg `/                                                                                                            |         | etc`             |     |
 | `BACKUP01_SNAPSHOT_PATH_FILE`       | Line seperated list of files or directories to                                                                                            |         | backup           |     |
 | `BACKUP01_SNAPSHOT_TAGS`            | Comma seperated list of tags to attach to                                                                                                 |         | snapshot         |     |
-| `BACKUP01_SNAPSHOT_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                 |         |                  | `2` |
+| `BACKUP01_SNAPSHOT_VERBOSITY_LEVEL` | Backup operations log verbosity - Best not to change this                                                                                 |         | `2`              | |
 
 ##### Hooks
 
@@ -585,7 +583,7 @@ This image has capabilities on sending notifications via a handful of services w
 | Parameter              | Description                                                                       | Default |
 | ---------------------- | --------------------------------------------------------------------------------- | ------- |
 | `ENABLE_NOTIFICATIONS` | Enable Notifications                                                              | `FALSE` |
-| `NOTIFICATION_TYPE`    | `CUSTOM` `EMAIL` `MATRIX` `MATTERMOST` `ROCKETCHAT` - Seperate Multiple by commas |         |
+| `NOTIFICATION_TYPE`    | `CUSTOM` `email` `MATRIX` `MATTERMOST` `ROCKETCHAT` - Seperate Multiple by commas |         |
 
 ##### Custom Notifications
 
@@ -679,7 +677,7 @@ Manual Pruning can be performed by entering the container and typing `prune-now`
 
 ### Creating Server Users and Passwords
 Use the `server-user` command:
-- Create: `server-user <username> <password>`
+- Create: `server-user create <username> <password>`
 - Delete: `server-user <delete>`
 
 ## Support
