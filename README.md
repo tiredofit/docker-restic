@@ -605,6 +605,9 @@ $5 body/error message
 
 
 ##### Email Notifications
+
+See base image for additional SMTP environment variables
+
 | Parameter   | Description                                                                               | Default | `_FILE` |
 | ----------- | ----------------------------------------------------------------------------------------- | ------- | ------- |
 | `MAIL_FROM` | What email address to send mail from for errors                                           |         |         |

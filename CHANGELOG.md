@@ -1,3 +1,9 @@
+## 1.2.4 2023-11-17 <dave at tiredofit dot ca>
+
+   ### Added
+      - Switch from using s-mail to msmtp
+
+
 ## 1.2.3 2023-11-13 <dave at tiredofit dot ca>
 
    ### Changed
