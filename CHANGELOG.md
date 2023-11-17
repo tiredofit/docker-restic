@@ -1,3 +1,9 @@
+## 1.2.5 2023-11-17 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Be more descriptive when using notifications to IM services
+
+
 ## 1.2.4 2023-11-17 <dave at tiredofit dot ca>
 
    ### Added
