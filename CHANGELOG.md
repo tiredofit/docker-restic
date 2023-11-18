@@ -1,3 +1,9 @@
+## 1.2.6 2023-11-18 <joergmschulz@github>
+
+   ### Changed
+      - Fix issue with loading msmtp configuration
+
+
 ## 1.2.5 2023-11-17 <dave at tiredofit dot ca>
 
    ### Changed
