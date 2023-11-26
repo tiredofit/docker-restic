@@ -1,3 +1,9 @@
+## 1.2.7 2023-11-26 <dave at tiredofit dot ca>
+
+   ### Added
+      - RClone 1.65.0
+
+
 ## 1.2.6 2023-11-18 <joergmschulz@github>
 
    ### Changed
