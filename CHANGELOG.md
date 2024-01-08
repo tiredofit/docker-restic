@@ -1,3 +1,9 @@
+## 1.2.9 2024-01-08 <dave at tiredofit dot ca>
+
+   ### Added
+      - RClone 1.65.1
+
+
 ## 1.2.8 2023-12-08 <dave at tiredofit dot ca>
 
    ### Added
