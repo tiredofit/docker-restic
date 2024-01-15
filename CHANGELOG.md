@@ -1,3 +1,9 @@
+## 1.2.10 2024-01-14 <dave at tiredofit dot ca>
+
+   ### Added
+      - Restic 0.16.3
+
+
 ## 1.2.9 2024-01-08 <dave at tiredofit dot ca>
 
    ### Added
