@@ -1,3 +1,11 @@
+## 1.2.21 2024-11-08 <dave at tiredofit dot ca>
+
+   ### Added
+      - Restic 0.17.3
+      - Restic REST Server 0.13.0
+      - Pin to tiredofit/nginx:alpine-3.20-6.5.5
+
+
 ## 1.2.20 2024-10-28 <dave at tiredofit dot ca>
 
    ### Added
