@@ -1,5 +1,5 @@
 ARG DISTRO=alpine
-ARG DISTRO_VARIANT=3.20-6.5.5
+ARG DISTRO_VARIANT=3.21-6.5.10
 
 FROM docker.io/tiredofit/nginx:${DISTRO}-${DISTRO_VARIANT}
 LABEL maintainer="Dave Conroy (github.com/tiredofit)"
@@ -12,7 +12,7 @@ ENV RESTIC_VERSION=${RESTIC_VERSION:-"v0.17.3"} \
     RESTIC_REST_SERVER_VERSION=${RESTIC_REST_SERVER_VERSION:-"v0.13.0"} \
     RESTIC_REPO_URL=${RESTIC_REPO_URL:-"https://github.com/restic/restic"} \
     RESTIC_REST_SERVER_REPO_URL=${RESTIC_REST_SERVER_REPO_URL:-"https://github.com/restic/rest-server"} \
-    R_CLONE_VERSION=${R_CLONE_VERSION:-"v1.68.1"} \
+    R_CLONE_VERSION=${R_CLONE_VERSION:-"v1.69.1"} \
     R_CLONE_REPO_URL=${R_CLONE_REPO_URL:-"https://github.com/rclone/rclone"} \
     NGINX_CLIENT_BODY_BUFFER_SIZE=20M \
     NGINX_SITE_ENABLED="restic-rest-server" \

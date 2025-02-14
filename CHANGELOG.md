@@ -1,3 +1,11 @@
+## 1.2.22 2025-02-14 <dave at tiredofit dot ca>
+
+   ### Added
+      - RClone 1.69.1
+      - Alpine 3.21 base
+      - Pin to tiredofit/nginx:6.5.10
+
+
 ## 1.2.21 2024-11-08 <dave at tiredofit dot ca>
 
    ### Added
