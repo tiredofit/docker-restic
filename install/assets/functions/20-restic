@@ -631,7 +631,7 @@ EOF
     esac
 }
 
-hooks() {
+hook() {
     post() {
         case "${1}" in
             backup )
@@ -1049,7 +1049,7 @@ EOF
         fi
 
         if [ -n "${backup_job_hook_pre}" ]; then
-            hook backup pre
+            hook pre backup
         fi
 
         print_info "Starting Backup Snapshot ${backup_job_log_suffix}"
@@ -1216,7 +1216,7 @@ EOF
         fi
 
         if [ -n "${backup_job_hook_post}" ]; then
-            hook backup post
+            hook post backup
         fi
 
         backup_instance_vars=$(mktemp)
@@ -1325,7 +1325,7 @@ EOF
         fi
 
         if [ -n "${check_job_hook_pre}" ]; then
-            hook check pre
+            hook pre check
         fi
 
         process_limiter restic 1 check
@@ -1442,7 +1442,7 @@ EOF
         fi
 
         if [ -n "${check_job_hook_post}" ]; then
-            hook check post
+            hook post check
         fi
 
         check_instance_vars=$(mktemp)
@@ -1672,7 +1672,7 @@ EOF
         fi
 
         if [ -n "${cleanup_job_hook_pre}" ]; then
-            hook cleanup pre
+            hook pre cleanup
         fi
 
         print_info "Starting cleanup of old backups"
@@ -1809,7 +1809,7 @@ EOF
         fi
 
         if [ -n "${cleanup_job_hook_post}" ]; then
-            hook cleanup post
+            hook post cleanup
         fi
 
         cleanup_instance_vars=$(mktemp)
@@ -2023,7 +2023,7 @@ EOF
         fi
 
         if [ -n "${inventory_job_hook_pre}" ]; then
-            hook inventory pre
+            hook pre inventory
         fi
 
         restic_repository=$(mktemp)
@@ -2114,7 +2114,7 @@ EOF
         fi
 
         if [ -n "${inventory_job_hook_pre}" ]; then
-            hook inventory post
+            hook post inventory
         fi
 
         unset inventory_job_args
@@ -2237,7 +2237,7 @@ EOF
         fi
 
         if [ -n "${prune_job_hook_pre}" ]; then
-            hook prune pre
+            hook pre prune
         fi
 
         process_limiter restic 1 prune
@@ -2350,7 +2350,7 @@ EOF
         fi
 
         if [ -n "${prune_job_hook_post}" ]; then
-            hook prune post
+            hook post prune
         fi
 
         prune_instance_vars=$(mktemp)
@@ -2442,7 +2442,7 @@ EOF
         fi
 
         if [ -n "${unlock_job_hook_pre}" ]; then
-            hook unlock pre
+            hook pre unlock
         fi
 
         restic_repository=$(mktemp)
@@ -2542,7 +2542,7 @@ EOF
         fi
 
         if [ -n "${unlock_job_hook_post}" ]; then
-            hook unlock post
+            hook post unlock
         fi
 
         unset unlock_job_args
