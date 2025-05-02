@@ -1,3 +1,9 @@
+## 1.2.27 2025-05-02 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Fix pre and post hooks (@credit MrMoyaert@github)
+
+
 ## 1.2.26 2025-05-01 <dave at tiredofit dot ca>
 
    ### Added
