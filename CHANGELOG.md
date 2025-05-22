@@ -1,3 +1,9 @@
+## 1.2.28 2025-05-21 <dave at tiredofit dot ca>
+
+   ### Added
+      - RCLone 1.69.3
+
+
 ## 1.2.27 2025-05-02 <dave at tiredofit dot ca>
 
    ### Changed
