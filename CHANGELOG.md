@@ -1,3 +1,9 @@
+## 1.2.32 2025-08-20 <dave at tiredofit dot ca>
+
+   ### Changed
+      - Overwrite instance scripts as opposed to append
+
+
 ## 1.2.31 2025-07-09 <dave at tiredofit dot ca>
 
    ### Added

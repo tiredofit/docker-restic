@@ -4,6 +4,32 @@ source /assets/functions/00-container
 prepare_service
 PROCESS_NAME="restic"
 
+#cat <<EOF
+#
+#*****************************************************************************************
+#*                                                                                       *
+#*                    END OF LIFE NOTICE AUGUST 18, 2025                                 *
+#*                               tiredofit/restic                                        *
+#*                                                                                       *
+#* This image is no longer maintained as of and will not receive updates.                *
+#*                                                                                       *
+#* A successor image is available at:                                                    *
+#*                                                                                       *
+#* Repository | Documentation:                                                           *
+#*   - https://github.com/nfrastack/container-restic                                     *
+#*                                                                                       *
+#* Image Registries:                                                                     *
+#*   - https://hub.docker.com/r/nfrastack/restic                                         *
+#*   - https://github.com/nfrastack/container-restic/pkgs/container/container-restic     *
+#*                                                                                       *
+#* Please visit https://nfrastack.com for more information.                              *
+#*                                                                                       *
+#*****************************************************************************************
+#
+#EOF
+#
+#sleep 15
+
 setup_container_mode
 bootstrap_filesystem
 
